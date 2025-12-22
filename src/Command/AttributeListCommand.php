@@ -33,19 +33,27 @@ class AttributeListCommand extends Command
     }
 
     /**
+     * Get the command description.
+     */
+    public static function getDescription(): string
+    {
+        return 'List discovered PHP attributes in a table format.';
+    }
+
+    /**
      * @inheritDoc
      */
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser
-            ->setDescription('List discovered PHP attributes')
+            ->setDescription(static::getDescription())
             ->addOption('attribute', [
                 'short' => 'a',
-                'help' => 'Filter by attribute name',
+                'help' => 'Filter by attribute name (partial match supported)',
             ])
             ->addOption('class', [
                 'short' => 'c',
-                'help' => 'Filter by class name',
+                'help' => 'Filter by class name (partial match supported)',
             ])
             ->addOption('type', [
                 'short' => 't',

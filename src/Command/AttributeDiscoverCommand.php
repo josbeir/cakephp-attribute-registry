@@ -32,12 +32,19 @@ class AttributeDiscoverCommand extends Command
     }
 
     /**
+     * Get the command description.
+     */
+    public static function getDescription(): string
+    {
+        return 'Discover and cache all PHP attributes in the application.';
+    }
+
+    /**
      * @inheritDoc
      */
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
-        $parser
-            ->setDescription('Discover and cache all PHP attributes in the application');
+        $parser->setDescription(static::getDescription());
 
         return $parser;
     }

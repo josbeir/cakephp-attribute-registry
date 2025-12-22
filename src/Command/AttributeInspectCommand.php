@@ -33,19 +33,27 @@ class AttributeInspectCommand extends Command
     }
 
     /**
+     * Get the command description.
+     */
+    public static function getDescription(): string
+    {
+        return 'Inspect detailed information about specific attributes.';
+    }
+
+    /**
      * @inheritDoc
      */
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser
-            ->setDescription('Inspect details of attributes')
+            ->setDescription(static::getDescription())
             ->addArgument('attribute', [
                 'required' => false,
-                'help' => 'The attribute class name to inspect',
+                'help' => 'The attribute class name to inspect (partial match supported)',
             ])
             ->addOption('class', [
                 'short' => 'c',
-                'help' => 'Filter by the class containing attributes',
+                'help' => 'Show all attributes on a specific class (partial match supported)',
             ]);
 
         return $parser;
