@@ -90,6 +90,7 @@ class AttributeInfoTest extends TestCase
 
         // This should not be allowed in PHP 8.2+ readonly objects
         $this->expectException(Error::class);
+        /** @phpstan-ignore property.readOnlyAssignOutOfClass */
         $attributeInfo->className = 'Different\Class';
     }
 

@@ -74,6 +74,9 @@ class AttributeParser
     }
 
     /**
+     * @param \ReflectionClass<object> $class Reflection class
+     * @param string $filePath File path
+     * @param int $fileModTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractClassAttributes(ReflectionClass $class, string $filePath, int $fileModTime): array
@@ -99,6 +102,9 @@ class AttributeParser
     }
 
     /**
+     * @param \ReflectionClass<object> $class Reflection class
+     * @param string $filePath File path
+     * @param int $fileModTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractMethodAttributes(ReflectionClass $class, string $filePath, int $fileModTime): array
@@ -127,6 +133,9 @@ class AttributeParser
     }
 
     /**
+     * @param \ReflectionClass<object> $class Reflection class
+     * @param string $filePath File path
+     * @param int $fileModTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractPropertyAttributes(ReflectionClass $class, string $filePath, int $fileModTime): array
@@ -156,7 +165,7 @@ class AttributeParser
     /**
      * Create an AttributeInfo instance from reflection data.
      *
-     * @param \ReflectionAttribute $attribute Reflection attribute
+     * @param \ReflectionAttribute<object> $attribute Reflection attribute
      * @param string $className Class name
      * @param string $filePath File path
      * @param int $lineNumber Line number
@@ -186,7 +195,7 @@ class AttributeParser
     /**
      * Extract named arguments from a reflection attribute.
      *
-     * @param \ReflectionAttribute $attribute Reflection attribute
+     * @param \ReflectionAttribute<object> $attribute Reflection attribute
      * @return array<string, mixed> Named arguments array
      */
     private function extractAttributeArguments(ReflectionAttribute $attribute): array

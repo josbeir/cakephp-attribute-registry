@@ -22,7 +22,7 @@ use Cake\Core\PluginApplicationInterface;
 class AttributeRegistryPlugin extends BasePlugin
 {
     /**
-     * @inheritDoc
+     * @param \Cake\Core\PluginApplicationInterface<\Cake\Event\EventManager> $app Application instance
      */
     public function bootstrap(PluginApplicationInterface $app): void
     {

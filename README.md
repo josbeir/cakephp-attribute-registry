@@ -8,11 +8,334 @@
 
 # CakePHP Attribute Registry Plugin
 
+A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attributes across your application and plugins.
+
 ## Table of Contents
 
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Using the AttributeRegistry Service](#using-the-attributeregistry-service)
+  - [Discovery Methods](#discovery-methods)
+  - [Working with AttributeInfo](#working-with-attributeinfo)
+- [Console Commands](#console-commands)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Overview
 
+The CakePHP Attribute Registry Plugin provides a centralized system for discovering and managing PHP 8 attributes throughout your CakePHP application. It scans your codebase for attributes on classes, methods, properties, parameters, and constants, then caches the results for fast retrieval.
+
+**Key Features:**
+
+- 🔍 **Automatic Discovery** - Scans PHP files for attributes using configurable glob patterns
+- 💾 **Built-in Caching** - Caches discovered attributes with file modification tracking
+- 🔎 **Flexible Querying** - Find attributes by name, class, or target type
+- 🔌 **Plugin Support** - Automatically scans all loaded CakePHP plugins
+- 🖥️ **CLI Tools** - Console commands for discovery, listing, and inspection
+- 🏗️ **Service-Oriented** - Clean architecture with dependency injection via CakePHP's container
+
+## Requirements
+
+- PHP 8.2 or higher
+- CakePHP 5.2 or higher
+
+## Installation
+
+Install the plugin using Composer:
+
+```bash
+composer require josbeir/cakephp-attribute-registry
+```
+
+Load the plugin in your `src/Application.php`:
+
+```php
+public function bootstrap(): void
+{
+    parent::bootstrap();
+    $this->addPlugin('AttributeRegistry');
+}
+```
+
+## Configuration
+
+The plugin works out of the box with sensible defaults. To customize, copy the configuration file to your application:
+
+```bash
+cp vendor/josbeir/cakephp-attribute-registry/config/app_attribute_registry.php config/
+```
+
+### Configuration Options
+
+```php
+// config/app_attribute_registry.php
+return [
+    'AttributeRegistry' => [
+        'cache' => [
+            // Cache configuration name (plugin auto-registers 'attribute_registry')
+            // Override with CACHE_ATTRIBUTE_REGISTRY_URL env var for custom backends
+            'config' => 'attribute_registry',
+        ],
+        'scanner' => [
+            // Glob patterns for files to scan (relative to base paths)
+            'paths' => [
+                'src/**/*.php',
+            ],
+            // Glob patterns for paths to exclude
+            'exclude_paths' => [
+                'vendor/**',
+                'tmp/**',
+                'logs/**',
+                'tests/**',
+                'webroot/**',
+            ],
+            // Maximum file size to scan (in bytes)
+            'max_file_size' => 1024 * 1024, // 1 MB
+        ],
+    ],
+];
+```
+
+### Cache Configuration
+
+The plugin automatically registers a file-based cache configuration named `attribute_registry`. You can override this by:
+
+1. Setting the `CACHE_ATTRIBUTE_REGISTRY_URL` environment variable
+2. Defining your own `attribute_registry` cache config in `config/app.php` before the plugin loads
+
+## Usage
+
+### Using the AttributeRegistry Service
+
+The `AttributeRegistry` service is available via CakePHP's dependency injection container:
+
+```php
+use AttributeRegistry\Service\AttributeRegistry;
+
+// In a Controller
+class MyController extends AppController
+{
+    public function index(AttributeRegistry $registry): Response
+    {
+        // Discover all attributes
+        $attributes = $registry->discover();
+
+        // Find specific attributes
+        $routes = $registry->findByAttribute('Route');
+
+        // ...
+    }
+}
+```
+
+### Discovery Methods
+
+The `AttributeRegistry` service provides several methods for finding attributes:
+
+#### Discover All Attributes
+
+```php
+// Get all discovered attributes (cached automatically)
+$attributes = $registry->discover();
+```
+
+#### Find by Attribute Name
+
+```php
+// Find all usages of a specific attribute
+$routes = $registry->findByAttribute(Route::class);
+$columns = $registry->findByAttribute(Column::class);
+
+// Partial matching is also supported
+$routes = $registry->findByAttribute('Route');
+```
+
+#### Find by Class Name
+
+```php
+// Find attributes on a specific class
+$attributes = $registry->findByClass(UserController::class);
+
+// Partial matching is also supported
+$attributes = $registry->findByClass('Controller');
+```
+
+#### Find by Target Type
+
+```php
+use AttributeRegistry\Enum\AttributeTargetType;
+
+// Find all class-level attributes
+$classAttributes = $registry->findByTargetType(AttributeTargetType::CLASS_TYPE);
+
+// Find all method-level attributes
+$methodAttributes = $registry->findByTargetType(AttributeTargetType::METHOD);
+
+// Find all property-level attributes
+$propertyAttributes = $registry->findByTargetType(AttributeTargetType::PROPERTY);
+```
+
+#### Cache Management
+
+```php
+// Clear all cached attribute data
+$registry->clearCache();
+
+// Warm the cache (clear and rediscover)
+$registry->warmCache();
+```
+
+### Working with AttributeInfo
+
+Each discovered attribute is returned as an `AttributeInfo` value object:
+
+```php
+use AttributeRegistry\ValueObject\AttributeInfo;
+
+foreach ($registry->discover() as $attr) {
+    // Basic information
+    echo $attr->attributeName;  // Full attribute class name
+    echo $attr->className;      // Class containing the attribute
+    echo $attr->filePath;       // File where attribute was found
+    echo $attr->lineNumber;     // Line number in file
+    echo $attr->fileModTime;    // File modification timestamp
+
+    // Attribute arguments
+    print_r($attr->arguments);  // Array of constructor arguments
+
+    // Target information
+    echo $attr->target->type->value;    // 'class', 'method', 'property', etc.
+    echo $attr->target->targetName;     // Name of the target element
+    echo $attr->target->parentClass;    // Parent class (for methods/properties)
+
+    // Instantiate the actual attribute
+    $instance = $attr->getInstance();
+
+    // With type safety
+    $route = $attr->getInstance(MyRoute::class);
+}
+```
+
+### Example: Building a Route Registry
+
+```php
+use Attribute;
+
+#[Attribute(Attribute::TARGET_CLASS)]
+class Route
+{
+    public function __construct(
+        public string $path,
+        public string $method = 'GET',
+    ) {}
+}
+
+#[Attribute(Attribute::TARGET_METHOD)]
+class Get
+{
+    public function __construct(
+        public ?string $path = null,
+    ) {}
+}
+
+// Controller
+#[Route('/users')]
+class UsersController
+{
+    #[Get('/')]
+    public function index(): void {}
+
+    #[Get('/{id}')]
+    public function view(int $id): void {}
+}
+
+// In your application
+$routes = $registry->findByAttribute(Route::class);
+foreach ($routes as $routeInfo) {
+    $route = $routeInfo->getInstance(Route::class);
+    echo "Route: {$route->path} ({$route->method})";
+}
+```
+
+## Console Commands
+
+The plugin provides three console commands for managing attributes:
+
+### Discover Attributes
+
+Scan and cache all attributes:
+
+```bash
+bin/cake attribute discover
+```
+
+Output:
+```
+Clearing attribute cache...
+Discovering attributes...
+Discovered 42 attributes in 0.234s
+```
+
+### List Attributes
+
+List discovered attributes with optional filtering:
+
+```bash
+# List all attributes
+bin/cake attribute list
+
+# Filter by attribute name
+bin/cake attribute list --attribute Route
+
+# Filter by class name
+bin/cake attribute list --class UserController
+
+# Filter by target type
+bin/cake attribute list --type method
+```
+
+Output:
+```
+Found 5 attributes:
+
++-----------+-----------------+--------+--------+
+| Attribute | Class           | Type   | Target |
++-----------+-----------------+--------+--------+
+| Route     | UsersController | class  | Users  |
+| Get       | UsersController | method | index  |
+| Get       | UsersController | method | view   |
++-----------+-----------------+--------+--------+
+```
+
+### Inspect Attributes
+
+View detailed information about specific attributes:
+
+```bash
+# Inspect by attribute name
+bin/cake attribute inspect Route
+
+# Inspect attributes on a specific class
+bin/cake attribute inspect --class UserController
+bin/cake attribute inspect -c UserController
+```
+
+Output:
+```
+Found 2 attributes for attribute "Route":
+
+1. App\Attribute\Route
+   Class: App\Controller\UsersController
+   Target: UsersController (class)
+   File: /path/to/src/Controller/UsersController.php:12
+   Arguments:
+     - path: /users
+     - method: GET
+```
 
 ## Testing
 
@@ -33,6 +356,9 @@ composer cs-check
 
 # Fix code style
 composer cs-fix
+
+# Run Rector checks
+composer rector-check
 ```
 
 ## Contributing
@@ -49,7 +375,7 @@ Contributions are welcome! Please follow these guidelines:
 ```bash
 # Clone the repository
 git clone git@github.com:josbeir/cakephp-attribute-registry.git
-cd synapse
+cd cakephp-attribute-registry
 
 # Install dependencies
 composer install
@@ -68,8 +394,3 @@ This plugin is open-sourced software licensed under the [MIT license](LICENSE.md
 ## Credits
 
 - Built with [CakePHP](https://cakephp.org/)
-- Implements [Model Context Protocol](https://modelcontextprotocol.io/)
-- Uses the [MCP PHP SDK](https://github.com/modelcontextprotocol/php-sdk)
-
-> [!NOTE]
-> The MCP PHP SDK is in active development and APIs may change.

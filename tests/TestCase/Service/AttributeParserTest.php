@@ -39,7 +39,6 @@ class AttributeParserTest extends TestCase
     {
         $attributes = $this->parser->parseFile($this->testFilePath);
 
-        $this->assertIsArray($attributes);
         $this->assertNotEmpty($attributes);
 
         // Should find class, property, and method attributes
@@ -57,7 +56,9 @@ class AttributeParserTest extends TestCase
         $attributes = $this->parser->parseFile($this->testFilePath);
 
         $classAttributes = array_filter($attributes, fn(AttributeInfo $attr): bool => $attr->target->type === AttributeTargetType::CLASS_TYPE);
+        $this->assertNotEmpty($classAttributes);
         $classAttribute = reset($classAttributes);
+        $this->assertInstanceOf(AttributeInfo::class, $classAttribute);
 
         $this->assertEquals(TestController::class, $classAttribute->className);
         $this->assertEquals(TestRoute::class, $classAttribute->attributeName);
@@ -132,7 +133,6 @@ class AttributeParserTest extends TestCase
 
         $attributes = $this->parser->parseFile($tempFile);
 
-        $this->assertIsArray($attributes);
         $this->assertEmpty($attributes);
 
         unlink($tempFile);

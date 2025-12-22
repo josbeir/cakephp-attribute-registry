@@ -44,6 +44,7 @@ class AttributeTargetTest extends TestCase
 
         // These should not be allowed in PHP 8.2+ readonly objects
         $this->expectException(Error::class);
+        /** @phpstan-ignore property.readOnlyAssignOutOfClass */
         $target->type = AttributeTargetType::METHOD;
     }
 }

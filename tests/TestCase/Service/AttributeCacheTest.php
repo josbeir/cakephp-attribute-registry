@@ -77,7 +77,6 @@ class AttributeCacheTest extends TestCase
 
         $key = $this->cache->generateFileKey($filePath, $modTime);
 
-        $this->assertIsString($key);
         $this->assertStringStartsWith('attr_', $key);
         $this->assertStringContainsString((string)$modTime, $key);
 

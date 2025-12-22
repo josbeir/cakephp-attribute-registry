@@ -63,7 +63,6 @@ class AttributeRegistryTest extends TestCase
     {
         $result = $this->registry->discover();
 
-        $this->assertIsArray($result);
         $this->assertNotEmpty($result);
     }
 
@@ -131,14 +130,13 @@ class AttributeRegistryTest extends TestCase
 
         $result = $this->registry->clearCache();
 
-        $this->assertIsBool($result);
+        $this->assertTrue($result);
     }
 
     public function testWarmCacheReturnsBool(): void
     {
         $result = $this->registry->warmCache();
 
-        $this->assertIsBool($result);
         $this->assertTrue($result);
     }
 }

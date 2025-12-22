@@ -97,7 +97,6 @@ readonly class AttributeInfo
             ));
         }
 
-        // @phpstan-ignore return.type
         return $instance;
     }
 

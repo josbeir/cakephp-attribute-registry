@@ -38,10 +38,14 @@ class AttributeInspectCommand extends Command
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser
-            ->setDescription('Inspect details of a specific attribute')
+            ->setDescription('Inspect details of attributes')
             ->addArgument('attribute', [
-                'required' => true,
+                'required' => false,
                 'help' => 'The attribute class name to inspect',
+            ])
+            ->addOption('class', [
+                'short' => 'c',
+                'help' => 'Filter by the class containing attributes',
             ]);
 
         return $parser;
@@ -52,16 +56,33 @@ class AttributeInspectCommand extends Command
      */
     public function execute(Arguments $args, ConsoleIo $io): int
     {
-        $attributeName = (string)$args->getArgument('attribute');
-        $attributes = $this->registry->findByAttribute($attributeName);
+        $attributeName = $args->getArgument('attribute');
+        $className = $args->getOption('class');
 
-        if ($attributes === []) {
-            $io->error(sprintf('No attributes found matching "%s"', $attributeName));
+        if ($attributeName === null && $className === null) {
+            $io->error('Please provide an attribute name or use --class option');
 
             return static::CODE_ERROR;
         }
 
-        $io->out(sprintf('<info>Found %d usages of "%s":</info>', count($attributes), $attributeName));
+        if ($attributeName !== null) {
+            $attributes = $this->registry->findByAttribute($attributeName);
+            $searchTerm = $attributeName;
+            $searchType = 'attribute';
+        } else {
+            $attributes = $this->registry->findByClass((string)$className);
+            $searchTerm = (string)$className;
+            $searchType = 'class';
+        }
+
+        if ($attributes === []) {
+            $io->error(sprintf('No attributes found matching %s "%s"', $searchType, $searchTerm));
+
+            return static::CODE_ERROR;
+        }
+
+        $count = count($attributes);
+        $io->out(sprintf('<info>Found %d attributes for %s "%s":</info>', $count, $searchType, $searchTerm));
         $io->out('');
 
         foreach ($attributes as $index => $attr) {
