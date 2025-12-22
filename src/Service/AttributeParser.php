@@ -9,10 +9,18 @@ use AttributeRegistry\ValueObject\AttributeTarget;
 use Exception;
 use ReflectionAttribute;
 use ReflectionClass;
+use ReflectionMethod;
 use Throwable;
 
 class AttributeParser
 {
+    /**
+     * Cache for attribute constructor reflections.
+     *
+     * @var array<string, \ReflectionMethod|null>
+     */
+    private static array $constructorCache = [];
+
     /**
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
@@ -29,14 +37,8 @@ class AttributeParser
         }
 
         try {
-            // Include the file to make classes available for reflection
-            require_once $filePath;
-
-            // Get all declared classes
-            $declaredClasses = get_declared_classes();
-
-            // Filter classes that are likely from this file
-            $fileClasses = $this->getClassesFromFile($filePath, $declaredClasses);
+            // Get classes from this file using diff or reflection
+            $fileClasses = $this->getClassesFromFile($filePath);
 
             foreach ($fileClasses as $className) {
                 try {
@@ -48,18 +50,12 @@ class AttributeParser
                         continue;
                     }
 
-                    $attributes = array_merge(
-                        $attributes,
-                        $this->extractClassAttributes($reflection, $filePath, $fileModTime),
-                    );
-                    $attributes = array_merge(
-                        $attributes,
-                        $this->extractMethodAttributes($reflection, $filePath, $fileModTime),
-                    );
-                    $attributes = array_merge(
-                        $attributes,
-                        $this->extractPropertyAttributes($reflection, $filePath, $fileModTime),
-                    );
+                    $attributes = [
+                        ...$attributes,
+                        ...$this->extractClassAttributes($reflection, $filePath, $fileModTime),
+                        ...$this->extractMethodAttributes($reflection, $filePath, $fileModTime),
+                        ...$this->extractPropertyAttributes($reflection, $filePath, $fileModTime),
+                    ];
                 } catch (Throwable $e) {
                     // Skip classes that can't be reflected
                     continue;
@@ -202,10 +198,9 @@ class AttributeParser
     {
         try {
             $rawArgs = $attribute->getArguments();
-            $attributeClass = new ReflectionClass($attribute->getName());
-            $constructor = $attributeClass->getConstructor();
+            $constructor = $this->getAttributeConstructor($attribute->getName());
 
-            if ($constructor === null) {
+            if (!$constructor instanceof ReflectionMethod) {
                 return $rawArgs;
             }
 
@@ -231,30 +226,54 @@ class AttributeParser
     }
 
     /**
-     * @param array<string> $allClasses
-     * @return array<string>
+     * Get the constructor for an attribute class (cached).
+     *
+     * @param class-string $attributeName Attribute class name
+     * @return \ReflectionMethod|null Constructor or null if none exists
      */
-    private function getClassesFromFile(string $filePath, array $allClasses): array
+    private function getAttributeConstructor(string $attributeName): ?ReflectionMethod
     {
-        // Get file content to extract namespace and class names
-        $content = file_get_contents($filePath);
-        if ($content === false) {
-            return [];
+        if (!array_key_exists($attributeName, self::$constructorCache)) {
+            /** @var class-string $attributeName */
+            $attributeClass = new ReflectionClass($attributeName);
+            self::$constructorCache[$attributeName] = $attributeClass->getConstructor();
         }
 
-        // Extract namespace
-        preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches);
-        $namespace = $namespaceMatches[1] ?? '';
+        return self::$constructorCache[$attributeName];
+    }
 
-        // Extract class names
-        preg_match_all('/(?:class|interface|trait)\s+(\w+)/', $content, $classMatches);
-        $classNames = $classMatches[1];
+    /**
+     * Get classes defined in a file.
+     *
+     * Uses class diffing when file is not yet loaded, falls back to
+     * iterating declared classes when file was already included.
+     *
+     * @param string $filePath File path to get classes from
+     * @return array<string> Class names from the file
+     */
+    private function getClassesFromFile(string $filePath): array
+    {
+        $includedFiles = get_included_files();
+        $alreadyLoaded = in_array($filePath, $includedFiles, true);
 
+        if (!$alreadyLoaded) {
+            // Fast path: diff classes before/after require
+            $classesBefore = get_declared_classes();
+            require_once $filePath;
+
+            return array_values(array_diff(get_declared_classes(), $classesBefore));
+        }
+
+        // Fallback: file already loaded, find classes by checking their file
         $fileClasses = [];
-        foreach ($classNames as $className) {
-            $fullClassName = $namespace !== '' && $namespace !== '0' ? $namespace . '\\' . $className : $className;
-            if (in_array($fullClassName, $allClasses)) {
-                $fileClasses[] = $fullClassName;
+        foreach (get_declared_classes() as $className) {
+            try {
+                $reflection = new ReflectionClass($className);
+                if ($reflection->getFileName() === $filePath) {
+                    $fileClasses[] = $className;
+                }
+            } catch (Throwable) {
+                continue;
             }
         }
 
