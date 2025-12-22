@@ -40,6 +40,34 @@ class AttributeCacheTest extends TestCase
         $this->assertInstanceOf(AttributeCache::class, $cacheWithConfig);
     }
 
+    public function testCacheCanBeDisabled(): void
+    {
+        $cache = new AttributeCache('attribute_test', false);
+        $this->assertFalse($cache->isEnabled());
+    }
+
+    public function testCacheIsEnabledByDefault(): void
+    {
+        $cache = new AttributeCache('attribute_test');
+        $this->assertTrue($cache->isEnabled());
+    }
+
+    public function testDisabledCacheReturnsNullOnGet(): void
+    {
+        $cache = new AttributeCache('attribute_test', false);
+        $cache->set('test_key', ['data' => 'value']);
+
+        $this->assertNull($cache->get('test_key'));
+    }
+
+    public function testDisabledCacheSetReturnsFalse(): void
+    {
+        $cache = new AttributeCache('attribute_test', false);
+        $result = $cache->set('test_key', ['data' => 'value']);
+
+        $this->assertFalse($result);
+    }
+
     public function testCacheCanSetAndGetData(): void
     {
         $testData = ['key1' => 'value1', 'key2' => 'value2'];

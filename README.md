@@ -53,12 +53,8 @@ composer require josbeir/cakephp-attribute-registry
 
 Load the plugin in your `src/Application.php`:
 
-```php
-public function bootstrap(): void
-{
-    parent::bootstrap();
-    $this->addPlugin('AttributeRegistry');
-}
+```bash
+bin/cake plugin load AttributeRegistry
 ```
 
 ## Configuration
@@ -72,6 +68,9 @@ The plugin works out of the box with sensible defaults.
 return [
     'AttributeRegistry' => [
         'cache' => [
+            // Enable/disable caching (default: true)
+            // When disabled, attributes are re-discovered on every request
+            'enabled' => true,
             // Cache configuration name (plugin auto-registers 'attribute_registry')
             // Override with CACHE_ATTRIBUTE_REGISTRY_URL env var for custom backends
             'config' => 'attribute_registry',
@@ -96,12 +95,36 @@ return [
 ];
 ```
 
+### Disabling Cache
+
+You can disable caching for development purposes by setting `cache.enabled` to `false`:
+
+```php
+'AttributeRegistry' => [
+    'cache' => [
+        'enabled' => false,
+    ],
+],
+```
+
+> [!WARNING]
+> Disabling cache will cause attributes to be re-discovered on every request, which may impact performance. Only use this for development.
+
 ### Cache Configuration
 
 The plugin automatically registers a file-based cache configuration named `attribute_registry`. You can override this by:
 
-1. Setting the `CACHE_ATTRIBUTE_REGISTRY_URL` environment variable
-2. Defining your own `attribute_registry` cache config in `config/app.php` before the plugin loads
+1. **Environment Variable**: Set the `CACHE_ATTRIBUTE_REGISTRY_URL` environment variable to use a custom cache backend:
+
+   ```bash
+   # Redis example
+   export CACHE_ATTRIBUTE_REGISTRY_URL="redis://localhost:6379?prefix=my_app_attr_&duration=2592000"
+
+   # Memcached example
+   export CACHE_ATTRIBUTE_REGISTRY_URL="memcached://localhost:11211?prefix=my_app_attr_&duration=2592000"
+   ```
+
+2. **Manual Configuration**: Define your own `attribute_registry` cache config in `config/app.php` before the plugin loads
 
 ## Usage
 

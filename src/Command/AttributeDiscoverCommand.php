@@ -47,6 +47,10 @@ class AttributeDiscoverCommand extends Command
      */
     public function execute(Arguments $args, ConsoleIo $io): int
     {
+        if (!$this->registry->isCacheEnabled()) {
+            $io->warning('Cache is disabled. Attributes will be re-discovered on every request.');
+        }
+
         $io->out('<info>Clearing attribute cache...</info>');
         $this->registry->clearCache();
 

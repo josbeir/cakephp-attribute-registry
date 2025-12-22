@@ -152,4 +152,41 @@ class AttributeDiscoverCommandTest extends TestCase
 
         $this->assertStringContainsString('Discover', $parser->getDescription());
     }
+
+    public function testDiscoverCommandShowsWarningWhenCacheIsDisabled(): void
+    {
+        // Create a new registry with disabled cache
+        $testDataPath = dirname(__DIR__, 2) . '/data';
+        $pathResolver = new PathResolver($testDataPath);
+        $cache = new AttributeCache('attribute_test', false);
+        $parser = new AttributeParser();
+
+        $scanner = new AttributeScanner(
+            $parser,
+            $pathResolver,
+            [
+                'paths' => ['*.php'],
+                'exclude_paths' => [],
+                'max_file_size' => 1024 * 1024,
+            ],
+        );
+
+        $registry = new AttributeRegistry($scanner, $cache);
+        $command = new AttributeDiscoverCommand($registry);
+
+        $args = $this->createArgs();
+        $command->execute($args, $this->io);
+
+        $output = $this->err->output();
+        $this->assertStringContainsString('Cache is disabled', $output);
+    }
+
+    public function testDiscoverCommandNoWarningWhenCacheIsEnabled(): void
+    {
+        $args = $this->createArgs();
+        $this->command->execute($args, $this->io);
+
+        $output = $this->err->output();
+        $this->assertStringNotContainsString('Cache is disabled', $output);
+    }
 }

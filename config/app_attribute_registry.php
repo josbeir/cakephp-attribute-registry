@@ -12,6 +12,14 @@ return [
          */
         'cache' => [
             /*
+             * Whether caching is enabled.
+             * When disabled, attributes will be re-discovered on every request.
+             * This is useful for development but should be enabled in production.
+             * Default: true
+             */
+            'enabled' => true,
+
+            /*
              * The cache configuration name to use.
              * The plugin automatically registers an 'attribute_registry' cache config
              * with file-based storage and 1-month duration.

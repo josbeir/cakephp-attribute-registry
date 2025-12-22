@@ -75,7 +75,10 @@ class ServiceProvider extends CakeServiceProvider
         $cacheConfig = (array)$config['cache'];
 
         $pathResolver = new PathResolver(implode(PATH_SEPARATOR, $this->resolveAllPaths()));
-        $cache = new AttributeCache((string)$cacheConfig['config']);
+        $cache = new AttributeCache(
+            (string)$cacheConfig['config'],
+            (bool)($cacheConfig['enabled'] ?? true),
+        );
         $parser = new AttributeParser();
 
         $scanner = new AttributeScanner(

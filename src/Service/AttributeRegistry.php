@@ -124,6 +124,16 @@ class AttributeRegistry
     }
 
     /**
+     * Check if caching is enabled.
+     *
+     * @return bool Whether caching is enabled
+     */
+    public function isCacheEnabled(): bool
+    {
+        return $this->cache->isEnabled();
+    }
+
+    /**
      * Warm the cache by discovering all attributes.
      *
      * @return bool True on success
