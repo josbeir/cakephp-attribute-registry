@@ -73,13 +73,6 @@ return [
                 // 'Deprecated',
                 // 'App\Internal\*',
             ],
-
-            /*
-             * Maximum file size in bytes to scan.
-             * Files larger than this will be skipped.
-             * Default: 1048576 (1 MB)
-             */
-            'max_file_size' => 1024 * 1024,
         ],
     ],
 ];

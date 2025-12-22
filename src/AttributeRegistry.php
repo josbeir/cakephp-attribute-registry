@@ -99,7 +99,6 @@ class AttributeRegistry
             [
                 'paths' => (array)($scannerConfig['paths'] ?? ['src/**/*.php']),
                 'exclude_paths' => (array)($scannerConfig['exclude_paths'] ?? ['vendor/**', 'tmp/**']),
-                'max_file_size' => (int)($scannerConfig['max_file_size'] ?? 1024 * 1024),
             ],
         );
 

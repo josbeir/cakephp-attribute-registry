@@ -85,7 +85,6 @@ class AttributeScannerTest extends TestCase
             config: [
                 'paths' => ['*.php'],
                 'exclude_paths' => ['TestController.php'],
-                'max_file_size' => 1024 * 1024,
             ],
         );
 
@@ -99,22 +98,6 @@ class AttributeScannerTest extends TestCase
         $this->assertEmpty($testControllerAttrs);
     }
 
-    public function testScanAllRespectsMaxFileSize(): void
-    {
-        // Set very small max file size
-        $scannerWithLimit = $this->createScanner(
-            config: [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 10, // 10 bytes - should exclude all files
-            ],
-        );
-
-        $attributes = iterator_to_array($scannerWithLimit->scanAll());
-
-        $this->assertEmpty($attributes);
-    }
-
     public function testScanAllSkipsNonPhpFiles(): void
     {
         // Create a temporary non-PHP file
@@ -126,7 +109,6 @@ class AttributeScannerTest extends TestCase
                 config: [
                     'paths' => ['*.*'],
                     'exclude_paths' => [],
-                    'max_file_size' => 1024 * 1024,
                 ],
             );
 
@@ -152,7 +134,6 @@ class AttributeScannerTest extends TestCase
                 config: [
                     'paths' => ['invalid_syntax.php'],
                     'exclude_paths' => [],
-                    'max_file_size' => 1024 * 1024,
                 ],
             );
 

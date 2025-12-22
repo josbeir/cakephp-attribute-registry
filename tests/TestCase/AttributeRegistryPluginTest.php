@@ -30,7 +30,6 @@ class AttributeRegistryPluginTest extends TestCase
             'scanner' => [
                 'paths' => ['src/**/*.php'],
                 'exclude_paths' => ['vendor/**'],
-                'max_file_size' => 1024 * 1024,
             ],
         ]);
     }

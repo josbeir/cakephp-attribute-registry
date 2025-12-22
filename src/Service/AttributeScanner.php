@@ -34,7 +34,6 @@ class AttributeScanner
         $this->config = array_merge([
             'paths' => ['src/**/*.php'],
             'exclude_paths' => ['vendor/**', 'tmp/**'],
-            'max_file_size' => 1024 * 1024,
         ], $config);
     }
 
@@ -64,12 +63,6 @@ class AttributeScanner
     {
         // Check file extension
         if (pathinfo($filePath, PATHINFO_EXTENSION) !== 'php') {
-            return false;
-        }
-
-        // Check file size
-        $fileSize = filesize($filePath);
-        if ($fileSize === false || $fileSize > $this->config['max_file_size']) {
             return false;
         }
 

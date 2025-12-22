@@ -101,7 +101,6 @@ trait AttributeRegistryTestTrait
         return [
             'paths' => ['*.php'],
             'exclude_paths' => [],
-            'max_file_size' => 1024 * 1024,
         ];
     }
 
