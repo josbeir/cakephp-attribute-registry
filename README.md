@@ -412,6 +412,11 @@ The panel provides:
 - Search functionality to filter attributes
 - Re-discover button to refresh the attribute cache
 
+> [!NOTE]
+> **Context-dependent plugin loading**: If you notice fewer attributes in the DebugKit panel compared to CLI commands, this is likely because some plugins are configured with `'onlyCli' => true` in your `config/plugins.php`. These plugins aren't loaded in web context, so their paths aren't scanned.
+>
+> **Recommended workflow**: Run `bin/cake attribute discover` from CLI to populate the cache. Both web and CLI contexts will then read from the same cached results, ensuring consistency.
+
 ## Testing
 
 Run the test suite:
