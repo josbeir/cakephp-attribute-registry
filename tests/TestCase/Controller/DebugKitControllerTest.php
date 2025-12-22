@@ -1,0 +1,121 @@
+<?php
+declare(strict_types=1);
+
+namespace AttributeRegistry\Test\TestCase\Controller;
+
+use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
+use Cake\Cache\Cache;
+use Cake\Core\Configure;
+use Cake\TestSuite\IntegrationTestTrait;
+use Cake\TestSuite\TestCase;
+
+/**
+ * DebugKitController Test
+ */
+class DebugKitControllerTest extends TestCase
+{
+    use AttributeRegistryTestTrait;
+    use IntegrationTestTrait;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Set up test cache
+        if (Cache::getConfig('controller_test') === null) {
+            Cache::setConfig('controller_test', [
+                'engine' => 'Array',
+                'duration' => '+1 hour',
+            ]);
+        }
+
+        $this->loadTestAttributes();
+
+        // Create and inject a test registry
+        $registry = $this->createRegistry('controller_test');
+        AttributeRegistry::setInstance($registry);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        AttributeRegistry::setInstance(null);
+        Configure::delete('AttributeRegistry');
+        Cache::clear('controller_test');
+    }
+
+    public function testDiscoverReturnsJson(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        $this->post('/attribute-registry/debug-kit/discover.json');
+
+        $this->assertResponseOk();
+        $this->assertContentType('application/json');
+
+        // Rewind stream before reading
+        $response = $this->_response;
+        $this->assertNotNull($response);
+        $response->getBody()->rewind();
+        $body = $response->getBody()->getContents();
+        $this->assertNotEmpty($body, 'Response body should not be empty');
+        $data = json_decode($body, true);
+
+        $this->assertNotNull($data, 'Failed to decode JSON: ' . $body);
+        $this->assertTrue($data['success']);
+        $this->assertArrayHasKey('count', $data);
+        $this->assertArrayHasKey('attributes', $data);
+        $this->assertGreaterThan(0, $data['count']);
+    }
+
+    public function testDiscoverClearsCache(): void
+    {
+        // First, populate the registry
+        $registry = AttributeRegistry::getInstance();
+        $initialAttributes = $registry->discover();
+        $initialCount = count($initialAttributes);
+
+        $this->post('/attribute-registry/debug-kit/discover.json');
+        $this->assertResponseOk();
+
+        $response = $this->_response;
+        $this->assertNotNull($response);
+        $response->getBody()->rewind();
+        $body = $response->getBody()->getContents();
+        $data = json_decode($body, true);
+
+        // Should have re-discovered attributes
+        $this->assertSame($initialCount, $data['count']);
+    }
+
+    public function testDiscoverRequiresPostMethod(): void
+    {
+        $this->get('/attribute-registry/debug-kit/discover.json');
+        $this->assertResponseCode(405);
+    }
+
+    public function testDiscoverWithEmptyPaths(): void
+    {
+        // Create a registry with non-existent paths
+        $scanner = $this->createScanner(
+            pathResolver: $this->createPathResolver('/non/existent/path'),
+        );
+        $cache = $this->createCache('controller_test');
+
+        $emptyRegistry = new AttributeRegistry($scanner, $cache);
+        AttributeRegistry::setInstance($emptyRegistry);
+
+        $this->post('/attribute-registry/debug-kit/discover.json');
+        $this->assertResponseOk();
+
+        $response = $this->_response;
+        $this->assertNotNull($response);
+        $response->getBody()->rewind();
+        $body = $response->getBody()->getContents();
+        $data = json_decode($body, true);
+
+        $this->assertTrue($data['success']);
+        $this->assertSame(0, $data['count']);
+        $this->assertEmpty($data['attributes']);
+    }
+}

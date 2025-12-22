@@ -32,6 +32,7 @@ A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attribute
     - [Discover Attributes](#discover-attributes)
     - [List Attributes](#list-attributes)
     - [Inspect Attributes](#inspect-attributes)
+- [DebugKit Panel](#debugkit-panel)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
@@ -49,6 +50,7 @@ The CakePHP Attribute Registry Plugin provides a centralized system for discover
 - 🔌 **Plugin Support** - Automatically scans all loaded CakePHP plugins
 - 🖥️ **CLI Tools** - Console commands for discovery, listing, and inspection
 - 🏗️ **Service-Oriented** - Clean architecture with dependency injection via CakePHP's container
+- 🐛 **DebugKit Panel** - Visual panel for browsing discovered attributes during development
 
 ## Requirements
 
@@ -393,6 +395,17 @@ Found 2 attributes for attribute "Route":
      - path: /users
      - method: GET
 ```
+
+## DebugKit Panel
+
+When [DebugKit](https://github.com/cakephp/debug_kit) is installed, the plugin automatically registers a panel for browsing discovered attributes.
+
+![DebugKit Panel](docs/debug_kit_screenshot.png)
+
+The panel provides:
+- Overview of all discovered attributes grouped by type or file
+- Search functionality to filter attributes
+- Re-discover button to refresh the attribute cache
 
 ## Testing
 

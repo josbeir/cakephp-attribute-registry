@@ -5,15 +5,13 @@ namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Service\AttributeCache;
-use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\AttributeScanner;
-use AttributeRegistry\Service\PathResolver;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 
 class AttributeRegistryTest extends TestCase
 {
+    use AttributeRegistryTestTrait;
+
     private AttributeRegistry $registry;
 
     protected function setUp(): void
@@ -25,26 +23,9 @@ class AttributeRegistryTest extends TestCase
             'duration' => '+1 hour',
         ]);
 
-        $testDataPath = dirname(__DIR__) . '/data';
+        $this->loadTestAttributes();
 
-        // Load test attributes
-        require_once $testDataPath . '/TestAttributes.php';
-
-        $pathResolver = new PathResolver($testDataPath);
-        $cache = new AttributeCache('attribute_test');
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
-
-        $this->registry = new AttributeRegistry($scanner, $cache);
+        $this->registry = $this->createRegistry('attribute_test', true);
     }
 
     protected function tearDown(): void
@@ -163,22 +144,7 @@ class AttributeRegistryTest extends TestCase
             'duration' => '+1 hour',
         ]);
 
-        $testDataPath = dirname(__DIR__, 2) . '/data';
-        $pathResolver = new PathResolver($testDataPath);
-        $cache = new AttributeCache('attribute_test');
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
-
-        $registry2 = new AttributeRegistry($scanner, $cache);
+        $registry2 = $this->createRegistry('attribute_test', true);
 
         // Second registry should get data from file cache
         $result2 = $registry2->discover();
@@ -195,22 +161,7 @@ class AttributeRegistryTest extends TestCase
 
     public function testIsCacheDisabled(): void
     {
-        $testDataPath = dirname(__DIR__, 2) . '/data';
-        $pathResolver = new PathResolver($testDataPath);
-        $cache = new AttributeCache('attribute_test', false);
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
-
-        $registry = new AttributeRegistry($scanner, $cache);
+        $registry = $this->createRegistry('attribute_test', false);
 
         $this->assertFalse($registry->isCacheEnabled());
     }

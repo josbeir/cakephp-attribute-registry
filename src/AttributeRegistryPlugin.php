@@ -12,7 +12,9 @@ use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
+use Cake\Core\Plugin;
 use Cake\Core\PluginApplicationInterface;
+use Cake\Routing\RouteBuilder;
 
 /**
  * Plugin class for AttributeRegistry.
@@ -34,6 +36,7 @@ class AttributeRegistryPlugin extends BasePlugin
         }
 
         $this->registerCacheConfig();
+        $this->registerDebugKitPanel();
     }
 
     /**
@@ -55,6 +58,42 @@ class AttributeRegistryPlugin extends BasePlugin
             'prefix' => 'attr_',
             'url' => env('CACHE_ATTRIBUTE_REGISTRY_URL'),
         ]);
+    }
+
+    /**
+     * Register the DebugKit panel if DebugKit is loaded.
+     */
+    private function registerDebugKitPanel(): void
+    {
+        if (!Plugin::isLoaded('DebugKit')) {
+            return;
+        }
+
+        $panels = Configure::read('DebugKit.panels', []);
+        $panels['AttributeRegistry.AttributeRegistry'] = true;
+        Configure::write('DebugKit.panels', $panels);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function routes(RouteBuilder $routes): void
+    {
+        if (Plugin::isLoaded('DebugKit')) {
+            $routes->plugin(
+                'AttributeRegistry',
+                ['path' => '/attribute-registry'],
+                function (RouteBuilder $builder): void {
+                    $builder->setExtensions(['json']);
+                    $builder->connect(
+                        '/debug-kit/discover',
+                        ['controller' => 'DebugKit', 'action' => 'discover'],
+                    );
+                },
+            );
+        }
+
+        parent::routes($routes);
     }
 
     /**
