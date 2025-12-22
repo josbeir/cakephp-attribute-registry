@@ -22,20 +22,13 @@ class AttributeParser
     private static array $constructorCache = [];
 
     /**
-     * List of attribute FQCNs to exclude from parsing.
-     *
-     * @var array<string>
-     */
-    private array $excludeAttributes;
-
-    /**
      * Constructor for AttributeParser.
      *
      * @param array<string> $excludeAttributes List of attribute FQCNs to exclude (supports wildcards)
      */
-    public function __construct(array $excludeAttributes = [])
-    {
-        $this->excludeAttributes = $excludeAttributes;
+    public function __construct(
+        private array $excludeAttributes = [],
+    ) {
     }
 
     /**
