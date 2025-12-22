@@ -98,46 +98,6 @@ class AttributeCacheTest extends TestCase
         $this->assertNull($this->cache->get('test_key'));
     }
 
-    public function testGenerateFileKey(): void
-    {
-        $filePath = '/app/src/Controller/TestController.php';
-        $modTime = 1640995200;
-
-        $key = $this->cache->generateFileKey($filePath, $modTime);
-
-        $this->assertStringStartsWith('attr_', $key);
-        $this->assertStringContainsString((string)$modTime, $key);
-
-        // Same file and mod time should produce same key
-        $key2 = $this->cache->generateFileKey($filePath, $modTime);
-        $this->assertEquals($key, $key2);
-
-        // Different mod time should produce different key
-        $key3 = $this->cache->generateFileKey($filePath, $modTime + 1);
-        $this->assertNotEquals($key, $key3);
-    }
-
-    public function testIsFileCached(): void
-    {
-        $filePath = '/app/src/Controller/TestController.php';
-        $modTime = 1640995200;
-        $testData = ['attributes' => []];
-
-        $key = $this->cache->generateFileKey($filePath, $modTime);
-
-        // File should not be cached initially
-        $this->assertFalse($this->cache->isFileCached($filePath, $modTime));
-
-        // Cache the file
-        $this->cache->set($key, $testData);
-
-        // File should now be cached
-        $this->assertTrue($this->cache->isFileCached($filePath, $modTime));
-
-        // Different mod time should not be cached
-        $this->assertFalse($this->cache->isFileCached($filePath, $modTime + 1));
-    }
-
     public function testCacheWithCustomDuration(): void
     {
         $testData = ['key' => 'value'];

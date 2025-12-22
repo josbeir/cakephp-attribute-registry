@@ -93,30 +93,4 @@ class AttributeCache
 
         return Cache::clear($this->cacheConfig);
     }
-
-    /**
-     * Generate a cache key for a file based on its path and modification time.
-     *
-     * @param string $filePath File path
-     * @param int $modTime File modification time
-     * @return string Generated cache key
-     */
-    public function generateFileKey(string $filePath, int $modTime): string
-    {
-        return sprintf('attr_%s_%d', md5($filePath), $modTime);
-    }
-
-    /**
-     * Check if a file is cached with the given modification time.
-     *
-     * @param string $filePath File path
-     * @param int $modTime File modification time
-     * @return bool True if file is cached
-     */
-    public function isFileCached(string $filePath, int $modTime): bool
-    {
-        $key = $this->generateFileKey($filePath, $modTime);
-
-        return $this->get($key) !== null;
-    }
 }
