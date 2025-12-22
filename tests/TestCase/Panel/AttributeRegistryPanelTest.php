@@ -5,10 +5,7 @@ namespace AttributeRegistry\Test\TestCase\Panel;
 
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Panel\AttributeRegistryPanel;
-use AttributeRegistry\Service\AttributeCache;
-use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\AttributeScanner;
-use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
@@ -18,6 +15,8 @@ use Cake\TestSuite\TestCase;
  */
 class AttributeRegistryPanelTest extends TestCase
 {
+    use AttributeRegistryTestTrait;
+
     private AttributeRegistryPanel $panel;
 
     protected function setUp(): void
@@ -32,26 +31,10 @@ class AttributeRegistryPanelTest extends TestCase
             ]);
         }
 
-        // Load test attributes
-        $testDataPath = dirname(__DIR__, 2) . '/data';
-        require_once $testDataPath . '/TestAttributes.php';
+        $this->loadTestAttributes();
 
         // Create and inject a test registry
-        $pathResolver = new PathResolver($testDataPath);
-        $cache = new AttributeCache('panel_test', false);
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
-
-        $registry = new AttributeRegistry($scanner, $cache);
+        $registry = $this->createRegistry('panel_test');
         AttributeRegistry::setInstance($registry);
 
         // Configure for config assertions
@@ -137,19 +120,10 @@ class AttributeRegistryPanelTest extends TestCase
     public function testSummaryWithNoAttributes(): void
     {
         // Create a registry with non-existent paths
-        $pathResolver = new PathResolver('/non/existent/path');
-        $cache = new AttributeCache('panel_test', false);
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
+        $scanner = $this->createScanner(
+            pathResolver: $this->createPathResolver('/non/existent/path'),
         );
+        $cache = $this->createCache('panel_test');
 
         $emptyRegistry = new AttributeRegistry($scanner, $cache);
         AttributeRegistry::setInstance($emptyRegistry);

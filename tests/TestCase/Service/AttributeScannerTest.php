@@ -4,15 +4,16 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
-use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use Cake\TestSuite\TestCase;
 use Generator;
 
 class AttributeScannerTest extends TestCase
 {
+    use AttributeRegistryTestTrait;
+
     private AttributeScanner $scanner;
 
     private string $testDataPath;
@@ -21,23 +22,10 @@ class AttributeScannerTest extends TestCase
     {
         parent::setUp();
 
-        $this->testDataPath = dirname(__DIR__, 2) . '/data';
+        $this->testDataPath = $this->getTestDataPath();
+        $this->loadTestAttributes();
 
-        // Load test attributes
-        require_once $this->testDataPath . '/TestAttributes.php';
-
-        $pathResolver = new PathResolver($this->testDataPath);
-        $parser = new AttributeParser();
-
-        $this->scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
+        $this->scanner = $this->createScanner();
     }
 
     public function testAttributeScannerCanBeCreated(): void
@@ -93,13 +81,8 @@ class AttributeScannerTest extends TestCase
 
     public function testScanAllRespectsExcludePaths(): void
     {
-        $pathResolver = new PathResolver($this->testDataPath);
-        $parser = new AttributeParser();
-
-        $scannerWithExclude = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
+        $scannerWithExclude = $this->createScanner(
+            config: [
                 'paths' => ['*.php'],
                 'exclude_paths' => ['TestController.php'],
                 'max_file_size' => 1024 * 1024,
@@ -118,14 +101,9 @@ class AttributeScannerTest extends TestCase
 
     public function testScanAllRespectsMaxFileSize(): void
     {
-        $pathResolver = new PathResolver($this->testDataPath);
-        $parser = new AttributeParser();
-
         // Set very small max file size
-        $scannerWithLimit = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
+        $scannerWithLimit = $this->createScanner(
+            config: [
                 'paths' => ['*.php'],
                 'exclude_paths' => [],
                 'max_file_size' => 10, // 10 bytes - should exclude all files
@@ -144,13 +122,8 @@ class AttributeScannerTest extends TestCase
         file_put_contents($tempFile, '<?php class Test {}');
 
         try {
-            $pathResolver = new PathResolver($this->testDataPath);
-            $parser = new AttributeParser();
-
-            $scanner = new AttributeScanner(
-                $parser,
-                $pathResolver,
-                [
+            $scanner = $this->createScanner(
+                config: [
                     'paths' => ['*.*'],
                     'exclude_paths' => [],
                     'max_file_size' => 1024 * 1024,
@@ -175,13 +148,8 @@ class AttributeScannerTest extends TestCase
         file_put_contents($tempFile, '<?php class { invalid }');
 
         try {
-            $pathResolver = new PathResolver($this->testDataPath);
-            $parser = new AttributeParser();
-
-            $scanner = new AttributeScanner(
-                $parser,
-                $pathResolver,
-                [
+            $scanner = $this->createScanner(
+                config: [
                     'paths' => ['invalid_syntax.php'],
                     'exclude_paths' => [],
                     'max_file_size' => 1024 * 1024,

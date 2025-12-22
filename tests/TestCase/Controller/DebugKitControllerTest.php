@@ -4,10 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Controller;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Service\AttributeCache;
-use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\AttributeScanner;
-use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
@@ -18,6 +15,7 @@ use Cake\TestSuite\TestCase;
  */
 class DebugKitControllerTest extends TestCase
 {
+    use AttributeRegistryTestTrait;
     use IntegrationTestTrait;
 
     protected function setUp(): void
@@ -32,26 +30,10 @@ class DebugKitControllerTest extends TestCase
             ]);
         }
 
-        // Load test attributes
-        $testDataPath = dirname(__DIR__, 2) . '/data';
-        require_once $testDataPath . '/TestAttributes.php';
+        $this->loadTestAttributes();
 
         // Create and inject a test registry
-        $pathResolver = new PathResolver($testDataPath);
-        $cache = new AttributeCache('controller_test', false);
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
-        );
-
-        $registry = new AttributeRegistry($scanner, $cache);
+        $registry = $this->createRegistry('controller_test');
         AttributeRegistry::setInstance($registry);
     }
 
@@ -126,19 +108,10 @@ class DebugKitControllerTest extends TestCase
     public function testDiscoverWithEmptyPaths(): void
     {
         // Create a registry with non-existent paths
-        $pathResolver = new PathResolver('/non/existent/path');
-        $cache = new AttributeCache('controller_test', false);
-        $parser = new AttributeParser();
-
-        $scanner = new AttributeScanner(
-            $parser,
-            $pathResolver,
-            [
-                'paths' => ['*.php'],
-                'exclude_paths' => [],
-                'max_file_size' => 1024 * 1024,
-            ],
+        $scanner = $this->createScanner(
+            pathResolver: $this->createPathResolver('/non/existent/path'),
         );
+        $cache = $this->createCache('controller_test');
 
         $emptyRegistry = new AttributeRegistry($scanner, $cache);
         AttributeRegistry::setInstance($emptyRegistry);

@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Controller;
 
-use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\ValueObject\AttributeInfo;
 use Cake\Controller\Controller;
 use Cake\Http\Response;
 use Cake\View\JsonView;
