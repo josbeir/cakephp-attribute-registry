@@ -70,7 +70,7 @@ class AttributeRegistryPlugin extends BasePlugin
         }
 
         $panels = Configure::read('DebugKit.panels', []);
-        $panels['AttributeRegistry'] = 'AttributeRegistry.AttributeRegistry';
+        $panels['AttributeRegistry.AttributeRegistry'] = true;
         Configure::write('DebugKit.panels', $panels);
     }
 

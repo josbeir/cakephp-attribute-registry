@@ -52,7 +52,7 @@ class AttributeRegistryPanel extends DebugPanel
      */
     public function title(): string
     {
-        return 'Attribute Registry';
+        return 'Attributes';
     }
 
     /**
