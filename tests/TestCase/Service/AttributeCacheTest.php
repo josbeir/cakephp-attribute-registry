@@ -148,4 +148,20 @@ class AttributeCacheTest extends TestCase
         $retrievedData = $this->cache->get('test_key');
         $this->assertEquals($testData, $retrievedData);
     }
+
+    public function testDisabledCacheDeleteReturnsFalse(): void
+    {
+        $cache = new AttributeCache('attribute_test', false);
+        $result = $cache->delete('test_key');
+
+        $this->assertFalse($result);
+    }
+
+    public function testDisabledCacheClearReturnsFalse(): void
+    {
+        $cache = new AttributeCache('attribute_test', false);
+        $result = $cache->clear();
+
+        $this->assertFalse($result);
+    }
 }

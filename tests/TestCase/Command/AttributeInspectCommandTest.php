@@ -166,4 +166,40 @@ class AttributeInspectCommandTest extends TestCase
         $this->assertArrayHasKey('class', $options);
         $this->assertSame('c', $options['class']->short());
     }
+
+    public function testInspectDisplaysArrayArguments(): void
+    {
+        $args = $this->createArgs(['TestConfig'], []);
+        $result = $this->command->execute($args, $this->io);
+
+        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $output = $this->out->output();
+        // Should display array as JSON
+        $this->assertStringContainsString('Arguments:', $output);
+        $this->assertStringContainsString('options:', $output);
+    }
+
+    public function testInspectDisplaysBoolArguments(): void
+    {
+        $args = $this->createArgs(['TestConfig'], []);
+        $result = $this->command->execute($args, $this->io);
+
+        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $output = $this->out->output();
+        // Should display bool values as 'true' or 'false'
+        $this->assertStringContainsString('enabled:', $output);
+        $this->assertMatchesRegularExpression('/enabled:\s*(true|false)/', $output);
+    }
+
+    public function testInspectDisplaysNullArguments(): void
+    {
+        $args = $this->createArgs(['TestConfig'], []);
+        $result = $this->command->execute($args, $this->io);
+
+        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $output = $this->out->output();
+        // Should display null values as 'null'
+        $this->assertStringContainsString('name:', $output);
+        $this->assertStringContainsString('null', $output);
+    }
 }

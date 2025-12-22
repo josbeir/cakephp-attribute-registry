@@ -47,4 +47,113 @@ class AttributeTargetTest extends TestCase
         /** @phpstan-ignore property.readOnlyAssignOutOfClass */
         $target->type = AttributeTargetType::METHOD;
     }
+
+    public function testToArray(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::METHOD,
+            'index',
+            'UserController',
+        );
+
+        $array = $target->toArray();
+
+        $this->assertEquals('method', $array['type']);
+        $this->assertEquals('index', $array['targetName']);
+        $this->assertEquals('UserController', $array['parentClass']);
+    }
+
+    public function testToArrayWithNullParentClass(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::CLASS_TYPE,
+            'MyClass',
+        );
+
+        $array = $target->toArray();
+
+        $this->assertEquals('class', $array['type']);
+        $this->assertEquals('MyClass', $array['targetName']);
+        $this->assertNull($array['parentClass']);
+    }
+
+    public function testFromArray(): void
+    {
+        $data = [
+            'type' => 'property',
+            'targetName' => 'email',
+            'parentClass' => 'User',
+        ];
+
+        $target = AttributeTarget::fromArray($data);
+
+        $this->assertEquals(AttributeTargetType::PROPERTY, $target->type);
+        $this->assertEquals('email', $target->targetName);
+        $this->assertEquals('User', $target->parentClass);
+    }
+
+    public function testFromArrayWithNullParentClass(): void
+    {
+        $data = [
+            'type' => 'class',
+            'targetName' => 'MyController',
+            'parentClass' => null,
+        ];
+
+        $target = AttributeTarget::fromArray($data);
+
+        $this->assertEquals(AttributeTargetType::CLASS_TYPE, $target->type);
+        $this->assertEquals('MyController', $target->targetName);
+        $this->assertNull($target->parentClass);
+    }
+
+    public function testFromArrayWithMissingParentClass(): void
+    {
+        $data = [
+            'type' => 'constant',
+            'targetName' => 'STATUS_ACTIVE',
+        ];
+
+        $target = AttributeTarget::fromArray($data);
+
+        $this->assertEquals(AttributeTargetType::CONSTANT, $target->type);
+        $this->assertEquals('STATUS_ACTIVE', $target->targetName);
+        $this->assertNull($target->parentClass);
+    }
+
+    public function testToArrayAndFromArrayRoundTrip(): void
+    {
+        $original = new AttributeTarget(
+            AttributeTargetType::PARAMETER,
+            'userId',
+            'findUser',
+        );
+
+        $array = $original->toArray();
+        $restored = AttributeTarget::fromArray($array);
+
+        $this->assertEquals($original->type, $restored->type);
+        $this->assertEquals($original->targetName, $restored->targetName);
+        $this->assertEquals($original->parentClass, $restored->parentClass);
+    }
+
+    public function testAllTargetTypes(): void
+    {
+        $types = [
+            AttributeTargetType::CLASS_TYPE,
+            AttributeTargetType::METHOD,
+            AttributeTargetType::PROPERTY,
+            AttributeTargetType::PARAMETER,
+            AttributeTargetType::CONSTANT,
+        ];
+
+        foreach ($types as $type) {
+            $target = new AttributeTarget($type, 'test');
+            $this->assertEquals($type, $target->type);
+
+            $array = $target->toArray();
+            $restored = AttributeTarget::fromArray($array);
+            $this->assertEquals($type, $restored->type);
+        }
+    }
 }

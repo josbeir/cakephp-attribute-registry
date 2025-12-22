@@ -5,7 +5,9 @@ namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistryPlugin;
 use AttributeRegistry\Service\AttributeRegistry;
+use Cake\Cache\Cache;
 use Cake\Console\CommandCollection;
+use Cake\Core\Configure;
 use Cake\Core\Container;
 use Cake\TestSuite\TestCase;
 
@@ -17,6 +19,31 @@ class AttributeRegistryPluginTest extends TestCase
     {
         parent::setUp();
         $this->plugin = new AttributeRegistryPlugin();
+
+        // Set up required configuration for tests
+        Configure::write('AttributeRegistry', [
+            'cache' => [
+                'enabled' => true,
+                'config' => 'attribute_registry',
+            ],
+            'scanner' => [
+                'paths' => ['src/**/*.php'],
+                'exclude_paths' => ['vendor/**'],
+                'max_file_size' => 1024 * 1024,
+            ],
+        ]);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // Clean up cache config if it was set
+        if (Cache::getConfig('attribute_registry') !== null) {
+            Cache::drop('attribute_registry');
+        }
+
+        Configure::delete('AttributeRegistry');
     }
 
     public function testPluginCanBeCreated(): void
@@ -41,5 +68,17 @@ class AttributeRegistryPluginTest extends TestCase
         $this->plugin->services($container);
 
         $this->assertTrue($container->has(AttributeRegistry::class));
+    }
+
+    public function testPluginHasCorrectPath(): void
+    {
+        $path = $this->plugin->getPath();
+        $this->assertStringContainsString('cakephp-attribute-registry', $path);
+    }
+
+    public function testPluginHasCorrectConfigPath(): void
+    {
+        $configPath = $this->plugin->getConfigPath();
+        $this->assertStringContainsString('config', $configPath);
     }
 }

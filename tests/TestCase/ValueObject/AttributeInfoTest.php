@@ -206,4 +206,97 @@ class AttributeInfoTest extends TestCase
         $this->assertTrue($attributeInfo->isInstanceOf(TestRoute::class));
         $this->assertFalse($attributeInfo->isInstanceOf(TestColumn::class));
     }
+
+    public function testToArray(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::METHOD,
+            'index',
+            'MyController',
+        );
+
+        $attributeInfo = new AttributeInfo(
+            className: 'App\Controller\MyController',
+            attributeName: 'App\Attribute\Route',
+            arguments: ['path' => '/users'],
+            filePath: '/app/src/Controller/MyController.php',
+            lineNumber: 20,
+            target: $target,
+            fileModTime: 1640995200,
+        );
+
+        $array = $attributeInfo->toArray();
+
+        $this->assertEquals('App\Controller\MyController', $array['className']);
+        $this->assertEquals('App\Attribute\Route', $array['attributeName']);
+        $this->assertEquals(['path' => '/users'], $array['arguments']);
+        $this->assertEquals('/app/src/Controller/MyController.php', $array['filePath']);
+        $this->assertEquals(20, $array['lineNumber']);
+        $this->assertEquals(1640995200, $array['fileModTime']);
+        $this->assertIsArray($array['target']);
+        $this->assertEquals('method', $array['target']['type']);
+        $this->assertEquals('index', $array['target']['targetName']);
+        $this->assertEquals('MyController', $array['target']['parentClass']);
+    }
+
+    public function testFromArray(): void
+    {
+        $data = [
+            'className' => 'App\Controller\UserController',
+            'attributeName' => 'App\Attribute\Get',
+            'arguments' => ['path' => '/users/{id}'],
+            'filePath' => '/app/src/Controller/UserController.php',
+            'lineNumber' => 30,
+            'target' => [
+                'type' => 'method',
+                'targetName' => 'view',
+                'parentClass' => 'UserController',
+            ],
+            'fileModTime' => 1640995200,
+        ];
+
+        $attributeInfo = AttributeInfo::fromArray($data);
+
+        $this->assertEquals('App\Controller\UserController', $attributeInfo->className);
+        $this->assertEquals('App\Attribute\Get', $attributeInfo->attributeName);
+        $this->assertEquals(['path' => '/users/{id}'], $attributeInfo->arguments);
+        $this->assertEquals('/app/src/Controller/UserController.php', $attributeInfo->filePath);
+        $this->assertEquals(30, $attributeInfo->lineNumber);
+        $this->assertEquals(1640995200, $attributeInfo->fileModTime);
+        $this->assertEquals(AttributeTargetType::METHOD, $attributeInfo->target->type);
+        $this->assertEquals('view', $attributeInfo->target->targetName);
+        $this->assertEquals('UserController', $attributeInfo->target->parentClass);
+    }
+
+    public function testToArrayAndFromArrayRoundTrip(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::PROPERTY,
+            'email',
+            'User',
+        );
+
+        $original = new AttributeInfo(
+            className: 'App\Entity\User',
+            attributeName: TestColumn::class,
+            arguments: ['type' => 'varchar', 'length' => 100],
+            filePath: '/app/src/Entity/User.php',
+            lineNumber: 25,
+            target: $target,
+            fileModTime: 1640995200,
+        );
+
+        $array = $original->toArray();
+        $restored = AttributeInfo::fromArray($array);
+
+        $this->assertEquals($original->className, $restored->className);
+        $this->assertEquals($original->attributeName, $restored->attributeName);
+        $this->assertEquals($original->arguments, $restored->arguments);
+        $this->assertEquals($original->filePath, $restored->filePath);
+        $this->assertEquals($original->lineNumber, $restored->lineNumber);
+        $this->assertEquals($original->fileModTime, $restored->fileModTime);
+        $this->assertEquals($original->target->type, $restored->target->type);
+        $this->assertEquals($original->target->targetName, $restored->target->targetName);
+        $this->assertEquals($original->target->parentClass, $restored->target->parentClass);
+    }
 }

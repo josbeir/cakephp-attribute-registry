@@ -35,3 +35,17 @@ class TestColumn
     ) {
     }
 }
+
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+class TestConfig
+{
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(
+        public bool $enabled = true,
+        public ?string $name = null,
+        public array $options = [],
+    ) {
+    }
+}

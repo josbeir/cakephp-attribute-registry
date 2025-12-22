@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\Data;
 
 #[TestRoute('/users', 'GET')]
+#[TestConfig(enabled: true, name: null, options: ['debug' => true, 'cache' => false])]
 class TestController
 {
     #[TestColumn('int', 11)]
@@ -25,6 +26,11 @@ class TestController
     }
 
     public function withoutAttribute(): void
+    {
+    }
+
+    #[TestConfig(enabled: false)]
+    public function disabled(): void
     {
     }
 }

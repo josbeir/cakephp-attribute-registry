@@ -139,4 +139,79 @@ class AttributeRegistryTest extends TestCase
 
         $this->assertTrue($result);
     }
+
+    public function testDiscoverUsesCacheOnSecondCall(): void
+    {
+        // First call - populates cache
+        $result1 = $this->registry->discover();
+
+        // Second call - should use memory cache (not file cache)
+        $result2 = $this->registry->discover();
+
+        $this->assertEquals($result1, $result2);
+    }
+
+    public function testDiscoverUsesFileCacheAfterClearingMemoryCache(): void
+    {
+        // First call - populates both memory and file cache
+        $result1 = $this->registry->discover();
+
+        // Create a new registry instance (simulating new request)
+        // This tests the file cache path
+        Cache::setConfig('attribute_test_2', [
+            'engine' => 'Array',
+            'duration' => '+1 hour',
+        ]);
+
+        $testDataPath = dirname(__DIR__, 2) . '/data';
+        $pathResolver = new PathResolver($testDataPath);
+        $cache = new AttributeCache('attribute_test');
+        $parser = new AttributeParser();
+
+        $scanner = new AttributeScanner(
+            $parser,
+            $pathResolver,
+            [
+                'paths' => ['*.php'],
+                'exclude_paths' => [],
+                'max_file_size' => 1024 * 1024,
+            ],
+        );
+
+        $registry2 = new AttributeRegistry($scanner, $cache);
+
+        // Second registry should get data from file cache
+        $result2 = $registry2->discover();
+
+        $this->assertCount(count($result1), $result2);
+
+        Cache::drop('attribute_test_2');
+    }
+
+    public function testIsCacheEnabled(): void
+    {
+        $this->assertTrue($this->registry->isCacheEnabled());
+    }
+
+    public function testIsCacheDisabled(): void
+    {
+        $testDataPath = dirname(__DIR__, 2) . '/data';
+        $pathResolver = new PathResolver($testDataPath);
+        $cache = new AttributeCache('attribute_test', false);
+        $parser = new AttributeParser();
+
+        $scanner = new AttributeScanner(
+            $parser,
+            $pathResolver,
+            [
+                'paths' => ['*.php'],
+                'exclude_paths' => [],
+                'max_file_size' => 1024 * 1024,
+            ],
+        );
+
+        $registry = new AttributeRegistry($scanner, $cache);
+
+        $this->assertFalse($registry->isCacheEnabled());
+    }
 }

@@ -212,9 +212,13 @@ class AttributeParser
             $parameters = $constructor->getParameters();
             $namedArgs = [];
 
-            // Map positional arguments to parameter names
+            // Map arguments to parameter names
             foreach ($rawArgs as $index => $value) {
-                if (isset($parameters[$index])) {
+                if (is_string($index)) {
+                    // Already a named argument
+                    $namedArgs[$index] = $value;
+                } elseif (isset($parameters[$index])) {
+                    // Positional argument - map to parameter name
                     $namedArgs[$parameters[$index]->getName()] = $value;
                 }
             }
