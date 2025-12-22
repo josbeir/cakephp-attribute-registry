@@ -1,0 +1,79 @@
+<?php
+declare(strict_types=1);
+
+namespace AttributeRegistry;
+
+use AttributeRegistry\Command\AttributeDiscoverCommand;
+use AttributeRegistry\Command\AttributeInspectCommand;
+use AttributeRegistry\Command\AttributeListCommand;
+use Cake\Cache\Cache;
+use Cake\Cache\Engine\FileEngine;
+use Cake\Console\CommandCollection;
+use Cake\Core\BasePlugin;
+use Cake\Core\Configure;
+use Cake\Core\ContainerInterface;
+use Cake\Core\PluginApplicationInterface;
+
+/**
+ * Plugin class for AttributeRegistry.
+ *
+ * Provides PHP attribute discovery and caching functionality.
+ */
+class AttributeRegistryPlugin extends BasePlugin
+{
+    /**
+     * @inheritDoc
+     */
+    public function bootstrap(PluginApplicationInterface $app): void
+    {
+        parent::bootstrap($app);
+
+        $configFile = $this->getConfigPath() . 'app_attribute_registry.php';
+        if (file_exists($configFile)) {
+            Configure::load('AttributeRegistry.app_attribute_registry');
+        }
+
+        $this->registerCacheConfig();
+    }
+
+    /**
+     * Register the attribute_registry cache configuration.
+     *
+     * Uses CACHE_ATTRIBUTE_REGISTRY_URL env var if set,
+     * otherwise uses a file-based cache with long duration.
+     */
+    private function registerCacheConfig(): void
+    {
+        if (Cache::getConfig('attribute_registry') !== null) {
+            return;
+        }
+
+        Cache::setConfig('attribute_registry', [
+            'className' => FileEngine::class,
+            'path' => CACHE . 'attribute_registry' . DS,
+            'duration' => '+1 month',
+            'prefix' => 'attr_',
+            'url' => env('CACHE_ATTRIBUTE_REGISTRY_URL'),
+        ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function console(CommandCollection $commands): CommandCollection
+    {
+        $commands->add('attribute discover', AttributeDiscoverCommand::class);
+        $commands->add('attribute list', AttributeListCommand::class);
+        $commands->add('attribute inspect', AttributeInspectCommand::class);
+
+        return $commands;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function services(ContainerInterface $container): void
+    {
+        $container->addServiceProvider(new ServiceProvider());
+    }
+}

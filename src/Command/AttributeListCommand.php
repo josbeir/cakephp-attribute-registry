@@ -1,0 +1,123 @@
+<?php
+declare(strict_types=1);
+
+namespace AttributeRegistry\Command;
+
+use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Service\AttributeRegistry;
+use Cake\Command\Command;
+use Cake\Console\Arguments;
+use Cake\Console\ConsoleIo;
+use Cake\Console\ConsoleOptionParser;
+
+/**
+ * Command to list discovered attributes.
+ */
+class AttributeListCommand extends Command
+{
+    /**
+     * @param \AttributeRegistry\Service\AttributeRegistry $registry Attribute registry service
+     */
+    public function __construct(
+        private readonly AttributeRegistry $registry,
+    ) {
+        parent::__construct();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function defaultName(): string
+    {
+        return 'attribute list';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
+    {
+        $parser
+            ->setDescription('List discovered PHP attributes')
+            ->addOption('attribute', [
+                'short' => 'a',
+                'help' => 'Filter by attribute name',
+            ])
+            ->addOption('class', [
+                'short' => 'c',
+                'help' => 'Filter by class name',
+            ])
+            ->addOption('type', [
+                'short' => 't',
+                'help' => 'Filter by target type (class, method, property, parameter, constant)',
+            ]);
+
+        return $parser;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function execute(Arguments $args, ConsoleIo $io): int
+    {
+        $attributes = $this->getFilteredAttributes($args);
+
+        if ($attributes === []) {
+            $io->warning('No attributes found matching the criteria.');
+
+            return static::CODE_SUCCESS;
+        }
+
+        $io->out(sprintf('<info>Found %d attributes:</info>', count($attributes)));
+        $io->out('');
+
+        $tableData = [];
+        foreach ($attributes as $attr) {
+            $tableData[] = [
+                $attr->attributeName,
+                $attr->className,
+                $attr->target->type->value,
+                $attr->target->targetName,
+            ];
+        }
+
+        $io->helper('Table')->output([
+            ['Attribute', 'Class', 'Type', 'Target'],
+            ...$tableData,
+        ]);
+
+        return static::CODE_SUCCESS;
+    }
+
+    /**
+     * Get filtered attributes based on command arguments.
+     *
+     * @param \Cake\Console\Arguments $args Command arguments
+     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
+     */
+    private function getFilteredAttributes(Arguments $args): array
+    {
+        $attributeFilter = $args->getOption('attribute');
+        $classFilter = $args->getOption('class');
+        $typeFilter = $args->getOption('type');
+
+        if ($attributeFilter !== null) {
+            return $this->registry->findByAttribute((string)$attributeFilter);
+        }
+
+        if ($classFilter !== null) {
+            return $this->registry->findByClass((string)$classFilter);
+        }
+
+        if ($typeFilter !== null) {
+            $type = AttributeTargetType::tryFrom((string)$typeFilter);
+            if ($type === null) {
+                return [];
+            }
+
+            return $this->registry->findByTargetType($type);
+        }
+
+        return $this->registry->discover();
+    }
+}
