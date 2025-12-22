@@ -2,6 +2,7 @@
 /**
  * Attribute Registry DebugKit Panel Template
  *
+ * @var \Cake\View\View $this
  * @var array<\AttributeRegistry\ValueObject\AttributeInfo> $attributes
  * @var int $count
  * @var array<string, array<\AttributeRegistry\ValueObject\AttributeInfo>> $groupedByAttribute
@@ -236,7 +237,8 @@ window.AttributeRegistryPanel = {
         fetch('/attribute-registry/debug-kit/discover', {
             method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': '<?= $this->getRequest()->getAttribute('csrfToken') ?>'
             }
         })
         .then(function(response) { return response.json(); })
