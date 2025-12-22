@@ -9,9 +9,6 @@
  * @var array<string, array<\AttributeRegistry\ValueObject\AttributeInfo>> $groupedByTarget
  * @var array<string, mixed> $config
  */
-
-use Cake\Utility\Text;
-
 ?>
 <style>
 .attribute-registry-panel {
@@ -173,7 +170,7 @@ use Cake\Utility\Text;
         </div>
     </div>
 
-    <button type="button" class="discover-btn" id="attribute-discover-btn" onclick="AttributeRegistryPanel.discover()">
+    <button type="button" class="discover-btn" id="attribute-discover-btn">
         Re-Discover Attributes
     </button>
 
@@ -183,7 +180,7 @@ use Cake\Utility\Text;
             <p>Configure paths in your <code>config/app_attribute_registry.php</code> file.</p>
         </div>
     <?php else: ?>
-        <input type="text" class="search-box" id="attribute-search" placeholder="Search attributes..." onkeyup="AttributeRegistryPanel.filter(this.value)">
+        <input type="text" class="search-box" id="attribute-search" placeholder="Search attributes...">
 
         <div class="tabs">
             <button type="button" class="tab active" data-tab="by-attribute">By Attribute</button>
@@ -193,7 +190,7 @@ use Cake\Utility\Text;
 
         <div id="tab-by-attribute" class="tab-content active">
             <?php foreach ($groupedByAttribute as $attributeName => $items): ?>
-                <div class="group-header" onclick="AttributeRegistryPanel.toggleGroup(this)">
+                <div class="group-header">
                     <span><?= h($attributeName) ?></span>
                     <span class="group-count"><?= count($items) ?></span>
                 </div>
@@ -207,7 +204,7 @@ use Cake\Utility\Text;
 
         <div id="tab-by-file" class="tab-content">
             <?php foreach ($groupedByTarget as $file => $items): ?>
-                <div class="group-header" onclick="AttributeRegistryPanel.toggleGroup(this)">
+                <div class="group-header">
                     <span class="file-path"><?= h($file) ?></span>
                     <span class="group-count"><?= count($items) ?></span>
                 </div>
@@ -271,7 +268,24 @@ window.AttributeRegistryPanel = {
     }
 };
 
-// Tab switching
+// Event listeners
+document.getElementById('attribute-discover-btn').addEventListener('click', function() {
+    AttributeRegistryPanel.discover();
+});
+
+var searchBox = document.getElementById('attribute-search');
+if (searchBox) {
+    searchBox.addEventListener('keyup', function() {
+        AttributeRegistryPanel.filter(this.value);
+    });
+}
+
+document.querySelectorAll('.attribute-registry-panel .group-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+        AttributeRegistryPanel.toggleGroup(this);
+    });
+});
+
 document.querySelectorAll('.attribute-registry-panel .tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
         document.querySelectorAll('.attribute-registry-panel .tab').forEach(function(t) {

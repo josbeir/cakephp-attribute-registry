@@ -136,6 +136,6 @@ class AttributeRegistryPanelTest extends TestCase
 
     public function testPanelTitle(): void
     {
-        $this->assertSame('Attribute Registry', $this->panel->title());
+        $this->assertSame('Attributes', $this->panel->title());
     }
 }
