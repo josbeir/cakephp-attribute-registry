@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Command;
 
-use AttributeRegistry\Service\AttributeRegistry;
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use BackedEnum;
 use Cake\Command\Command;
@@ -18,7 +18,7 @@ use UnitEnum;
 class AttributeInspectCommand extends Command
 {
     /**
-     * @param \AttributeRegistry\Service\AttributeRegistry $registry Attribute registry service
+     * @param \AttributeRegistry\AttributeRegistry $registry Attribute registry
      */
     public function __construct(
         private readonly AttributeRegistry $registry,

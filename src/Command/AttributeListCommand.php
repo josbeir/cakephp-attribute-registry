@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Command;
 
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Service\AttributeRegistry;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
@@ -16,7 +16,7 @@ use Cake\Console\ConsoleOptionParser;
 class AttributeListCommand extends Command
 {
     /**
-     * @param \AttributeRegistry\Service\AttributeRegistry $registry Attribute registry service
+     * @param \AttributeRegistry\AttributeRegistry $registry Attribute registry
      */
     public function __construct(
         private readonly AttributeRegistry $registry,

@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace AttributeRegistry\Test\TestCase\Service;
+namespace AttributeRegistry\Test\TestCase;
 
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\AttributeRegistry;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\PathResolver;
 use Cake\Cache\Cache;
@@ -25,7 +25,7 @@ class AttributeRegistryTest extends TestCase
             'duration' => '+1 hour',
         ]);
 
-        $testDataPath = dirname(__DIR__, 2) . '/data';
+        $testDataPath = dirname(__DIR__) . '/data';
 
         // Load test attributes
         require_once $testDataPath . '/TestAttributes.php';

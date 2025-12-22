@@ -1,20 +1,38 @@
 <?php
 declare(strict_types=1);
 
-namespace AttributeRegistry\Service;
+namespace AttributeRegistry;
 
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Service\AttributeCache;
+use AttributeRegistry\Service\AttributeParser;
+use AttributeRegistry\Service\AttributeScanner;
+use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\ValueObject\AttributeInfo;
+use Cake\Core\Configure;
+use Cake\Core\Plugin;
 
 /**
- * Main registry service for discovering and querying PHP attributes.
+ * Main registry for discovering and querying PHP attributes.
  *
  * Provides high-level API for attribute discovery and retrieval
  * with caching support and filtering capabilities.
+ *
+ * Can be used as a singleton or via dependency injection:
+ *
+ * ```php
+ * // Singleton access (anywhere in your app)
+ * $registry = AttributeRegistry::getInstance();
+ *
+ * // Via dependency injection (in controllers, commands, etc.)
+ * public function index(AttributeRegistry $registry): Response
+ * ```
  */
 class AttributeRegistry
 {
     private const REGISTRY_CACHE_KEY = 'attribute_registry_all';
+
+    private static ?self $instance = null;
 
     /**
      * @var array<\AttributeRegistry\ValueObject\AttributeInfo>|null
@@ -29,6 +47,79 @@ class AttributeRegistry
         private readonly AttributeScanner $scanner,
         private readonly AttributeCache $cache,
     ) {
+    }
+
+    /**
+     * Get the singleton instance of AttributeRegistry.
+     *
+     * Creates and configures the instance from application config on first call.
+     */
+    public static function getInstance(): self
+    {
+        if (!self::$instance instanceof AttributeRegistry) {
+            self::$instance = self::createFromConfig();
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * Set the singleton instance.
+     *
+     * Useful for testing or custom configuration.
+     *
+     * @param self|null $instance Instance to set, or null to reset
+     */
+    public static function setInstance(?self $instance): void
+    {
+        self::$instance = $instance;
+    }
+
+    /**
+     * Create a new AttributeRegistry from application configuration.
+     */
+    private static function createFromConfig(): self
+    {
+        $config = (array)Configure::read('AttributeRegistry');
+        $scannerConfig = (array)($config['scanner'] ?? []);
+        $cacheConfig = (array)($config['cache'] ?? []);
+
+        $pathResolver = new PathResolver(implode(PATH_SEPARATOR, self::resolveAllPaths()));
+        $cache = new AttributeCache(
+            (string)($cacheConfig['config'] ?? 'default'),
+            (bool)($cacheConfig['enabled'] ?? true),
+        );
+        $parser = new AttributeParser();
+
+        $scanner = new AttributeScanner(
+            $parser,
+            $pathResolver,
+            [
+                'paths' => (array)($scannerConfig['paths'] ?? ['src/**/*.php']),
+                'exclude_paths' => (array)($scannerConfig['exclude_paths'] ?? ['vendor/**', 'tmp/**']),
+                'max_file_size' => (int)($scannerConfig['max_file_size'] ?? 1024 * 1024),
+            ],
+        );
+
+        return new self($scanner, $cache);
+    }
+
+    /**
+     * Resolve all base paths from app + loaded plugins.
+     *
+     * @return array<string> Resolved base paths
+     */
+    private static function resolveAllPaths(): array
+    {
+        $basePaths = [];
+        $basePaths[] = ROOT;
+
+        $plugins = Plugin::getCollection();
+        foreach ($plugins as $plugin) {
+            $basePaths[] = $plugin->getPath();
+        }
+
+        return $basePaths;
     }
 
     /**

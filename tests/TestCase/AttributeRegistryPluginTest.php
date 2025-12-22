@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase;
 
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\AttributeRegistryPlugin;
-use AttributeRegistry\Service\AttributeRegistry;
 use Cake\Cache\Cache;
 use Cake\Console\CommandCollection;
 use Cake\Core\Configure;

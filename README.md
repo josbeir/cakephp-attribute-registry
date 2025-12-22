@@ -128,25 +128,51 @@ The plugin automatically registers a file-based cache configuration named `attri
 
 ## Usage
 
-### Using the AttributeRegistry Service
+### Accessing the AttributeRegistry
 
-The `AttributeRegistry` service is available via CakePHP's dependency injection container:
+The `AttributeRegistry` can be accessed in two ways:
+
+#### Option 1: Singleton
+
+Use `getInstance()` anywhere in your application without requiring dependency injection:
 
 ```php
-use AttributeRegistry\Service\AttributeRegistry;
+use AttributeRegistry\AttributeRegistry;
+
+// Anywhere in your code
+$registry = AttributeRegistry::getInstance();
+$routes = $registry->findByAttribute('Route');
+```
+
+#### Option 2: Dependency Injection
+
+The registry is also available via CakePHP's dependency injection container:
+
+```php
+use AttributeRegistry\AttributeRegistry;
 
 // In a Controller
 class MyController extends AppController
 {
     public function index(AttributeRegistry $registry): Response
     {
-        // Find specific attributes
         $routes = $registry->findByAttribute('Route');
-
         // ...
     }
 }
+
+// In a Command
+class MyCommand extends Command
+{
+    public function __construct(
+        private readonly AttributeRegistry $registry,
+    ) {
+        parent::__construct();
+    }
+}
 ```
+
+Both approaches return the same singleton instance, ensuring consistent caching behavior.
 
 ### Discovery Methods
 

@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase;
 
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Command\AttributeDiscoverCommand;
 use AttributeRegistry\Command\AttributeInspectCommand;
 use AttributeRegistry\Command\AttributeListCommand;
-use AttributeRegistry\Service\AttributeRegistry;
 use AttributeRegistry\ServiceProvider;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -44,6 +44,7 @@ class ServiceProviderTest extends TestCase
         Cache::clear('attribute_test');
         Cache::drop('attribute_test');
         Configure::delete('AttributeRegistry');
+        AttributeRegistry::setInstance(null);
     }
 
     public function testServiceProviderCanBeCreated(): void

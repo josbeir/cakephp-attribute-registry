@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase\Command;
 
+use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Command\AttributeInspectCommand;
 use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\AttributeRegistry;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\PathResolver;
 use Cake\Cache\Cache;
