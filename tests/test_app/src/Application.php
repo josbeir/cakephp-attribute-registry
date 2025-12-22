@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace TestApp;
 
 use AttributeRegistry\AttributeRegistryPlugin;
-use Cake\Core\BasePlugin;
 use Cake\Http\BaseApplication;
 use Cake\Http\MiddlewareQueue;
 use Cake\Routing\Middleware\RoutingMiddleware;
