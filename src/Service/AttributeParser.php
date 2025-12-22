@@ -66,6 +66,7 @@ class AttributeParser
                         ...$this->extractMethodAttributes($reflection, $filePath, $fileModTime),
                         ...$this->extractPropertyAttributes($reflection, $filePath, $fileModTime),
                         ...$this->extractParameterAttributes($reflection, $filePath, $fileModTime),
+                        ...$this->extractConstantAttributes($reflection, $filePath, $fileModTime),
                     ];
                 } catch (Throwable $e) {
                     // Skip classes that can't be reflected
@@ -244,6 +245,40 @@ class AttributeParser
                         ),
                     );
                 }
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @param \ReflectionClass<object> $class Reflection class
+     * @param string $filePath File path
+     * @param int $fileModTime File modification time
+     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
+     */
+    private function extractConstantAttributes(ReflectionClass $class, string $filePath, int $fileModTime): array
+    {
+        $attributes = [];
+
+        foreach ($class->getReflectionConstants() as $constant) {
+            foreach ($constant->getAttributes() as $attribute) {
+                if ($this->isAttributeExcluded($attribute)) {
+                    continue;
+                }
+
+                $attributes[] = $this->createAttributeInfo(
+                    $attribute,
+                    $class->getName(),
+                    $filePath,
+                    0, // Constants don't have reliable line numbers
+                    $fileModTime,
+                    new AttributeTarget(
+                        AttributeTargetType::CONSTANT,
+                        $constant->getName(),
+                        $class->getShortName(),
+                    ),
+                );
             }
         }
 

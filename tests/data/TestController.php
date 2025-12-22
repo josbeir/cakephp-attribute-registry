@@ -6,9 +6,19 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\Data;
 
 #[TestRoute('/users', 'GET')]
-#[TestConfig(enabled: true, name: null, options: ['debug' => true, 'cache' => false])]
+#[TestConfig(
+    enabled: true,
+    name: null,
+    options: ['debug' => true, 'cache' => false]
+)]
 class TestController
 {
+    #[TestConst(
+        description: 'Active status',
+        deprecated: false
+    )]
+    public const STATUS_ACTIVE = 'active';
+
     #[TestColumn('int', 11)]
     public int $id;
 
@@ -21,7 +31,9 @@ class TestController
     }
 
     #[TestGet('/show')]
-    public function show(#[TestParam(source: 'path', name: 'id')] int $id): void
+    public function show(
+        #[TestParam(source: 'path', name: 'id')] int $id
+    ): void
     {
     }
 
@@ -35,7 +47,12 @@ class TestController
     }
 }
 
-#[TestWithEnum(label: 'Text Transformer', category: TestCategory::Text, priority: TestPriority::High)]
+
+#[TestWithEnum(
+    label: 'Text Transformer',
+    category: TestCategory::Text,
+    priority: TestPriority::High
+)]
 class TestTransformer
 {
 }

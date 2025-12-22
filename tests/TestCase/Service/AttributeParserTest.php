@@ -6,6 +6,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Test\Data\TestColumn;
+use AttributeRegistry\Test\Data\TestConst;
 use AttributeRegistry\Test\Data\TestController;
 use AttributeRegistry\Test\Data\TestGet;
 use AttributeRegistry\Test\Data\TestParam;
@@ -232,5 +233,25 @@ class AttributeParserTest extends TestCase
         $this->assertEquals(['source' => 'path', 'name' => 'id'], $paramAttr->arguments);
         $this->assertEquals('id', $paramAttr->target->targetName);
         $this->assertEquals('show', $paramAttr->target->parentClass);
+    }
+
+    public function testParseFileExtractsConstantAttributes(): void
+    {
+        $attributes = $this->parser->parseFile($this->testFilePath);
+
+        $constantAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->target->type === AttributeTargetType::CONSTANT,
+        );
+
+        $this->assertCount(1, $constantAttributes);
+
+        $constAttr = reset($constantAttributes);
+        $this->assertInstanceOf(AttributeInfo::class, $constAttr);
+        $this->assertEquals(TestConst::class, $constAttr->attributeName);
+        $this->assertEquals(TestController::class, $constAttr->className);
+        $this->assertEquals(['description' => 'Active status', 'deprecated' => false], $constAttr->arguments);
+        $this->assertEquals('STATUS_ACTIVE', $constAttr->target->targetName);
+        $this->assertEquals('TestController', $constAttr->target->parentClass);
     }
 }

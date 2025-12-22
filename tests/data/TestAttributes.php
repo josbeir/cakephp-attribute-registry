@@ -83,3 +83,13 @@ class TestParam
     ) {
     }
 }
+
+#[Attribute(Attribute::TARGET_CLASS_CONSTANT)]
+class TestConst
+{
+    public function __construct(
+        public string $description = '',
+        public bool $deprecated = false,
+    ) {
+    }
+}
