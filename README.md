@@ -52,6 +52,20 @@ The CakePHP Attribute Registry Plugin provides a centralized system for discover
 - 🏗️ **Service-Oriented** - Clean architecture with dependency injection via CakePHP's container
 - 🐛 **DebugKit Panel** - Visual panel for browsing discovered attributes during development
 
+**Supported Attribute Targets:**
+
+| PHP Target | Constant | Supported | Example |
+|------------|----------|:---------:|---------|
+| Class | `Attribute::TARGET_CLASS` | ✅ | `#[Route] class MyController` |
+| Method | `Attribute::TARGET_METHOD` | ✅ | `#[Get] public function index()` |
+| Property | `Attribute::TARGET_PROPERTY` | ✅ | `#[Column] public int $id` |
+| Parameter | `Attribute::TARGET_PARAMETER` | ✅ | `function show(#[FromPath] int $id)` |
+| Class Constant | `Attribute::TARGET_CLASS_CONSTANT` | ✅ | `#[Deprecated] const STATUS = 1` |
+| Function | `Attribute::TARGET_FUNCTION` | ❌ | Standalone functions not supported |
+
+> [!NOTE]
+> Standalone functions (`TARGET_FUNCTION`) are not supported because the plugin uses class-based reflection. In typical CakePHP applications, attributes are primarily used on classes and their members.
+
 ## Requirements
 
 - PHP 8.2 or higher
