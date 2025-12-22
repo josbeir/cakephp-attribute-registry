@@ -32,7 +32,7 @@ The CakePHP Attribute Registry Plugin provides a centralized system for discover
 **Key Features:**
 
 - 🔍 **Automatic Discovery** - Scans PHP files for attributes using configurable glob patterns
-- 💾 **Built-in Caching** - Caches discovered attributes with file modification tracking
+- 💾 **Built-in Caching** - Caches discovered attributes
 - 🔎 **Flexible Querying** - Find attributes by name, class, or target type
 - 🔌 **Plugin Support** - Automatically scans all loaded CakePHP plugins
 - 🖥️ **CLI Tools** - Console commands for discovery, listing, and inspection
@@ -63,11 +63,7 @@ public function bootstrap(): void
 
 ## Configuration
 
-The plugin works out of the box with sensible defaults. To customize, copy the configuration file to your application:
-
-```bash
-cp vendor/josbeir/cakephp-attribute-registry/config/app_attribute_registry.php config/
-```
+The plugin works out of the box with sensible defaults.
 
 ### Configuration Options
 
@@ -121,9 +117,6 @@ class MyController extends AppController
 {
     public function index(AttributeRegistry $registry): Response
     {
-        // Discover all attributes
-        $attributes = $registry->discover();
-
         // Find specific attributes
         $routes = $registry->findByAttribute('Route');
 
@@ -135,6 +128,9 @@ class MyController extends AppController
 ### Discovery Methods
 
 The `AttributeRegistry` service provides several methods for finding attributes:
+
+> [!NOTE]
+> All query methods (`findByAttribute`, `findByClass`, `findByTargetType`) internally call `discover()`. The discovery result is cached after the first call, so subsequent queries within the same request are fast. When adding new attributes to your codebase, clear the cache using `$registry->clearCache()` or run `bin/cake attribute discover` to refresh the registry.
 
 #### Discover All Attributes
 
