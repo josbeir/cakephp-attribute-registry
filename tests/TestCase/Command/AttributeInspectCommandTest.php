@@ -202,4 +202,28 @@ class AttributeInspectCommandTest extends TestCase
         $this->assertStringContainsString('name:', $output);
         $this->assertStringContainsString('null', $output);
     }
+
+    public function testInspectDisplaysBackedEnumArguments(): void
+    {
+        $args = $this->createArgs(['TestWithEnum'], []);
+        $result = $this->command->execute($args, $this->io);
+
+        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $output = $this->out->output();
+        // Should display backed enum value (TestCategory::Text = 'text')
+        $this->assertStringContainsString('category:', $output);
+        $this->assertStringContainsString('text', $output);
+    }
+
+    public function testInspectDisplaysUnitEnumArguments(): void
+    {
+        $args = $this->createArgs(['TestWithEnum'], []);
+        $result = $this->command->execute($args, $this->io);
+
+        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $output = $this->out->output();
+        // Should display unit enum name (TestPriority::High)
+        $this->assertStringContainsString('priority:', $output);
+        $this->assertStringContainsString('High', $output);
+    }
 }

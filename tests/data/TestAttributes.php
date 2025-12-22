@@ -49,3 +49,27 @@ class TestConfig
     ) {
     }
 }
+
+enum TestCategory: string
+{
+    case Text = 'text';
+    case Number = 'number';
+}
+
+enum TestPriority
+{
+    case Low;
+    case Medium;
+    case High;
+}
+
+#[Attribute(Attribute::TARGET_CLASS)]
+class TestWithEnum
+{
+    public function __construct(
+        public string $label,
+        public TestCategory $category,
+        public TestPriority $priority = TestPriority::Medium,
+    ) {
+    }
+}

@@ -34,3 +34,8 @@ class TestController
     {
     }
 }
+
+#[TestWithEnum(label: 'Text Transformer', category: TestCategory::Text, priority: TestPriority::High)]
+class TestTransformer
+{
+}

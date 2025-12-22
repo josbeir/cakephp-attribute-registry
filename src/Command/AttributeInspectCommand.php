@@ -5,10 +5,12 @@ namespace AttributeRegistry\Command;
 
 use AttributeRegistry\Service\AttributeRegistry;
 use AttributeRegistry\ValueObject\AttributeInfo;
+use BackedEnum;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
+use UnitEnum;
 
 /**
  * Command to inspect details of a specific attribute.
@@ -142,6 +144,18 @@ class AttributeInspectCommand extends Command
 
         if (is_null($value)) {
             return 'null';
+        }
+
+        if ($value instanceof BackedEnum) {
+            return (string)$value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
+        }
+
+        if (is_object($value)) {
+            return get_class($value);
         }
 
         return (string)$value;

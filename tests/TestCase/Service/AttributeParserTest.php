@@ -46,7 +46,7 @@ class AttributeParserTest extends TestCase
         $propertyAttributes = array_filter($attributes, fn(AttributeInfo $attr): bool => $attr->target->type === AttributeTargetType::PROPERTY);
         $methodAttributes = array_filter($attributes, fn(AttributeInfo $attr): bool => $attr->target->type === AttributeTargetType::METHOD);
 
-        $this->assertCount(2, $classAttributes); // TestRoute and TestConfig on TestController
+        $this->assertCount(3, $classAttributes); // TestRoute, TestConfig on TestController + TestWithEnum on TestTransformer
         $this->assertCount(2, $propertyAttributes); // TestColumn on id and name
         $this->assertCount(3, $methodAttributes); // TestGet on index and show methods, TestConfig on disabled
     }
