@@ -136,4 +136,63 @@ class AttributeScannerTest extends TestCase
 
         $this->assertEmpty($attributes);
     }
+
+    public function testScanAllSkipsNonPhpFiles(): void
+    {
+        // Create a temporary non-PHP file
+        $tempFile = $this->testDataPath . '/test.txt';
+        file_put_contents($tempFile, '<?php class Test {}');
+
+        try {
+            $pathResolver = new PathResolver($this->testDataPath);
+            $parser = new AttributeParser();
+
+            $scanner = new AttributeScanner(
+                $parser,
+                $pathResolver,
+                [
+                    'paths' => ['*.*'],
+                    'exclude_paths' => [],
+                    'max_file_size' => 1024 * 1024,
+                ],
+            );
+
+            $attributes = iterator_to_array($scanner->scanAll());
+
+            // Should only have attributes from PHP files
+            foreach ($attributes as $attr) {
+                $this->assertStringEndsWith('.php', $attr->filePath);
+            }
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    public function testScanAllHandlesParseErrors(): void
+    {
+        // Create a temporary PHP file with invalid syntax
+        $tempFile = $this->testDataPath . '/invalid_syntax.php';
+        file_put_contents($tempFile, '<?php class { invalid }');
+
+        try {
+            $pathResolver = new PathResolver($this->testDataPath);
+            $parser = new AttributeParser();
+
+            $scanner = new AttributeScanner(
+                $parser,
+                $pathResolver,
+                [
+                    'paths' => ['invalid_syntax.php'],
+                    'exclude_paths' => [],
+                    'max_file_size' => 1024 * 1024,
+                ],
+            );
+
+            // Should not throw, just return empty for unparseable files
+            $attributes = iterator_to_array($scanner->scanAll());
+            $this->assertEmpty($attributes);
+        } finally {
+            unlink($tempFile);
+        }
+    }
 }

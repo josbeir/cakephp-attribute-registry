@@ -226,4 +226,15 @@ class AttributeInspectCommandTest extends TestCase
         $this->assertStringContainsString('priority:', $output);
         $this->assertStringContainsString('High', $output);
     }
+
+    public function testDefaultNameReturnsCorrectValue(): void
+    {
+        $this->assertSame('attribute inspect', AttributeInspectCommand::defaultName());
+    }
+
+    public function testGetDescriptionReturnsString(): void
+    {
+        $description = AttributeInspectCommand::getDescription();
+        $this->assertNotEmpty($description);
+    }
 }
