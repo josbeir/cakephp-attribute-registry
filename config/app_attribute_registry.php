@@ -58,6 +58,23 @@ return [
             ],
 
             /*
+             * Attribute class names to exclude from discovery results.
+             * Supports exact FQCN matches and namespace wildcards.
+             *
+             * Examples:
+             * - 'Override' - Exclude PHP's built-in Override attribute
+             * - 'App\Internal\*' - Exclude all attributes in App\Internal namespace
+             * - 'Doctrine\ORM\Mapping\*' - Exclude all Doctrine ORM attributes
+             *
+             * Default: []
+             */
+            'exclude_attributes' => [
+                // 'Override',
+                // 'Deprecated',
+                // 'App\Internal\*',
+            ],
+
+            /*
              * Maximum file size in bytes to scan.
              * Files larger than this will be skipped.
              * Default: 1048576 (1 MB)

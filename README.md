@@ -102,6 +102,11 @@ return [
                 'tests/**',
                 'webroot/**',
             ],
+            // Attribute classes to exclude from discovery
+            'exclude_attributes' => [
+                'Override',           // Exact FQCN match
+                'App\\Internal\\*',   // Namespace wildcard
+            ],
             // Maximum file size to scan (in bytes)
             'max_file_size' => 1024 * 1024, // 1 MB
         ],

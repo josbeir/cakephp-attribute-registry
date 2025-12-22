@@ -22,6 +22,23 @@ class AttributeParser
     private static array $constructorCache = [];
 
     /**
+     * List of attribute FQCNs to exclude from parsing.
+     *
+     * @var array<string>
+     */
+    private array $excludeAttributes;
+
+    /**
+     * Constructor for AttributeParser.
+     *
+     * @param array<string> $excludeAttributes List of attribute FQCNs to exclude (supports wildcards)
+     */
+    public function __construct(array $excludeAttributes = [])
+    {
+        $this->excludeAttributes = $excludeAttributes;
+    }
+
+    /**
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     public function parseFile(string $filePath): array
@@ -70,6 +87,38 @@ class AttributeParser
     }
 
     /**
+     * Check if an attribute should be excluded from results.
+     *
+     * @param \ReflectionAttribute<object> $attribute Reflection attribute to check
+     * @return bool True if attribute should be excluded
+     */
+    private function isAttributeExcluded(ReflectionAttribute $attribute): bool
+    {
+        if ($this->excludeAttributes === []) {
+            return false;
+        }
+
+        $fqcn = $attribute->getName();
+
+        foreach ($this->excludeAttributes as $pattern) {
+            // Exact match
+            if ($pattern === $fqcn) {
+                return true;
+            }
+
+            // Namespace wildcard: "App\Internal\*" matches "App\Internal\Foo"
+            if (str_ends_with($pattern, '\*')) {
+                $prefix = substr($pattern, 0, -1); // Remove the "*", keep the "\"
+                if (str_starts_with($fqcn, $prefix)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
      * @param int $fileModTime File modification time
@@ -80,6 +129,10 @@ class AttributeParser
         $attributes = [];
 
         foreach ($class->getAttributes() as $attribute) {
+            if ($this->isAttributeExcluded($attribute)) {
+                continue;
+            }
+
             $startLine = $class->getStartLine();
             $attributes[] = $this->createAttributeInfo(
                 $attribute,
@@ -109,6 +162,10 @@ class AttributeParser
 
         foreach ($class->getMethods() as $method) {
             foreach ($method->getAttributes() as $attribute) {
+                if ($this->isAttributeExcluded($attribute)) {
+                    continue;
+                }
+
                 $startLine = $method->getStartLine();
                 $attributes[] = $this->createAttributeInfo(
                     $attribute,
@@ -140,6 +197,10 @@ class AttributeParser
 
         foreach ($class->getProperties() as $property) {
             foreach ($property->getAttributes() as $attribute) {
+                if ($this->isAttributeExcluded($attribute)) {
+                    continue;
+                }
+
                 $attributes[] = $this->createAttributeInfo(
                     $attribute,
                     $class->getName(),

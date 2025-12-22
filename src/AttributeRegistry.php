@@ -89,7 +89,9 @@ class AttributeRegistry
             (string)($cacheConfig['config'] ?? 'default'),
             (bool)($cacheConfig['enabled'] ?? true),
         );
-        $parser = new AttributeParser();
+        $parser = new AttributeParser(
+            (array)($scannerConfig['exclude_attributes'] ?? []),
+        );
 
         $scanner = new AttributeScanner(
             $parser,

@@ -137,4 +137,79 @@ class AttributeParserTest extends TestCase
 
         unlink($tempFile);
     }
+
+    public function testExcludeAttributesByExactFqcn(): void
+    {
+        $parser = new AttributeParser([TestRoute::class]);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        // TestRoute should be excluded
+        $routeAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->attributeName === TestRoute::class,
+        );
+        $this->assertEmpty($routeAttributes);
+
+        // Other attributes should still be present
+        $columnAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->attributeName === TestColumn::class,
+        );
+        $this->assertNotEmpty($columnAttributes);
+    }
+
+    public function testExcludeMultipleAttributes(): void
+    {
+        $parser = new AttributeParser([TestRoute::class, TestColumn::class]);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        // Both should be excluded
+        $routeAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->attributeName === TestRoute::class,
+        );
+        $columnAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->attributeName === TestColumn::class,
+        );
+
+        $this->assertEmpty($routeAttributes);
+        $this->assertEmpty($columnAttributes);
+
+        // TestGet should still be present
+        $getAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->attributeName === TestGet::class,
+        );
+        $this->assertNotEmpty($getAttributes);
+    }
+
+    public function testExcludeAttributesByNamespaceWildcard(): void
+    {
+        // Exclude all attributes in AttributeRegistry\Test\Data namespace
+        $parser = new AttributeParser(['AttributeRegistry\Test\Data\*']);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        // All test attributes should be excluded
+        $this->assertEmpty($attributes);
+    }
+
+    public function testEmptyExcludeListIncludesAllAttributes(): void
+    {
+        $parser = new AttributeParser([]);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        // Should have all attributes
+        $this->assertNotEmpty($attributes);
+        $this->assertGreaterThanOrEqual(8, count($attributes));
+    }
+
+    public function testExcludeNonExistentAttributeDoesNotError(): void
+    {
+        $parser = new AttributeParser(['NonExistent\Attribute\Class']);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        // Should still find all attributes
+        $this->assertNotEmpty($attributes);
+    }
 }
