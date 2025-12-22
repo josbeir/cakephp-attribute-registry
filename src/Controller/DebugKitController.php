@@ -5,25 +5,25 @@ namespace AttributeRegistry\Controller;
 
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\ValueObject\AttributeInfo;
-use Cake\Controller\Controller;
 use Cake\Http\Response;
 use Cake\View\JsonView;
+use DebugKit\Controller\DebugKitController as BaseDebugKitController;
 
 /**
  * Controller for DebugKit panel AJAX actions.
  *
  * Provides endpoints for re-discovering attributes from the panel.
  */
-class DebugKitController extends Controller
+class DebugKitController extends BaseDebugKitController
 {
     /**
-     * @return array<string, class-string>
+     * @inheritDoc
      */
-    public function viewClasses(): array
+    public function initialize(): void
     {
-        return [
-            'json' => JsonView::class,
-        ];
+        parent::initialize();
+
+        $this->viewBuilder()->setClassName(JsonView::class);
     }
 
     /**
@@ -50,7 +50,8 @@ class DebugKitController extends Controller
                 $attributes,
             ),
         ]);
-        $this->viewBuilder()->setOption('serialize', ['success', 'count', 'attributes']);
+        $this->viewBuilder()
+            ->setOption('serialize', ['success', 'count', 'attributes']);
 
         return null;
     }

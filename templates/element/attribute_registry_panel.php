@@ -174,7 +174,7 @@ use Cake\Utility\Text;
     </div>
 
     <button type="button" class="discover-btn" id="attribute-discover-btn" onclick="AttributeRegistryPanel.discover()">
-        🔄 Re-Discover Attributes
+        Re-Discover Attributes
     </button>
 
     <?php if ($count === 0): ?>
@@ -234,7 +234,7 @@ window.AttributeRegistryPanel = {
         btn.disabled = true;
         btn.textContent = '⏳ Discovering...';
 
-        fetch('/attribute-registry/debug-kit/discover', {
+        fetch('/attribute-registry/debug-kit/discover.json', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

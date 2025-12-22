@@ -48,10 +48,7 @@ class DebugKitControllerTest extends TestCase
     public function testDiscoverReturnsJson(): void
     {
         $this->disableErrorHandlerMiddleware();
-        $this->configRequest([
-            'headers' => ['Accept' => 'application/json'],
-        ]);
-        $this->post('/attribute-registry/debug-kit/discover');
+        $this->post('/attribute-registry/debug-kit/discover.json');
 
         $this->assertResponseOk();
         $this->assertContentType('application/json');
@@ -78,11 +75,7 @@ class DebugKitControllerTest extends TestCase
         $initialAttributes = $registry->discover();
         $initialCount = count($initialAttributes);
 
-        $this->configRequest([
-            'headers' => ['Accept' => 'application/json'],
-        ]);
-        $this->post('/attribute-registry/debug-kit/discover');
-
+        $this->post('/attribute-registry/debug-kit/discover.json');
         $this->assertResponseOk();
 
         $response = $this->_response;
@@ -97,11 +90,7 @@ class DebugKitControllerTest extends TestCase
 
     public function testDiscoverRequiresPostMethod(): void
     {
-        $this->configRequest([
-            'headers' => ['Accept' => 'application/json'],
-        ]);
-        $this->get('/attribute-registry/debug-kit/discover');
-
+        $this->get('/attribute-registry/debug-kit/discover.json');
         $this->assertResponseCode(405);
     }
 
@@ -116,11 +105,7 @@ class DebugKitControllerTest extends TestCase
         $emptyRegistry = new AttributeRegistry($scanner, $cache);
         AttributeRegistry::setInstance($emptyRegistry);
 
-        $this->configRequest([
-            'headers' => ['Accept' => 'application/json'],
-        ]);
-        $this->post('/attribute-registry/debug-kit/discover');
-
+        $this->post('/attribute-registry/debug-kit/discover.json');
         $this->assertResponseOk();
 
         $response = $this->_response;
