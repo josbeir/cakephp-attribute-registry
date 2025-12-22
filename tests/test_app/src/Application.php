@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace TestApp;
 
 use AttributeRegistry\AttributeRegistryPlugin;
+use Cake\Core\BasePlugin;
 use Cake\Http\BaseApplication;
 use Cake\Http\MiddlewareQueue;
 use Cake\Routing\Middleware\RoutingMiddleware;
 use Cake\Routing\RouteBuilder;
+use DebugKit\DebugKitPlugin;
 
 /**
  * @extends BaseApplication<\TestApp\Application>
@@ -26,6 +28,9 @@ class Application extends BaseApplication
 
     public function bootstrap(): void
     {
+        // Add a fake DebugKit plugin to simulate it being loaded
+        // This allows AttributeRegistry to detect DebugKit and register routes
+        $this->addOptionalPlugin(DebugKitPlugin::class);
         $this->addPlugin(AttributeRegistryPlugin::class);
     }
 }

@@ -79,13 +79,19 @@ class AttributeRegistryPlugin extends BasePlugin
      */
     public function routes(RouteBuilder $routes): void
     {
-        $routes->plugin('AttributeRegistry', ['path' => '/attribute-registry'], function (RouteBuilder $builder): void {
-            $builder->setExtensions('json');
-            $builder->connect('/debug-kit/discover', [
-                'controller' => 'DebugKit',
-                'action' => 'discover',
-            ]);
-        });
+        if (Plugin::isLoaded('DebugKit')) {
+            $routes->plugin(
+                'AttributeRegistry',
+                ['path' => '/attribute-registry'],
+                function (RouteBuilder $builder): void {
+                    $builder->setExtensions(['json']);
+                    $builder->connect(
+                        '/debug-kit/discover',
+                        ['controller' => 'DebugKit', 'action' => 'discover'],
+                    );
+                },
+            );
+        }
         parent::routes($routes);
     }
 
