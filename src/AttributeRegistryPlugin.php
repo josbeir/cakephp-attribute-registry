@@ -30,18 +30,9 @@ class AttributeRegistryPlugin extends BasePlugin
     {
         parent::bootstrap($app);
 
-        // Preserve any app-level config overrides defined before plugin bootstrap
-        $appConfig = (array)Configure::read('AttributeRegistry');
-
         $configFile = $this->getConfigPath() . 'app_attribute_registry.php';
         if (file_exists($configFile)) {
             Configure::load('AttributeRegistry.app_attribute_registry');
-        }
-
-        // Merge app config back on top (app overrides take precedence over plugin defaults)
-        if ($appConfig !== []) {
-            $defaultConfig = (array)Configure::read('AttributeRegistry');
-            Configure::write('AttributeRegistry', array_replace_recursive($defaultConfig, $appConfig));
         }
 
         $this->registerCacheConfig();
