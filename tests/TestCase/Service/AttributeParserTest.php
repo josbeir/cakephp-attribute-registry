@@ -8,6 +8,7 @@ use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Test\Data\TestColumn;
 use AttributeRegistry\Test\Data\TestController;
 use AttributeRegistry\Test\Data\TestGet;
+use AttributeRegistry\Test\Data\TestParam;
 use AttributeRegistry\Test\Data\TestRoute;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use Exception;
@@ -211,5 +212,25 @@ class AttributeParserTest extends TestCase
 
         // Should still find all attributes
         $this->assertNotEmpty($attributes);
+    }
+
+    public function testParseFileExtractsParameterAttributes(): void
+    {
+        $attributes = $this->parser->parseFile($this->testFilePath);
+
+        $parameterAttributes = array_filter(
+            $attributes,
+            fn(AttributeInfo $attr): bool => $attr->target->type === AttributeTargetType::PARAMETER,
+        );
+
+        $this->assertCount(1, $parameterAttributes);
+
+        $paramAttr = reset($parameterAttributes);
+        $this->assertInstanceOf(AttributeInfo::class, $paramAttr);
+        $this->assertEquals(TestParam::class, $paramAttr->attributeName);
+        $this->assertEquals(TestController::class, $paramAttr->className);
+        $this->assertEquals(['source' => 'path', 'name' => 'id'], $paramAttr->arguments);
+        $this->assertEquals('id', $paramAttr->target->targetName);
+        $this->assertEquals('show', $paramAttr->target->parentClass);
     }
 }

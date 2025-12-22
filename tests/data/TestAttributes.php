@@ -73,3 +73,13 @@ class TestWithEnum
     ) {
     }
 }
+
+#[Attribute(Attribute::TARGET_PARAMETER)]
+class TestParam
+{
+    public function __construct(
+        public string $source = 'query',
+        public ?string $name = null,
+    ) {
+    }
+}

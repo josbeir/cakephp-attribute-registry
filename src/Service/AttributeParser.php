@@ -65,6 +65,7 @@ class AttributeParser
                         ...$this->extractClassAttributes($reflection, $filePath, $fileModTime),
                         ...$this->extractMethodAttributes($reflection, $filePath, $fileModTime),
                         ...$this->extractPropertyAttributes($reflection, $filePath, $fileModTime),
+                        ...$this->extractParameterAttributes($reflection, $filePath, $fileModTime),
                     ];
                 } catch (Throwable $e) {
                     // Skip classes that can't be reflected
@@ -206,6 +207,43 @@ class AttributeParser
                         $class->getShortName(),
                     ),
                 );
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @param \ReflectionClass<object> $class Reflection class
+     * @param string $filePath File path
+     * @param int $fileModTime File modification time
+     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
+     */
+    private function extractParameterAttributes(ReflectionClass $class, string $filePath, int $fileModTime): array
+    {
+        $attributes = [];
+
+        foreach ($class->getMethods() as $method) {
+            foreach ($method->getParameters() as $parameter) {
+                foreach ($parameter->getAttributes() as $attribute) {
+                    if ($this->isAttributeExcluded($attribute)) {
+                        continue;
+                    }
+
+                    $startLine = $method->getStartLine();
+                    $attributes[] = $this->createAttributeInfo(
+                        $attribute,
+                        $class->getName(),
+                        $filePath,
+                        $startLine === false ? 0 : $startLine,
+                        $fileModTime,
+                        new AttributeTarget(
+                            AttributeTargetType::PARAMETER,
+                            $parameter->getName(),
+                            $method->getName(),
+                        ),
+                    );
+                }
             }
         }
 

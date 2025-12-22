@@ -21,7 +21,7 @@ class TestController
     }
 
     #[TestGet('/show')]
-    public function show(int $id): void
+    public function show(#[TestParam(source: 'path', name: 'id')] int $id): void
     {
     }
 
