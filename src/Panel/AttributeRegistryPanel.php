@@ -28,7 +28,7 @@ class AttributeRegistryPanel extends DebugPanel
     public function data(): array
     {
         $registry = AttributeRegistry::getInstance();
-        $attributes = $registry->discover();
+        $attributes = $registry->discover()->toList();
 
         return [
             'attributes' => $attributes,
@@ -44,7 +44,7 @@ class AttributeRegistryPanel extends DebugPanel
      */
     public function summary(): string
     {
-        return (string)count(AttributeRegistry::getInstance()->discover());
+        return (string)AttributeRegistry::getInstance()->discover()->count();
     }
 
     /**

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace AttributeRegistry;
 
+use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
@@ -126,14 +127,31 @@ class AttributeRegistry
     /**
      * Discover all attributes from configured paths.
      *
+     * Returns an AttributeCollection for fluent filtering with domain-specific
+     * methods while retaining all standard CakePHP Collection operations.
+     *
      * Results are cached in memory for subsequent calls within the same request.
      *
-     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
+     * Example:
+     * ```php
+     * // Using custom filter methods
+     * $registry->discover()
+     *     ->attribute(Route::class)
+     *     ->namespace('App\\Controller\\*')
+     *     ->targetType(AttributeTargetType::METHOD)
+     *     ->toList();
+     *
+     * // Using standard Collection methods
+     * $registry->discover()
+     *     ->filter(fn($attr) => $attr->arguments['method'] === 'POST')
+     *     ->groupBy(fn($attr) => $attr->className)
+     *     ->toArray();
+     * ```
      */
-    public function discover(): array
+    public function discover(): AttributeCollection
     {
         if ($this->discoveredAttributes !== null) {
-            return $this->discoveredAttributes;
+            return new AttributeCollection($this->discoveredAttributes);
         }
 
         /** @var array<array<string, mixed>>|null $cached */
@@ -141,7 +159,7 @@ class AttributeRegistry
         if ($cached !== null) {
             $this->discoveredAttributes = $this->hydrateFromCache($cached);
 
-            return $this->discoveredAttributes;
+            return new AttributeCollection($this->discoveredAttributes);
         }
 
         $attributes = [];
@@ -152,7 +170,7 @@ class AttributeRegistry
         $this->cache->set(self::REGISTRY_CACHE_KEY, $this->serializeForCache($attributes));
         $this->discoveredAttributes = $attributes;
 
-        return $attributes;
+        return new AttributeCollection($attributes);
     }
 
     /**
@@ -163,12 +181,9 @@ class AttributeRegistry
      */
     public function findByAttribute(string $attributeName): array
     {
-        $all = $this->discover();
-
-        return array_values(array_filter(
-            $all,
-            fn(AttributeInfo $attr): bool => str_contains($attr->attributeName, $attributeName),
-        ));
+        return $this->discover()
+            ->attributeContains($attributeName)
+            ->toList();
     }
 
     /**
@@ -179,12 +194,9 @@ class AttributeRegistry
      */
     public function findByClass(string $className): array
     {
-        $all = $this->discover();
-
-        return array_values(array_filter(
-            $all,
-            fn(AttributeInfo $attr): bool => str_contains($attr->className, $className),
-        ));
+        return $this->discover()
+            ->classNameContains($className)
+            ->toList();
     }
 
     /**
@@ -195,12 +207,9 @@ class AttributeRegistry
      */
     public function findByTargetType(AttributeTargetType $type): array
     {
-        $all = $this->discover();
-
-        return array_values(array_filter(
-            $all,
-            fn(AttributeInfo $attr): bool => $attr->target->type === $type,
-        ));
+        return $this->discover()
+            ->targetType($type)
+            ->toList();
     }
 
     /**

@@ -126,6 +126,6 @@ class AttributeListCommand extends Command
             return $this->registry->findByTargetType($type);
         }
 
-        return $this->registry->discover();
+        return $this->registry->discover()->toList();
     }
 }

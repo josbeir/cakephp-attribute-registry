@@ -22,6 +22,7 @@ A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attribute
         - [Option 2: Dependency Injection](#option-2-dependency-injection)
     - [Discovery Methods](#discovery-methods)
         - [Discover All Attributes](#discover-all-attributes)
+        - [Fluent Filtering with AttributeCollection](#fluent-filtering-with-attributecollection)
         - [Find by Attribute Name](#find-by-attribute-name)
         - [Find by Class Name](#find-by-class-name)
         - [Find by Target Type](#find-by-target-type)
@@ -214,9 +215,113 @@ The `AttributeRegistry` service provides several methods for finding attributes:
 
 #### Discover All Attributes
 
+The `discover()` method returns an `AttributeCollection` - a powerful extension of CakePHP's Collection with domain-specific filter methods:
+
 ```php
-// Get all discovered attributes (cached automatically)
+// Get all discovered attributes as a collection
 $attributes = $registry->discover();
+
+// Convert to array when needed
+$array = $attributes->toList();
+```
+
+#### Fluent Filtering with AttributeCollection
+
+The `AttributeCollection` provides chainable filter methods for building complex queries. All filter methods accept multiple arguments with **OR logic** (matches any):
+
+```php
+use AttributeRegistry\Enum\AttributeTargetType;
+
+// Filter by exact attribute class (single or multiple)
+$routes = $registry->discover()
+    ->attribute(Route::class)
+    ->toList();
+
+// Multiple attributes - matches Route OR Get OR Post
+$httpAttributes = $registry->discover()
+    ->attribute(Route::class, Get::class, Post::class)
+    ->toList();
+
+// Filter by namespace pattern (supports wildcards)
+$appAttributes = $registry->discover()
+    ->namespace('App\\Controller\\*')
+    ->toList();
+
+// Multiple namespaces
+$attributes = $registry->discover()
+    ->namespace('App\\Controller\\*', 'App\\Model\\*')
+    ->toList();
+
+// Filter by target type (single or multiple)
+$methodAttributes = $registry->discover()
+    ->targetType(AttributeTargetType::METHOD)
+    ->toList();
+
+// Methods OR properties
+$memberAttributes = $registry->discover()
+    ->targetType(AttributeTargetType::METHOD, AttributeTargetType::PROPERTY)
+    ->toList();
+
+// Filter by exact class name (single or multiple)
+$controllerAttributes = $registry->discover()
+    ->className(UsersController::class, PostsController::class)
+    ->toList();
+
+// Partial matching with contains methods
+$routeAttributes = $registry->discover()
+    ->attributeContains('Route')
+    ->toList();
+
+$controllerAttributes = $registry->discover()
+    ->classNameContains('Controller')
+    ->toList();
+```
+
+**Combining Filters**
+
+Chain multiple filters to narrow down results (uses AND logic between different filter types):
+
+```php
+// Find all Route attributes on methods in the App\Controller namespace
+$routes = $registry->discover()
+    ->attribute(Route::class)
+    ->namespace('App\\Controller\\*')
+    ->targetType(AttributeTargetType::METHOD)
+    ->toList();
+```
+
+**Using Standard Collection Methods**
+
+Since `AttributeCollection` extends CakePHP's Collection, all standard methods are available:
+
+```php
+// Group attributes by class
+$grouped = $registry->discover()
+    ->attribute(Route::class)
+    ->groupBy(fn($attr) => $attr->className)
+    ->toArray();
+
+// Filter with custom logic
+$postRoutes = $registry->discover()
+    ->attribute(Route::class)
+    ->filter(fn($attr) => ($attr->arguments['method'] ?? 'GET') === 'POST')
+    ->toList();
+
+// Map to extract specific data
+$paths = $registry->discover()
+    ->attribute(Route::class)
+    ->map(fn($attr) => $attr->arguments['path'] ?? '/')
+    ->toList();
+
+// Count results
+$count = $registry->discover()
+    ->attribute(Route::class)
+    ->count();
+
+// Check if any exist
+$hasRoutes = $registry->discover()
+    ->attribute(Route::class)
+    ->isEmpty() === false;
 ```
 
 #### Find by Attribute Name

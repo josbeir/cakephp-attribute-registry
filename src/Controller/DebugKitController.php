@@ -44,11 +44,10 @@ class DebugKitController extends BaseDebugKitController
 
         $this->set([
             'success' => true,
-            'count' => count($attributes),
-            'attributes' => array_map(
-                fn(AttributeInfo $attr): array => $attr->toArray(),
-                $attributes,
-            ),
+            'count' => $attributes->count(),
+            'attributes' => $attributes
+                ->map(fn(AttributeInfo $attr): array => $attr->toArray())
+                ->toList(),
         ]);
         $this->viewBuilder()
             ->setOption('serialize', ['success', 'count', 'attributes']);

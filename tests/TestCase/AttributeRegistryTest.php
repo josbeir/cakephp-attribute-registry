@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Test\Data\TestRoute;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 
@@ -40,11 +42,12 @@ class AttributeRegistryTest extends TestCase
         $this->assertInstanceOf(AttributeRegistry::class, $this->registry);
     }
 
-    public function testDiscoverReturnsArray(): void
+    public function testDiscoverReturnsAttributeCollection(): void
     {
         $result = $this->registry->discover();
 
-        $this->assertNotEmpty($result);
+        $this->assertInstanceOf(AttributeCollection::class, $result);
+        $this->assertNotEmpty($result->toList());
     }
 
     public function testFindByAttributeReturnsMatchingAttributes(): void
@@ -129,7 +132,7 @@ class AttributeRegistryTest extends TestCase
         // Second call - should use memory cache (not file cache)
         $result2 = $this->registry->discover();
 
-        $this->assertEquals($result1, $result2);
+        $this->assertEquals($result1->toList(), $result2->toList());
     }
 
     public function testDiscoverUsesFileCacheAfterClearingMemoryCache(): void
@@ -149,7 +152,7 @@ class AttributeRegistryTest extends TestCase
         // Second registry should get data from file cache
         $result2 = $registry2->discover();
 
-        $this->assertCount(count($result1), $result2);
+        $this->assertCount($result1->count(), $result2);
 
         Cache::drop('attribute_test_2');
     }
@@ -189,5 +192,30 @@ class AttributeRegistryTest extends TestCase
 
         // Getting instance again should create a new one (will fail without config, but proves reset worked)
         $this->addToAssertionCount(1);
+    }
+
+    public function testDiscoverCanFilterByAttribute(): void
+    {
+        $result = $this->registry->discover()
+            ->attribute(TestRoute::class)
+            ->toList();
+
+        $this->assertNotEmpty($result);
+        foreach ($result as $attr) {
+            $this->assertSame(TestRoute::class, $attr->attributeName);
+        }
+    }
+
+    public function testDiscoverCanCombineFilters(): void
+    {
+        $result = $this->registry->discover()
+            ->namespace('AttributeRegistry\\Test\\Data\\*')
+            ->targetType(AttributeTargetType::METHOD)
+            ->toList();
+
+        $this->assertNotEmpty($result);
+        foreach ($result as $attr) {
+            $this->assertSame(AttributeTargetType::METHOD, $attr->target->type);
+        }
     }
 }
