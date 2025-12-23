@@ -56,3 +56,33 @@ class TestController
 class TestTransformer
 {
 }
+
+/**
+ * Test class demonstrating object instance in attribute argument.
+ */
+#[TestWithObject(
+    argument: new TestAttributeArgument('test-value', 42),
+    label: 'Object Argument Test'
+)]
+class TestWithObjectArgument
+{
+    #[TestWithObject(argument: new TestAttributeArgument('method-object'))]
+    public function methodWithObject(): void
+    {
+    }
+}
+
+/**
+ * Test class demonstrating array of object instances in attribute argument.
+ */
+#[TestWithObjectArray(
+    arguments: [
+        new TestAttributeArgument('first', 1),
+        new TestAttributeArgument('second', 2),
+        new TestAttributeArgument('third'),
+    ],
+    description: 'Multiple object arguments'
+)]
+class TestWithObjectArrayArgument
+{
+}

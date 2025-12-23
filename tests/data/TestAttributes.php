@@ -93,3 +93,44 @@ class TestConst
     ) {
     }
 }
+
+/**
+ * Simple test class to be used in attribute arguments.
+ */
+class TestAttributeArgument
+{
+    public function __construct(
+        public string $value,
+        public ?int $count = null,
+    ) {
+    }
+}
+
+/**
+ * Test attribute that accepts an object instance as argument.
+ */
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+class TestWithObject
+{
+    public function __construct(
+        public TestAttributeArgument $argument,
+        public ?string $label = null,
+    ) {
+    }
+}
+
+/**
+ * Test attribute that accepts an array of object instances.
+ */
+#[Attribute(Attribute::TARGET_CLASS)]
+class TestWithObjectArray
+{
+    /**
+     * @param array<TestAttributeArgument> $arguments
+     */
+    public function __construct(
+        public array $arguments = [],
+        public string $description = '',
+    ) {
+    }
+}

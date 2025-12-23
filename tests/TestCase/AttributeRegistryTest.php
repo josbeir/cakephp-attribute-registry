@@ -6,7 +6,10 @@ namespace AttributeRegistry\Test\TestCase;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Test\Data\TestAttributeArgument;
 use AttributeRegistry\Test\Data\TestRoute;
+use AttributeRegistry\Test\Data\TestWithObject;
+use AttributeRegistry\Test\Data\TestWithObjectArray;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 
@@ -216,6 +219,130 @@ class AttributeRegistryTest extends TestCase
         $this->assertNotEmpty($result);
         foreach ($result as $attr) {
             $this->assertSame(AttributeTargetType::METHOD, $attr->target->type);
+        }
+    }
+
+    public function testAttributeArgumentsWithObjectInstances(): void
+    {
+        $results = $this->registry->findByClass('TestWithObjectArgument');
+
+        $this->assertNotEmpty($results);
+
+        // Find the class-level attribute
+        $classAttr = null;
+        foreach ($results as $attr) {
+            if ($attr->target->type === AttributeTargetType::CLASS_TYPE) {
+                $classAttr = $attr;
+                break;
+            }
+        }
+
+        $this->assertNotNull($classAttr);
+        $this->assertSame(TestWithObject::class, $classAttr->attributeName);
+
+        // Check that the object argument was captured
+        $this->assertArrayHasKey('argument', $classAttr->arguments);
+        $this->assertArrayHasKey('label', $classAttr->arguments);
+        $this->assertSame('Object Argument Test', $classAttr->arguments['label']);
+    }
+
+    public function testAttributeArgumentsWithObjectSerializationDeserialization(): void
+    {
+        $results = $this->registry->findByClass('TestWithObjectArgument');
+        $classAttr = null;
+
+        foreach ($results as $attr) {
+            if ($attr->target->type === AttributeTargetType::CLASS_TYPE) {
+                $classAttr = $attr;
+                break;
+            }
+        }
+
+        $this->assertNotNull($classAttr);
+
+        // Serialize to array (simulating cache storage)
+        $serialized = $classAttr->toArray();
+
+        // Deserialize from array
+        $deserialized = $classAttr::fromArray($serialized);
+
+        // Verify the object argument is preserved through serialization
+        $this->assertSame($classAttr->attributeName, $deserialized->attributeName);
+        $this->assertSame($classAttr->className, $deserialized->className);
+        $this->assertEquals($classAttr->arguments, $deserialized->arguments);
+
+        // Verify nested object properties
+        if (is_object($deserialized->arguments['argument'])) {
+            $this->assertInstanceOf(TestAttributeArgument::class, $deserialized->arguments['argument']);
+        }
+    }
+
+    public function testAttributeMethodArgumentsWithObjectInstances(): void
+    {
+        $results = $this->registry->findByClass('TestWithObjectArgument');
+
+        // Find the method-level attribute
+        $methodAttr = null;
+        foreach ($results as $attr) {
+            if ($attr->target->type === AttributeTargetType::METHOD) {
+                $methodAttr = $attr;
+                break;
+            }
+        }
+
+        $this->assertNotNull($methodAttr);
+        $this->assertSame(TestWithObject::class, $methodAttr->attributeName);
+        $this->assertSame('methodWithObject', $methodAttr->target->targetName);
+
+        // Check that object argument was captured
+        $this->assertArrayHasKey('argument', $methodAttr->arguments);
+    }
+
+    public function testAttributeArgumentsWithObjectArrays(): void
+    {
+        $results = $this->registry->findByClass('TestWithObjectArrayArgument');
+
+        $this->assertNotEmpty($results);
+
+        $classAttr = null;
+        foreach ($results as $attr) {
+            if ($attr->target->type === AttributeTargetType::CLASS_TYPE) {
+                $classAttr = $attr;
+                break;
+            }
+        }
+
+        $this->assertNotNull($classAttr);
+        $this->assertSame(TestWithObjectArray::class, $classAttr->attributeName);
+
+        // Check that the arguments array exists and has the correct key
+        $this->assertArrayHasKey('arguments', $classAttr->arguments);
+        $this->assertArrayHasKey('description', $classAttr->arguments);
+        $this->assertSame('Multiple object arguments', $classAttr->arguments['description']);
+
+        // Verify array contains object instances
+        $arguments = $classAttr->arguments['arguments'];
+        $this->assertIsArray($arguments);
+        $this->assertCount(3, $arguments);
+    }
+
+    public function testObjectArgumentsPreservedThroughCaching(): void
+    {
+        // Get the attribute from cache (second call uses cache)
+        $results1 = $this->registry->discover()
+            ->className('TestWithObjectArgument')
+            ->toList();
+
+        $results2 = $this->registry->discover()
+            ->className('TestWithObjectArgument')
+            ->toList();
+
+        $this->assertCount(count($results1), $results2);
+
+        // Arguments should be identical after caching
+        foreach ($results1 as $index => $attr1) {
+            $attr2 = $results2[$index];
+            $this->assertEquals($attr1->arguments, $attr2->arguments);
         }
     }
 }
