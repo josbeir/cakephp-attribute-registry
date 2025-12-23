@@ -158,31 +158,6 @@ The plugin automatically registers a file-based cache configuration named `attri
 
 2. **Manual Configuration**: Define your own `attribute_registry` cache config in `config/app.php` before the plugin loads
 
-### Context-Aware Caching
-
-The plugin uses **separate cache keys** for CLI and web contexts to ensure accuracy when plugins are loaded conditionally:
-
-- **Web Context**: `attribute_registry_web` - Only includes plugins loaded in web requests
-- **CLI Context**: `attribute_registry_cli` - Includes CLI-only plugins (marked with `'onlyCli' => true`)
-
-This prevents issues where CLI-only plugins would be cached but unavailable in web requests, or vice versa.
-
-**Key Points:**
-- Each context discovers and caches independently on first access
-- `clearCache()` automatically clears both context caches
-- Storage overhead is minimal (~2x cache space, negligible for most applications)
-- Cache expiration handles staleness automatically (1 month default)
-
-**Example workflow:**
-```php
-// Run discovery in CLI (includes CLI-only plugins)
-$ bin/cake attribute discover
-
-// Web requests use their own cache (only web-accessible plugins)
-$registry = AttributeRegistry::getInstance();
-$attributes = $registry->discover(); // Uses web context cache
-```
-
 ## Usage
 
 ### Accessing the AttributeRegistry
@@ -506,7 +481,7 @@ bin/cake attribute list --type method
 
 Output:
 ```
-Found 8 attributes:
+Found 5 attributes:
 
 +---------------------------+----------------------------------+--------+-----------------+
 | Attribute                 | Class                            | Type   | Target          |
@@ -555,14 +530,6 @@ The panel provides:
 - Overview of all discovered attributes grouped by type or file
 - Search functionality to filter attributes
 - Re-discover button to refresh the attribute cache
-
-> [!NOTE]
-> **Context-aware caching**: The plugin uses separate cache keys for CLI and web contexts. If you notice different attributes in the DebugKit panel compared to CLI commands, this is expected behavior when plugins are configured with `'onlyCli' => true` in your `config/plugins.php`.
->
-> - **Web context** (DebugKit panel): Only shows attributes from plugins loaded in web requests
-> - **CLI context** (commands): Shows attributes from all plugins, including CLI-only plugins
->
-> Each context maintains its own cache and discovers attributes independently based on which plugins are actually loaded.
 
 ## Testing
 

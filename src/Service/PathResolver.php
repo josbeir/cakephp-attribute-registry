@@ -97,7 +97,7 @@ class PathResolver
         if (strpos($pattern, '**') !== false) {
             yield from $this->expandRecursivePattern($pattern);
         } else {
-            $files = glob($pattern, GLOB_BRACE) ?: [];
+            $files = glob($pattern, GLOB_BRACE | GLOB_NOSORT) ?: [];
             yield from $files;
         }
     }
@@ -120,15 +120,13 @@ class PathResolver
 
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($basePath, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST,
+            RecursiveIteratorIterator::LEAVES_ONLY,
         );
 
         foreach ($iterator as $file) {
-            if ($file->isFile()) {
-                $filePath = $file->getPathname();
-                if (empty($suffix) || fnmatch('*' . $suffix, basename($filePath))) {
-                    yield $filePath;
-                }
+            $filePath = $file->getPathname();
+            if (empty($suffix) || fnmatch('*' . $suffix, basename($filePath))) {
+                yield $filePath;
             }
         }
     }
