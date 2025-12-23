@@ -506,15 +506,17 @@ bin/cake attribute list --type method
 
 Output:
 ```
-Found 5 attributes:
+Found 8 attributes:
 
-+-----------+-----------------+--------+--------+
-| Attribute | Class           | Type   | Target |
-+-----------+-----------------+--------+--------+
-| Route     | UsersController | class  | Users  |
-| Get       | UsersController | method | index  |
-| Get       | UsersController | method | view   |
-+-----------+-----------------+--------+--------+
++---------------------------+----------------------------------+--------+-----------------+
+| Attribute                 | Class                            | Type   | Target          |
++---------------------------+----------------------------------+--------+-----------------+
+| App\Attribute\Route       | App\Controller\UsersController   | class  | UsersController |
+| App\Attribute\Get         | App\Controller\UsersController   | method | index           |
+| App\Attribute\Get         | App\Controller\UsersController   | method | view            |
+| MyPlugin\Attribute\Cache  | MyPlugin\Model\Table\PostsTable  | method | findPublished   |
+| MyPlugin\Attribute\Queue  | MyPlugin\Service\EmailService    | method | sendWelcome     |
++---------------------------+----------------------------------+--------+-----------------+
 ```
 
 ### Inspect Attributes
