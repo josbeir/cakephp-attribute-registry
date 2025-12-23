@@ -31,7 +31,9 @@ use Cake\Core\Plugin;
  */
 class AttributeRegistry
 {
-    private const REGISTRY_CACHE_KEY = 'attribute_registry_all';
+    private const REGISTRY_CACHE_KEY_WEB = 'attribute_registry_web';
+
+    private const REGISTRY_CACHE_KEY_CLI = 'attribute_registry_cli';
 
     private static ?self $instance = null;
 
@@ -125,6 +127,21 @@ class AttributeRegistry
     }
 
     /**
+     * Get the cache key based on current context (CLI vs web).
+     *
+     * Uses separate cache keys for CLI and web contexts to ensure accuracy
+     * when plugins are loaded conditionally (e.g., 'onlyCli' => true).
+     *
+     * @return string Cache key for current context
+     */
+    private function getCacheKey(): string
+    {
+        return PHP_SAPI === 'cli'
+            ? self::REGISTRY_CACHE_KEY_CLI
+            : self::REGISTRY_CACHE_KEY_WEB;
+    }
+
+    /**
      * Discover all attributes from configured paths.
      *
      * Returns an AttributeCollection for fluent filtering with domain-specific
@@ -154,8 +171,10 @@ class AttributeRegistry
             return new AttributeCollection($this->discoveredAttributes);
         }
 
+        $cacheKey = $this->getCacheKey();
+
         /** @var array<array<string, mixed>>|null $cached */
-        $cached = $this->cache->get(self::REGISTRY_CACHE_KEY);
+        $cached = $this->cache->get($cacheKey);
         if ($cached !== null) {
             $this->discoveredAttributes = $this->hydrateFromCache($cached);
 
@@ -167,7 +186,7 @@ class AttributeRegistry
             $attributes[] = $attribute;
         }
 
-        $this->cache->set(self::REGISTRY_CACHE_KEY, $this->serializeForCache($attributes));
+        $this->cache->set($cacheKey, $this->serializeForCache($attributes));
         $this->discoveredAttributes = $attributes;
 
         return new AttributeCollection($attributes);
@@ -215,13 +234,22 @@ class AttributeRegistry
     /**
      * Clear all cached attribute data.
      *
+     * Clears both CLI and web context caches to ensure consistency.
+     *
      * @return bool True on success
      */
     public function clearCache(): bool
     {
         $this->discoveredAttributes = null;
 
-        return $this->cache->clear();
+        // Clear both context-specific cache keys
+        $resultWeb = $this->cache->delete(self::REGISTRY_CACHE_KEY_WEB);
+        $resultCli = $this->cache->delete(self::REGISTRY_CACHE_KEY_CLI);
+
+        // Also clear legacy cache key for backward compatibility
+        $this->cache->delete('attribute_registry_all');
+
+        return $resultWeb || $resultCli;
     }
 
     /**
