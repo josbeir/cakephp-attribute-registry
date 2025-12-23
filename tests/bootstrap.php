@@ -24,7 +24,7 @@ define('CORE_PATH', CAKE_CORE_INCLUDE_PATH . DS);
 define('CAKE', CORE_PATH . APP_DIR . DS);
 define('WWW_ROOT', PLUGIN_ROOT . DS . 'webroot' . DS);
 define('TESTS', __DIR__ . DS);
-define('CONFIG', TESTS . 'config' . DS);
+define('CONFIG', ROOT . DS . 'config' . DS);
 define('TEST_SEARCH_DB', TMP . 'tests' . DS . 'search.db');
 
 require_once PLUGIN_ROOT . '/vendor/autoload.php';

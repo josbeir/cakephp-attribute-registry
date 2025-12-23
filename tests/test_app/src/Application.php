@@ -9,7 +9,6 @@ use Cake\Http\MiddlewareQueue;
 use Cake\Routing\Middleware\RoutingMiddleware;
 use Cake\Routing\RouteBuilder;
 use DebugKit\DebugKitPlugin;
-use TestLocalPlugin\TestLocalPlugin;
 
 /**
  * @extends BaseApplication<\TestApp\Application>
@@ -32,8 +31,5 @@ class Application extends BaseApplication
         // This allows AttributeRegistry to detect DebugKit and register routes
         $this->addOptionalPlugin(DebugKitPlugin::class);
         $this->addPlugin(AttributeRegistryPlugin::class);
-
-        // Add test local plugin (simulates a local plugin without packagePath)
-        $this->addPlugin(TestLocalPlugin::class);
     }
 }
