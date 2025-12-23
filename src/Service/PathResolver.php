@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Service;
 
+use Closure;
 use Generator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -14,25 +15,52 @@ class PathResolver
      */
     private array $basePaths;
 
+    private bool $pathsResolved = false;
+
     /**
      * Constructor for PathResolver.
      *
-     * @param string $basePaths Base paths separated by PATH_SEPARATOR
+     * @param string $basePath Primary base path (typically ROOT)
+     * @param \Closure|null $pluginPathsCallback Optional lazy callback returning additional plugin paths
      */
     public function __construct(
-        string $basePaths,
+        string $basePath,
+        private readonly ?Closure $pluginPathsCallback = null,
     ) {
-        $this->basePaths = array_filter(explode(PATH_SEPARATOR, $basePaths));
+        $this->basePaths = array_filter(explode(PATH_SEPARATOR, $basePath));
+    }
+
+    /**
+     * Ensure all paths (including plugin paths) are resolved.
+     * Only resolves once on first call for performance.
+     */
+    private function ensureAllPathsResolved(): void
+    {
+        if ($this->pathsResolved) {
+            return;
+        }
+
+        if ($this->pluginPathsCallback instanceof Closure) {
+            $pluginPaths = ($this->pluginPathsCallback)();
+            foreach ($pluginPaths as $path) {
+                $this->basePaths[] = $path;
+            }
+        }
+
+        $this->pathsResolved = true;
     }
 
     /**
      * Resolve all paths from glob patterns.
+     * Lazily resolves plugin paths on first invocation.
      *
      * @param array<string> $globPatterns Array of glob patterns
      * @return \Generator<string> Generator yielding file paths
      */
     public function resolveAllPaths(array $globPatterns): Generator
     {
+        $this->ensureAllPathsResolved();
+
         foreach ($this->basePaths as $basePath) {
             foreach ($this->resolvePatternsForPath($basePath, $globPatterns) as $path) {
                 yield $path;

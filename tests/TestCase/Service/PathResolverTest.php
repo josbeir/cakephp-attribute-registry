@@ -97,6 +97,95 @@ class PathResolverTest extends TestCase
         rmdir($pluginPath);
     }
 
+    public function testLazyPluginPathCallbackIsNotInvokedOnConstruction(): void
+    {
+        $callbackInvoked = false;
+        $callback = function () use (&$callbackInvoked): array {
+            $callbackInvoked = true;
+
+            return ['/some/plugin/path'];
+        };
+
+        new PathResolver($this->testAppPath, $callback);
+
+        // Callback should NOT be invoked during construction
+        $this->assertFalse($callbackInvoked, 'Plugin path callback should not be invoked during construction');
+    }
+
+    public function testLazyPluginPathCallbackIsInvokedOnFirstResolve(): void
+    {
+        $callbackInvoked = false;
+        $callback = function () use (&$callbackInvoked): array {
+            $callbackInvoked = true;
+
+            return [];
+        };
+
+        $resolver = new PathResolver($this->testAppPath, $callback);
+
+        // Invoke resolveAllPaths to trigger callback
+        iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
+
+        // Callback should be invoked on first resolve
+        $this->assertTrue($callbackInvoked, 'Plugin path callback should be invoked on first path resolution');
+    }
+
+    public function testLazyPluginPathCallbackIsOnlyInvokedOnce(): void
+    {
+        $callbackInvokeCount = 0;
+        $callback = function () use (&$callbackInvokeCount): array {
+            $callbackInvokeCount++;
+
+            return [];
+        };
+
+        $resolver = new PathResolver($this->testAppPath, $callback);
+
+        // Invoke resolveAllPaths multiple times
+        iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
+        iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
+        iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
+
+        // Callback should only be invoked once
+        $this->assertSame(1, $callbackInvokeCount, 'Plugin path callback should only be invoked once');
+    }
+
+    public function testLazyPluginPathsAreMergedWithBasePath(): void
+    {
+        // Create a plugin path
+        $pluginPath = sys_get_temp_dir() . '/attribute_registry_lazy_plugin_' . uniqid();
+        mkdir($pluginPath . '/src', 0755, true);
+        file_put_contents($pluginPath . '/src/PluginClass.php', "<?php\n// Plugin file");
+
+        $callback = fn(): array => [$pluginPath];
+
+        $resolver = new PathResolver($this->testAppPath, $callback);
+
+        $patterns = ['src/*.php'];
+        $paths = iterator_to_array($resolver->resolveAllPaths($patterns));
+
+        // Should find files from both base path and lazily resolved plugin paths
+        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
+        $this->assertContains($pluginPath . '/src/PluginClass.php', $paths);
+
+        // Cleanup plugin path
+        unlink($pluginPath . '/src/PluginClass.php');
+        rmdir($pluginPath . '/src');
+        rmdir($pluginPath);
+    }
+
+    public function testPathResolverWorksWithoutLazyCallback(): void
+    {
+        // Ensure backward compatibility - can be constructed without callback
+        $resolver = new PathResolver($this->testAppPath);
+
+        $patterns = ['src/*.php'];
+        $paths = iterator_to_array($resolver->resolveAllPaths($patterns));
+
+        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
+        $this->assertNotEmpty($paths);
+    }
+
     private function createTestStructure(): void
     {
         $structure = [

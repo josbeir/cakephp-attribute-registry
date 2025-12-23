@@ -85,7 +85,13 @@ class AttributeRegistry
         $scannerConfig = (array)($config['scanner'] ?? []);
         $cacheConfig = (array)($config['cache'] ?? []);
 
-        $pathResolver = new PathResolver(implode(PATH_SEPARATOR, self::resolveAllPaths()));
+        // Create PathResolver with lazy plugin path resolution
+        // The callback is only invoked when scanning is needed (cache miss)
+        $pathResolver = new PathResolver(
+            ROOT,
+            fn(): array => (new PluginPathResolver())->getEnabledPluginPaths(),
+        );
+
         $cache = new AttributeCache(
             (string)($cacheConfig['config'] ?? 'default'),
             (bool)($cacheConfig['enabled'] ?? true),
@@ -104,30 +110,6 @@ class AttributeRegistry
         );
 
         return new self($scanner, $cache);
-    }
-
-    /**
-     * Resolve all base paths from app + all enabled plugins.
-     *
-     * Uses PluginPathResolver to get ALL enabled plugins (including CLI-only)
-     * regardless of current request context. This ensures atomic discovery
-     * where the same attributes are discovered in both CLI and web contexts.
-     *
-     * @return array<string> Resolved base paths
-     */
-    private static function resolveAllPaths(): array
-    {
-        $basePaths = [];
-        $basePaths[] = ROOT;
-
-        $pluginPathResolver = new PluginPathResolver();
-        $pluginPaths = $pluginPathResolver->getEnabledPluginPaths();
-
-        foreach ($pluginPaths as $path) {
-            $basePaths[] = $path;
-        }
-
-        return $basePaths;
     }
 
     /**
