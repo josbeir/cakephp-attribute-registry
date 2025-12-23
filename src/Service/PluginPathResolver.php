@@ -29,8 +29,8 @@ class PluginPathResolver
      */
     public function getEnabledPluginPaths(): array
     {
-        $allPlugins = PluginConfig::getAppConfig();
         $paths = [];
+        $allPlugins = PluginConfig::getAppConfig();
         $pluginCollection = Plugin::getCollection();
 
         foreach ($allPlugins as $name => $config) {

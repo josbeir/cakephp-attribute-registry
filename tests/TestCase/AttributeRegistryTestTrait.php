@@ -8,6 +8,7 @@ use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Service\PluginPathResolver;
 
 /**
  * Trait providing factory methods for common test objects.
@@ -84,6 +85,46 @@ trait AttributeRegistryTestTrait
     }
 
     /**
+     * Create a new AttributeRegistry instance that includes plugin paths.
+     *
+     * This is useful for integration tests that need to discover attributes
+     * from loaded plugins (including local plugins).
+     *
+     * @param string $cacheKey Cache configuration key
+     * @param bool $cacheEnabled Whether caching is enabled
+     * @param array<string, mixed> $scannerConfig Scanner configuration options
+     */
+    protected function createRegistryWithPlugins(
+        string $cacheKey,
+        bool $cacheEnabled = false,
+        array $scannerConfig = [],
+    ): AttributeRegistry {
+        // Build path string including test data + all loaded plugins
+        $pluginPathResolver = new PluginPathResolver();
+        $pluginPaths = $pluginPathResolver->getEnabledPluginPaths();
+        $allPaths = array_merge([$this->getTestDataPath()], $pluginPaths);
+        $pathString = implode(PATH_SEPARATOR, $allPaths);
+
+        $pathResolver = new PathResolver($pathString);
+        $parser = $this->createParser();
+
+        // Use src/**/*.php for plugins, *.php for test data
+        $defaultConfig = [
+            'paths' => ['*.php', 'src/**/*.php'],
+            'exclude_paths' => [],
+        ];
+
+        $scanner = new AttributeScanner(
+            $parser,
+            $pathResolver,
+            $scannerConfig + $defaultConfig,
+        );
+        $cache = $this->createCache($cacheKey, $cacheEnabled);
+
+        return new AttributeRegistry($scanner, $cache);
+    }
+
+    /**
      * Get the path to the test data directory.
      */
     protected function getTestDataPath(): string
@@ -110,5 +151,13 @@ trait AttributeRegistryTestTrait
     protected function loadTestAttributes(): void
     {
         require_once $this->getTestDataPath() . '/TestAttributes.php';
+    }
+
+    /**
+     * Load test plugins including local plugin.
+     */
+    protected function loadTestPlugins(): void
+    {
+        $this->loadPlugins(['TestLocalPlugin']);
     }
 }

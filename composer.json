@@ -30,6 +30,7 @@
     "autoload-dev": {
         "psr-4": {
             "TestApp\\": "tests/test_app/src/",
+            "TestLocalPlugin\\": "tests/test_app/plugins/TestLocalPlugin/src/",
             "AttributeRegistry\\Test\\": "tests/"
         }
     },

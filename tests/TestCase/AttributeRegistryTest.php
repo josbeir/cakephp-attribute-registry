@@ -6,10 +6,12 @@ namespace AttributeRegistry\Test\TestCase;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Service\PluginPathResolver;
 use AttributeRegistry\Test\Data\TestAttributeArgument;
 use AttributeRegistry\Test\Data\TestRoute;
 use AttributeRegistry\Test\Data\TestWithObject;
 use AttributeRegistry\Test\Data\TestWithObjectArray;
+use AttributeRegistry\ValueObject\AttributeInfo;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 
@@ -29,8 +31,10 @@ class AttributeRegistryTest extends TestCase
         ]);
 
         $this->loadTestAttributes();
+        $this->loadTestPlugins();
 
-        $this->registry = $this->createRegistry('attribute_test', true);
+        // Create registry with both test data and plugin paths
+        $this->registry = $this->createRegistryWithPlugins('attribute_test', true);
     }
 
     protected function tearDown(): void
@@ -38,6 +42,7 @@ class AttributeRegistryTest extends TestCase
         parent::tearDown();
         Cache::clear('attribute_test');
         Cache::drop('attribute_test');
+        $this->clearPlugins();
     }
 
     public function testAttributeRegistryCanBeCreated(): void
@@ -382,5 +387,52 @@ class AttributeRegistryTest extends TestCase
             $attr2 = $results2[$index];
             $this->assertEquals($attr1->arguments, $attr2->arguments);
         }
+    }
+
+    public function testDiscoverIncludesLocalPluginAttributes(): void
+    {
+        // Debug: Check if plugin paths are being picked up
+        $pluginPathResolver = new PluginPathResolver();
+        $paths = $pluginPathResolver->getEnabledPluginPaths();
+
+        // Discover all attributes
+        $results = $this->registry->discover();
+
+        // Debug: check all discovered attributes
+        $allAttributes = $results->toList();
+        $attributeNames = array_map(fn(AttributeInfo $attr): string => $attr->attributeName, $allAttributes);
+
+        // Filter for LocalPluginRoute attribute from test local plugin
+        $localPluginAttributes = $results
+            ->attributeContains('LocalPluginRoute')
+            ->toList();
+
+        // Should find attributes from local plugin
+        $this->assertNotEmpty(
+            $localPluginAttributes,
+            'Should discover attributes from local plugin. Plugin paths: ' . implode(', ', $paths) .
+            '. Found attributes: ' . implode(', ', $attributeNames),
+        );
+
+        // Verify attributes are from the local plugin namespace
+        foreach ($localPluginAttributes as $attr) {
+            $this->assertStringContainsString('TestLocalPlugin', $attr->className);
+        }
+    }
+
+    public function testDiscoverIncludesLocalPluginController(): void
+    {
+        // Discover all attributes from TestLocalController
+        $results = $this->registry->discover()
+            ->classNameContains('TestLocalController')
+            ->toList();
+
+        // Should find the controller with attributes
+        $this->assertNotEmpty($results, 'Should discover TestLocalController from local plugin');
+
+        // Verify we got both class and method attributes
+        $targetTypes = array_unique(array_map(fn(AttributeInfo $attr) => $attr->target->type->value, $results));
+        $this->assertContains('class', $targetTypes, 'Should have class-level attribute');
+        $this->assertContains('method', $targetTypes, 'Should have method-level attribute');
     }
 }

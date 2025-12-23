@@ -37,11 +37,14 @@ Configure::write('App', [
     'defaultLocale' => 'en_US',
     'fullBaseUrl' => 'http://localhost',
     'paths' => [
-        'plugins' => [ROOT . 'plugins' . DS],
+        'plugins' => [ROOT . DS . 'plugins' . DS],
         'templates' => [ROOT . DS . 'templates' . DS],
         'locales' => [ROOT . DS . 'resources' . DS . 'locales' . DS],
     ],
 ]);
+
+// Register test local plugin path
+Configure::write('plugins.TestLocalPlugin', ROOT . DS . 'plugins' . DS . 'TestLocalPlugin' . DS);
 
 Configure::write('debug', true);
 Chronos::setTestNow(Chronos::now());
