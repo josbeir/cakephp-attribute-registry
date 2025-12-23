@@ -120,28 +120,42 @@ class AttributeRegistryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testClearCacheRemovesBothContextKeys(): void
+    public function testClearCacheRemovesAtomicCacheKey(): void
     {
-        // Manually set both context-specific cache keys
+        // Set atomic cache key
+        Cache::write('attribute_registry_all', ['test' => 'data'], 'attribute_test');
+
+        $this->registry->clearCache();
+
+        // Atomic cache key should be cleared
+        $this->assertNull(Cache::read('attribute_registry_all', 'attribute_test'));
+    }
+
+    public function testClearCacheRemovesLegacyContextKeys(): void
+    {
+        // Set legacy context-specific cache keys
         Cache::write('attribute_registry_web', ['test' => 'web'], 'attribute_test');
         Cache::write('attribute_registry_cli', ['test' => 'cli'], 'attribute_test');
 
         $this->registry->clearCache();
 
-        // Both keys should be cleared
+        // Legacy keys should be cleared for backward compatibility
         $this->assertNull(Cache::read('attribute_registry_web', 'attribute_test'));
         $this->assertNull(Cache::read('attribute_registry_cli', 'attribute_test'));
     }
 
-    public function testClearCacheRemovesLegacyCacheKey(): void
+    public function testDiscoverUsesAtomicCacheKey(): void
     {
-        // Set legacy cache key
-        Cache::write('attribute_registry_all', ['test' => 'legacy'], 'attribute_test');
-
+        // Clear any existing cache
         $this->registry->clearCache();
 
-        // Legacy key should be cleared for backward compatibility
-        $this->assertNull(Cache::read('attribute_registry_all', 'attribute_test'));
+        // First discover call should populate cache
+        $this->registry->discover();
+
+        // Verify atomic cache key is used
+        $cached = Cache::read('attribute_registry_all', 'attribute_test');
+        $this->assertNotNull($cached);
+        $this->assertIsArray($cached);
     }
 
     public function testWarmCacheReturnsBool(): void

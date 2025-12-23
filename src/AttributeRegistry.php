@@ -9,9 +9,9 @@ use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Service\PluginPathResolver;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use Cake\Core\Configure;
-use Cake\Core\Plugin;
 
 /**
  * Main registry for discovering and querying PHP attributes.
@@ -31,9 +31,7 @@ use Cake\Core\Plugin;
  */
 class AttributeRegistry
 {
-    private const REGISTRY_CACHE_KEY_WEB = 'attribute_registry_web';
-
-    private const REGISTRY_CACHE_KEY_CLI = 'attribute_registry_cli';
+    private const REGISTRY_CACHE_KEY_ALL = 'attribute_registry_all';
 
     private static ?self $instance = null;
 
@@ -109,7 +107,11 @@ class AttributeRegistry
     }
 
     /**
-     * Resolve all base paths from app + loaded plugins.
+     * Resolve all base paths from app + all enabled plugins.
+     *
+     * Uses PluginPathResolver to get ALL enabled plugins (including CLI-only)
+     * regardless of current request context. This ensures atomic discovery
+     * where the same attributes are discovered in both CLI and web contexts.
      *
      * @return array<string> Resolved base paths
      */
@@ -118,27 +120,14 @@ class AttributeRegistry
         $basePaths = [];
         $basePaths[] = ROOT;
 
-        $plugins = Plugin::getCollection();
-        foreach ($plugins as $plugin) {
-            $basePaths[] = $plugin->getPath();
+        $pluginPathResolver = new PluginPathResolver();
+        $pluginPaths = $pluginPathResolver->getEnabledPluginPaths();
+
+        foreach ($pluginPaths as $path) {
+            $basePaths[] = $path;
         }
 
         return $basePaths;
-    }
-
-    /**
-     * Get the cache key based on current context (CLI vs web).
-     *
-     * Uses separate cache keys for CLI and web contexts to ensure accuracy
-     * when plugins are loaded conditionally (e.g., 'onlyCli' => true).
-     *
-     * @return string Cache key for current context
-     */
-    private function getCacheKey(): string
-    {
-        return PHP_SAPI === 'cli'
-            ? self::REGISTRY_CACHE_KEY_CLI
-            : self::REGISTRY_CACHE_KEY_WEB;
     }
 
     /**
@@ -171,10 +160,8 @@ class AttributeRegistry
             return new AttributeCollection($this->discoveredAttributes);
         }
 
-        $cacheKey = $this->getCacheKey();
-
         /** @var array<array<string, mixed>>|null $cached */
-        $cached = $this->cache->get($cacheKey);
+        $cached = $this->cache->get(self::REGISTRY_CACHE_KEY_ALL);
         if ($cached !== null) {
             $this->discoveredAttributes = $this->hydrateFromCache($cached);
 
@@ -186,7 +173,7 @@ class AttributeRegistry
             $attributes[] = $attribute;
         }
 
-        $this->cache->set($cacheKey, $this->serializeForCache($attributes));
+        $this->cache->set(self::REGISTRY_CACHE_KEY_ALL, $this->serializeForCache($attributes));
         $this->discoveredAttributes = $attributes;
 
         return new AttributeCollection($attributes);
@@ -234,7 +221,7 @@ class AttributeRegistry
     /**
      * Clear all cached attribute data.
      *
-     * Clears both CLI and web context caches to ensure consistency.
+     * Clears atomic cache and legacy context-specific caches for backward compatibility.
      *
      * @return bool True on success
      */
@@ -242,14 +229,14 @@ class AttributeRegistry
     {
         $this->discoveredAttributes = null;
 
-        // Clear both context-specific cache keys
-        $resultWeb = $this->cache->delete(self::REGISTRY_CACHE_KEY_WEB);
-        $resultCli = $this->cache->delete(self::REGISTRY_CACHE_KEY_CLI);
+        // Clear atomic cache key
+        $result = $this->cache->delete(self::REGISTRY_CACHE_KEY_ALL);
 
-        // Also clear legacy cache key for backward compatibility
-        $this->cache->delete('attribute_registry_all');
+        // Clear legacy context-specific cache keys for backward compatibility
+        $this->cache->delete('attribute_registry_web');
+        $this->cache->delete('attribute_registry_cli');
 
-        return $resultWeb || $resultCli;
+        return $result;
     }
 
     /**
