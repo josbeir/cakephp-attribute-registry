@@ -6,7 +6,7 @@ namespace AttributeRegistry\Test\TestCase;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Service\PluginPathResolver;
+use AttributeRegistry\Service\PluginLocator;
 use AttributeRegistry\Test\Data\TestAttributeArgument;
 use AttributeRegistry\Test\Data\TestRoute;
 use AttributeRegistry\Test\Data\TestWithObject;
@@ -393,8 +393,8 @@ class AttributeRegistryTest extends TestCase
     public function testDiscoverIncludesLocalPluginAttributes(): void
     {
         // Debug: Check if plugin paths are being picked up
-        $pluginPathResolver = new PluginPathResolver();
-        $paths = $pluginPathResolver->getEnabledPluginPaths();
+        $pluginLocator = new PluginLocator();
+        $paths = $pluginLocator->getEnabledPluginPaths();
 
         // Discover all attributes
         $results = $this->registry->discover();

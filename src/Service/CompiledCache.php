@@ -258,6 +258,7 @@ class CompiledCache
             "%s    lineNumber: %d,\n" .
             "%s    target: %s,\n" .
             "%s    fileHash: %s,\n" .
+            "%s    pluginName: %s,\n" .
             '%s)',
             $indent,
             $indent,
@@ -274,6 +275,8 @@ class CompiledCache
             $this->generateAttributeTarget($attr->target, 2),
             $indent,
             $this->exportString($attr->fileHash),
+            $indent,
+            $attr->pluginName === null ? 'null' : $this->exportString($attr->pluginName),
             $indent,
         );
     }

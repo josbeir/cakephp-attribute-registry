@@ -641,4 +641,62 @@ class CompiledCacheTest extends TestCase
         $this->assertIsArray($loaded);
         $this->assertCount(2, $loaded);
     }
+
+    public function testGeneratedCacheIncludesPluginName(): void
+    {
+        $attr = new AttributeInfo(
+            className: 'TestPlugin\\Controller\\UsersController',
+            attributeName: 'TestPlugin\\Attribute\\Route',
+            arguments: ['path' => '/users'],
+            filePath: '/path/to/plugin/TestPlugin/src/Controller/UsersController.php',
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'UsersController',
+            ),
+            fileHash: 'abc123',
+            pluginName: 'TestPlugin',
+        );
+
+        $this->cache->set('plugin_test', [$attr]);
+
+        // Check that the generated PHP code includes pluginName
+        $safeKey = 'plugin_test';
+        $hash = hash('xxh3', 'plugin_test');
+        $cacheFile = $this->tempPath . $safeKey . '_' . $hash . '.php';
+        $this->assertFileExists($cacheFile);
+
+        $contents = file_get_contents($cacheFile);
+        $this->assertNotFalse($contents, 'Failed to read cache file');
+        $this->assertStringContainsString('pluginName:', $contents);
+        $this->assertStringContainsString("'TestPlugin'", $contents);
+
+        $loaded = $this->cache->get('plugin_test');
+        $this->assertIsArray($loaded);
+        $this->assertCount(1, $loaded);
+        $this->assertEquals('TestPlugin', $loaded[0]->pluginName);
+    }
+
+    public function testGeneratedCacheHandlesNullPluginName(): void
+    {
+        $attr = new AttributeInfo(
+            className: 'App\\Controller\\UsersController',
+            attributeName: 'App\\Attribute\\Route',
+            arguments: ['path' => '/users'],
+            filePath: '/app/src/Controller/UsersController.php',
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'UsersController',
+            ),
+            fileHash: 'abc123',
+        );
+
+        $this->cache->set('app_test', [$attr]);
+        $loaded = $this->cache->get('app_test');
+
+        $this->assertIsArray($loaded);
+        $this->assertCount(1, $loaded);
+        $this->assertNull($loaded[0]->pluginName);
+    }
 }
