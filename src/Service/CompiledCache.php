@@ -265,20 +265,20 @@ class CompiledCache
     private function generateAttributeTarget(AttributeTarget $target, int $level): string
     {
         $indent = str_repeat('    ', $level);
+        $innerIndent = str_repeat('    ', $level + 1);
 
         return sprintf(
             "new \\AttributeRegistry\\ValueObject\\AttributeTarget(\n" .
-            ('%stype: ' . AttributeTargetType::class . '::%s,
-') .
+            '%stype: ' . AttributeTargetType::class . '::%s,' . "\n" .
             "%stargetName: %s,\n" .
             "%sparentClass: %s,\n" .
             '%s)',
-            $indent,
+            $innerIndent,
             $target->type->name,
-            $indent,
+            $innerIndent,
             $this->exportString($target->targetName),
-            $indent,
-            $this->exportValue($target->parentClass),
+            $innerIndent,
+            $this->exportValue($target->parentClass, $level),
             $indent,
         );
     }
@@ -299,9 +299,10 @@ class CompiledCache
      * Export any value as PHP code.
      *
      * @param mixed $value Value to export
+     * @param int $level Indentation level for nested structures
      * @return string Exported code
      */
-    private function exportValue(mixed $value): string
+    private function exportValue(mixed $value, int $level = 0): string
     {
         if ($value === null) {
             return 'null';
@@ -333,7 +334,7 @@ class CompiledCache
         }
 
         if (is_array($value)) {
-            return $this->exportArray($value, 0);
+            return $this->exportArray($value, $level);
         }
 
         if (is_object($value)) {
@@ -382,11 +383,11 @@ class CompiledCache
                 $items[] = sprintf(
                     '%s%s => %s',
                     $indent,
-                    $this->exportValue($key),
-                    $this->exportValue($value),
+                    $this->exportValue($key, $level + 1),
+                    $this->exportValue($value, $level + 1),
                 );
             } else {
-                $items[] = $indent . $this->exportValue($value);
+                $items[] = $indent . $this->exportValue($value, $level + 1);
             }
         }
 
