@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Service;
 
+use AttributeRegistry\Utility\PathNormalizer;
 use Closure;
 use Generator;
 use RecursiveDirectoryIterator;
@@ -79,7 +80,7 @@ class PathResolver
     {
         foreach ($globPatterns as $pattern) {
             // Ensure pattern uses forward slashes for glob compatibility on all platforms
-            $pattern = str_replace('\\', '/', $pattern);
+            $pattern = PathNormalizer::toUnixStyle($pattern);
 
             $fullPattern = rtrim($basePath, DIRECTORY_SEPARATOR) .
                 DIRECTORY_SEPARATOR . ltrim($pattern, '/');
@@ -101,11 +102,11 @@ class PathResolver
             yield from $this->expandRecursivePattern($pattern);
         } else {
             // Convert to forward slashes for glob on all platforms
-            $pattern = str_replace('\\', '/', $pattern);
+            $pattern = PathNormalizer::toUnixStyle($pattern);
             $files = glob($pattern, GLOB_BRACE | GLOB_NOSORT) ?: [];
             foreach ($files as $file) {
                 // Normalize returned paths to platform separator
-                yield str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file);
+                yield PathNormalizer::normalize($file);
             }
         }
     }
@@ -134,7 +135,7 @@ class PathResolver
         foreach ($iterator as $file) {
             $filePath = $file->getPathname();
             // Normalize path separators for consistent comparison
-            $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $filePath);
+            $normalizedPath = PathNormalizer::normalize($filePath);
             if (empty($suffix) || fnmatch('*' . $suffix, basename($normalizedPath))) {
                 yield $normalizedPath;
             }

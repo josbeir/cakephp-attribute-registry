@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Utility\PathNormalizer;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Exception;
@@ -387,8 +388,7 @@ class AttributeParser
      */
     private function getClassesFromFile(string $filePath): array
     {
-        // Normalize paths from get_included_files() for comparison
-        $includedFiles = array_map(fn(string $file) => realpath($file), get_included_files());
+        $includedFiles = get_included_files();
         $alreadyLoaded = in_array($filePath, $includedFiles, true);
 
         if (!$alreadyLoaded) {
@@ -400,14 +400,20 @@ class AttributeParser
         }
 
         // Fallback: file already loaded, find classes by checking their file
+        // Normalize target path once for comparison
+        $normalizedFilePath = PathNormalizer::normalize($filePath);
+
         $fileClasses = [];
         foreach (get_declared_classes() as $className) {
             try {
                 $reflection = new ReflectionClass($className);
                 $reflectionFile = $reflection->getFileName();
-                // Normalize reflection path for comparison
-                if ($reflectionFile !== false && realpath($reflectionFile) === $filePath) {
-                    $fileClasses[] = $className;
+                // Normalize reflection file path for cross-platform comparison
+                if ($reflectionFile !== false) {
+                    $normalizedReflectionFile = PathNormalizer::normalize($reflectionFile);
+                    if ($normalizedReflectionFile === $normalizedFilePath) {
+                        $fileClasses[] = $className;
+                    }
                 }
             } catch (Throwable) {
                 continue;
