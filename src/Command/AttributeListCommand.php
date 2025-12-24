@@ -84,13 +84,14 @@ class AttributeListCommand extends Command
             $tableData[] = [
                 $attr->attributeName,
                 $attr->className,
+                $attr->pluginName ?? '-',
                 $attr->target->type->value,
                 $attr->target->targetName,
             ];
         }
 
         $io->helper('Table')->output([
-            ['Attribute', 'Class', 'Type', 'Target'],
+            ['Attribute', 'Class', 'Plugin', 'Type', 'Target'],
             ...$tableData,
         ]);
 

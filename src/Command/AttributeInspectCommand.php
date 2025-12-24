@@ -113,8 +113,19 @@ class AttributeInspectCommand extends Command
     {
         $io->out(sprintf('<comment>%d. %s</comment>', $index, $attr->attributeName));
         $io->out(sprintf('   Class: %s', $attr->className));
+
+        if ($attr->pluginName !== null) {
+            $io->out(sprintf('   Plugin: %s', $attr->pluginName));
+        }
+
         $io->out(sprintf('   Target: %s (%s)', $attr->target->targetName, $attr->target->type->value));
+
+        if ($attr->target->parentClass !== null) {
+            $io->out(sprintf('   Parent Class: %s', $attr->target->parentClass));
+        }
+
         $io->out(sprintf('   File: %s:%d', $attr->filePath, $attr->lineNumber));
+        $io->out(sprintf('   File Hash: %s', $attr->fileHash));
 
         if ($attr->arguments !== []) {
             $io->out('   Arguments:');
