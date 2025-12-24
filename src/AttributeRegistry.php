@@ -84,11 +84,13 @@ class AttributeRegistry
         $scannerConfig = (array)($config['scanner'] ?? []);
         $cacheConfig = (array)($config['cache'] ?? []);
 
+        $pluginLocator = new PluginLocator();
+
         // Create PathResolver with lazy plugin path resolution
         // The callback is only invoked when scanning is needed (cache miss)
         $pathResolver = new PathResolver(
             ROOT,
-            fn(): array => (new PluginLocator())->getEnabledPluginPaths(),
+            fn(): array => $pluginLocator->getEnabledPluginPaths(),
         );
 
         // Determine cache path from config
@@ -101,6 +103,7 @@ class AttributeRegistry
         );
         $parser = new AttributeParser(
             (array)($scannerConfig['exclude_attributes'] ?? []),
+            $pluginLocator,
         );
 
         $scanner = new AttributeScanner(
@@ -214,14 +217,7 @@ class AttributeRegistry
     {
         $this->discoveredAttributes = null;
 
-        // Clear atomic cache key
-        $result = $this->cache->delete(self::REGISTRY_CACHE_KEY_ALL);
-
-        // Clear legacy context-specific cache keys for backward compatibility
-        $this->cache->delete('attribute_registry_web');
-        $this->cache->delete('attribute_registry_cli');
-
-        return $result;
+        return $this->cache->delete(self::REGISTRY_CACHE_KEY_ALL);
     }
 
     /**
