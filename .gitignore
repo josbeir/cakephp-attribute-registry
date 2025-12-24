@@ -12,3 +12,4 @@
 /coverage*
 /.github/**/*.md
 /research/
+/audit/

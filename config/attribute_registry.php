@@ -20,14 +20,10 @@ return [
             'enabled' => true,
 
             /*
-             * The cache configuration name to use.
-             * The plugin automatically registers an 'attribute_registry' cache config
-             * with file-based storage and 1-month duration.
-             *
-             * Override via CACHE_ATTRIBUTE_REGISTRY_URL env var, or define your own
-             * 'attribute_registry' cache config in app.php before the plugin loads.
+             * Cache directory path for compiled attribute files.
+             * Default: CACHE . 'attribute_registry' . DS
              */
-            'config' => 'attribute_registry',
+            'path' => null,
         ],
 
         /*

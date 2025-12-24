@@ -12,7 +12,6 @@ use AttributeRegistry\Test\Data\TestRoute;
 use AttributeRegistry\Test\Data\TestWithObject;
 use AttributeRegistry\Test\Data\TestWithObjectArray;
 use AttributeRegistry\ValueObject\AttributeInfo;
-use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 
 class AttributeRegistryTest extends TestCase
@@ -21,28 +20,42 @@ class AttributeRegistryTest extends TestCase
 
     private AttributeRegistry $registry;
 
+    private string $tempPath;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        Cache::setConfig('attribute_test', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
+        $this->tempPath = sys_get_temp_dir() . '/attribute_registry_test_' . uniqid() . '/';
+        mkdir($this->tempPath, 0755, true);
 
         $this->loadTestAttributes();
         $this->loadTestPlugins();
 
         // Create registry with both test data and plugin paths
-        $this->registry = $this->createRegistryWithPlugins('attribute_test', true);
+        $this->registry = $this->createRegistryWithPlugins($this->tempPath, true);
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
-        Cache::clear('attribute_test');
-        Cache::drop('attribute_test');
+        $this->removeDirectory($this->tempPath);
         $this->clearPlugins();
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
+        }
+
+        rmdir($dir);
     }
 
     public function testAttributeRegistryCanBeCreated(): void
@@ -125,31 +138,22 @@ class AttributeRegistryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testClearCacheRemovesAtomicCacheKey(): void
+    public function testClearCacheRemovesCompiledCacheFile(): void
     {
-        // Set atomic cache key
-        Cache::write('attribute_registry_all', ['test' => 'data'], 'attribute_test');
+        // Populate cache
+        $this->registry->discover();
+
+        // Verify cache file exists
+        $cacheFile = $this->tempPath . 'attribute_registry_all.php';
+        $this->assertFileExists($cacheFile);
 
         $this->registry->clearCache();
 
-        // Atomic cache key should be cleared
-        $this->assertNull(Cache::read('attribute_registry_all', 'attribute_test'));
+        // Cache file should be removed
+        $this->assertFileDoesNotExist($cacheFile);
     }
 
-    public function testClearCacheRemovesLegacyContextKeys(): void
-    {
-        // Set legacy context-specific cache keys
-        Cache::write('attribute_registry_web', ['test' => 'web'], 'attribute_test');
-        Cache::write('attribute_registry_cli', ['test' => 'cli'], 'attribute_test');
-
-        $this->registry->clearCache();
-
-        // Legacy keys should be cleared for backward compatibility
-        $this->assertNull(Cache::read('attribute_registry_web', 'attribute_test'));
-        $this->assertNull(Cache::read('attribute_registry_cli', 'attribute_test'));
-    }
-
-    public function testDiscoverUsesAtomicCacheKey(): void
+    public function testDiscoverUsesCompiledCache(): void
     {
         // Clear any existing cache
         $this->registry->clearCache();
@@ -157,10 +161,14 @@ class AttributeRegistryTest extends TestCase
         // First discover call should populate cache
         $this->registry->discover();
 
-        // Verify atomic cache key is used
-        $cached = Cache::read('attribute_registry_all', 'attribute_test');
-        $this->assertNotNull($cached);
-        $this->assertIsArray($cached);
+        // Verify cache file is created
+        $cacheFile = $this->tempPath . 'attribute_registry_all.php';
+        $this->assertFileExists($cacheFile);
+
+        // Verify it contains compiled PHP code
+        $content = file_get_contents($cacheFile);
+        $this->assertNotFalse($content);
+        $this->assertStringContainsString('new \\AttributeRegistry\\ValueObject\\AttributeInfo', $content);
     }
 
     public function testWarmCacheReturnsBool(): void
@@ -181,26 +189,19 @@ class AttributeRegistryTest extends TestCase
         $this->assertEquals($result1->toList(), $result2->toList());
     }
 
-    public function testDiscoverUsesFileCacheAfterClearingMemoryCache(): void
+    public function testDiscoverUsesCompiledCacheAfterClearingMemoryCache(): void
     {
-        // First call - populates both memory and file cache
+        // First call - populates both memory and compiled cache
         $result1 = $this->registry->discover();
 
         // Create a new registry instance (simulating new request)
-        // This tests the file cache path
-        Cache::setConfig('attribute_test_2', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
+        // This tests the compiled cache path - use same creation method
+        $registry2 = $this->createRegistryWithPlugins($this->tempPath, true);
 
-        $registry2 = $this->createRegistry('attribute_test', true);
-
-        // Second registry should get data from file cache
+        // Second registry should get data from compiled cache
         $result2 = $registry2->discover();
 
         $this->assertCount($result1->count(), $result2);
-
-        Cache::drop('attribute_test_2');
     }
 
     public function testIsCacheEnabled(): void
@@ -210,7 +211,7 @@ class AttributeRegistryTest extends TestCase
 
     public function testIsCacheDisabled(): void
     {
-        $registry = $this->createRegistry('attribute_test', false);
+        $registry = $this->createRegistry($this->tempPath, false);
 
         $this->assertFalse($registry->isCacheEnabled());
     }
