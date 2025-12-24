@@ -148,4 +148,30 @@ class AttributeRegistryPluginTest extends TestCase
         $this->assertTrue($config['cache']['enabled'], 'Default cache.enabled should be true');
         $this->assertIsArray($config['scanner']['paths']);
     }
+
+    public function testBootstrapWorksWhenConfigFileDoesNotExist(): void
+    {
+        // Create a test plugin with a non-existent config path
+        $plugin = new class extends AttributeRegistryPlugin {
+            public function getConfigPath(): string
+            {
+                return '/non/existent/path/';
+            }
+        };
+
+        Configure::delete('AttributeRegistry');
+        Configure::write('AttributeRegistry', [
+            'cache' => ['enabled' => true],
+        ]);
+
+        $app = $this->createStub(PluginApplicationInterface::class);
+
+        // Should not throw an exception
+        $plugin->bootstrap($app);
+
+        // Configuration should still be present
+        $config = Configure::read('AttributeRegistry');
+        $this->assertNotNull($config);
+        $this->assertTrue($config['cache']['enabled']);
+    }
 }

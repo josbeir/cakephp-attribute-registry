@@ -293,4 +293,36 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals($original->target->targetName, $restored->target->targetName);
         $this->assertEquals($original->target->parentClass, $restored->target->parentClass);
     }
+
+    public function testSetStateRestoresObjectState(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::METHOD,
+            'index',
+            'TestController',
+        );
+
+        $original = new AttributeInfo(
+            className: 'App\Controller\TestController',
+            attributeName: TestRoute::class,
+            arguments: ['path' => '/test', 'method' => 'GET'],
+            filePath: '/app/src/Controller/TestController.php',
+            lineNumber: 15,
+            target: $target,
+            fileHash: 'abc123',
+        );
+
+        // Test __set_state method directly with array data
+        $data = $original->toArray();
+        $restored = AttributeInfo::__set_state($data);
+
+        $this->assertInstanceOf(AttributeInfo::class, $restored);
+        $this->assertEquals($original->className, $restored->className);
+        $this->assertEquals($original->attributeName, $restored->attributeName);
+        $this->assertEquals($original->arguments, $restored->arguments);
+        $this->assertEquals($original->filePath, $restored->filePath);
+        $this->assertEquals($original->lineNumber, $restored->lineNumber);
+        $this->assertEquals($original->target->type, $restored->target->type);
+        $this->assertEquals($original->fileHash, $restored->fileHash);
+    }
 }

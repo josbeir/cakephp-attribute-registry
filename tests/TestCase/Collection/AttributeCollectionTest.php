@@ -200,6 +200,46 @@ class AttributeCollectionTest extends TestCase
         $this->assertSame(3, $result->count());
     }
 
+    public function testAttributeWithNoArgumentsReturnsSameCollection(): void
+    {
+        $collection = $this->createCollection();
+
+        $result = $collection->attribute();
+
+        $this->assertSame($collection, $result);
+        $this->assertSame(5, $result->count());
+    }
+
+    public function testNamespaceWithNoArgumentsReturnsSameCollection(): void
+    {
+        $collection = $this->createCollection();
+
+        $result = $collection->namespace();
+
+        $this->assertSame($collection, $result);
+        $this->assertSame(5, $result->count());
+    }
+
+    public function testTargetTypeWithNoArgumentsReturnsSameCollection(): void
+    {
+        $collection = $this->createCollection();
+
+        $result = $collection->targetType();
+
+        $this->assertSame($collection, $result);
+        $this->assertSame(5, $result->count());
+    }
+
+    public function testClassNameWithNoArgumentsReturnsSameCollection(): void
+    {
+        $collection = $this->createCollection();
+
+        $result = $collection->className();
+
+        $this->assertSame($collection, $result);
+        $this->assertSame(5, $result->count());
+    }
+
     public function testChainingFilters(): void
     {
         $collection = $this->createCollection();

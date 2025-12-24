@@ -144,4 +144,34 @@ class AttributeScannerTest extends TestCase
             unlink($tempFile);
         }
     }
+
+    public function testScanFileLogsWarningOnException(): void
+    {
+        // Create a file with severely malformed PHP that will trigger parser exception
+        $tempFile = $this->testDataPath . '/malformed.php';
+        file_put_contents($tempFile, '<?php namespace Test; class Broken { public function } }');
+
+        try {
+            $scanner = $this->createScanner(
+                config: [
+                    'paths' => ['malformed.php'],
+                    'exclude_paths' => [],
+                ],
+            );
+
+            // scanFile should catch the exception and log a warning, returning empty array
+            $attributes = iterator_to_array($scanner->scanAll());
+
+            // The malformed file should not produce any valid attributes
+            $malformedAttrs = array_filter(
+                $attributes,
+                fn($attr) => str_contains($attr->filePath, 'malformed.php'),
+            );
+            $this->assertEmpty($malformedAttrs);
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+    }
 }
