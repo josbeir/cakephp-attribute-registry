@@ -144,19 +144,24 @@ You can disable caching for development purposes by setting `cache.enabled` to `
 
 ### Cache Configuration
 
-The plugin automatically registers a file-based cache configuration named `attribute_registry`. You can override this by:
+The plugin uses **compiled cache files** for zero-cost attribute caching. Discovered attributes are stored as pre-compiled PHP files with direct object instantiation, leveraging OPcache for maximum performance.
 
-1. **Environment Variable**: Set the `CACHE_ATTRIBUTE_REGISTRY_URL` environment variable to use a custom cache backend:
+**Cache Location**: By default, cache files are stored in `tmp/cache/attribute_registry/`. You can customize this path:
 
-   ```bash
-   # Redis example
-   export CACHE_ATTRIBUTE_REGISTRY_URL="redis://localhost:6379?prefix=my_app_attr_&duration=2592000"
+```php
+'AttributeRegistry' => [
+    'cache' => [
+        'path' => CACHE . 'attributes' . DS, // Custom cache directory
+    ],
+],
+```
 
-   # Memcached example
-   export CACHE_ATTRIBUTE_REGISTRY_URL="memcached://localhost:11211?prefix=my_app_attr_&duration=2592000"
-   ```
+**How it Works**:
+1. During discovery, attributes are scanned and serialized into executable PHP files
+2. The compiled files contain direct `AttributeInfo` object instantiation code
+3. OPcache automatically optimizes these files for near-zero overhead on subsequent loads
 
-2. **Manual Configuration**: Define your own `attribute_registry` cache config in `config/app.php` before the plugin loads
+**Performance**: Compiled cache eliminates deserialization overhead entirely - loading cached attributes is as fast as requiring a PHP file with predefined objects.
 
 ## Usage
 
@@ -363,12 +368,19 @@ $propertyAttributes = $registry->findByTargetType(AttributeTargetType::PROPERTY)
 #### Cache Management
 
 ```php
-// Clear all cached attribute data
+// Clear all cached attribute data (removes compiled cache files)
 $registry->clearCache();
 
-// Warm the cache (clear and rediscover)
+// Warm the cache (clear and rediscover - regenerates compiled files)
 $registry->warmCache();
+
+// Check if cache is enabled
+if ($registry->isCacheEnabled()) {
+    // Cache is active
+}
 ```
+
+The cache records file modification timestamps (`filemtime`) for discovered attributes, which you can use to detect when source files have changed and decide when to rebuild or clear the cache.
 
 ### Working with AttributeInfo
 

@@ -16,7 +16,7 @@ class PathResolverTest extends TestCase
     {
         parent::setUp();
 
-        $this->testAppPath = sys_get_temp_dir() . '/attribute_registry_test_' . uniqid();
+        $this->testAppPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'attribute_registry_test_' . uniqid();
         mkdir($this->testAppPath, 0755, true);
 
         $this->pathResolver = new PathResolver($this->testAppPath);
@@ -42,7 +42,7 @@ class PathResolverTest extends TestCase
         $patterns = ['src/*.php'];
         $paths = iterator_to_array($this->pathResolver->resolveAllPaths($patterns));
 
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
         $this->assertNotEmpty($paths);
     }
 
@@ -51,9 +51,9 @@ class PathResolverTest extends TestCase
         $patterns = ['src/**/*.php'];
         $paths = iterator_to_array($this->pathResolver->resolveAllPaths($patterns));
 
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
-        $this->assertContains($this->testAppPath . '/src/Controller/TestController.php', $paths);
-        $this->assertContains($this->testAppPath . '/src/Model/TestModel.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller' . DIRECTORY_SEPARATOR . 'TestController.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'TestModel.php', $paths);
     }
 
     public function testResolveMultiplePatterns(): void
@@ -61,8 +61,8 @@ class PathResolverTest extends TestCase
         $patterns = ['src/*.php', 'config/*.php'];
         $paths = iterator_to_array($this->pathResolver->resolveAllPaths($patterns));
 
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
-        $this->assertContains($this->testAppPath . '/config/app.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php', $paths);
     }
 
     public function testResolveNonExistentPath(): void
@@ -76,9 +76,9 @@ class PathResolverTest extends TestCase
     public function testResolveMultipleBasePaths(): void
     {
         // Create a second base path simulating a plugin
-        $pluginPath = sys_get_temp_dir() . '/attribute_registry_plugin_' . uniqid();
-        mkdir($pluginPath . '/src', 0755, true);
-        file_put_contents($pluginPath . '/src/PluginClass.php', "<?php\n// Plugin file");
+        $pluginPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'attribute_registry_plugin_' . uniqid();
+        mkdir($pluginPath . DIRECTORY_SEPARATOR . 'src', 0755, true);
+        file_put_contents($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php', "<?php\n// Plugin file");
 
         // Join paths with PATH_SEPARATOR like the plugin does
         $combinedPaths = $this->testAppPath . PATH_SEPARATOR . $pluginPath;
@@ -88,12 +88,12 @@ class PathResolverTest extends TestCase
         $paths = iterator_to_array($resolver->resolveAllPaths($patterns));
 
         // Should find files from both base paths
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
-        $this->assertContains($pluginPath . '/src/PluginClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php', $paths);
 
         // Cleanup plugin path
-        unlink($pluginPath . '/src/PluginClass.php');
-        rmdir($pluginPath . '/src');
+        unlink($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php');
+        rmdir($pluginPath . DIRECTORY_SEPARATOR . 'src');
         rmdir($pluginPath);
     }
 
@@ -153,9 +153,9 @@ class PathResolverTest extends TestCase
     public function testLazyPluginPathsAreMergedWithBasePath(): void
     {
         // Create a plugin path
-        $pluginPath = sys_get_temp_dir() . '/attribute_registry_lazy_plugin_' . uniqid();
-        mkdir($pluginPath . '/src', 0755, true);
-        file_put_contents($pluginPath . '/src/PluginClass.php', "<?php\n// Plugin file");
+        $pluginPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'attribute_registry_lazy_plugin_' . uniqid();
+        mkdir($pluginPath . DIRECTORY_SEPARATOR . 'src', 0755, true);
+        file_put_contents($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php', "<?php\n// Plugin file");
 
         $callback = fn(): array => [$pluginPath];
 
@@ -165,12 +165,12 @@ class PathResolverTest extends TestCase
         $paths = iterator_to_array($resolver->resolveAllPaths($patterns));
 
         // Should find files from both base path and lazily resolved plugin paths
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
-        $this->assertContains($pluginPath . '/src/PluginClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php', $paths);
 
         // Cleanup plugin path
-        unlink($pluginPath . '/src/PluginClass.php');
-        rmdir($pluginPath . '/src');
+        unlink($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php');
+        rmdir($pluginPath . DIRECTORY_SEPARATOR . 'src');
         rmdir($pluginPath);
     }
 
@@ -182,7 +182,7 @@ class PathResolverTest extends TestCase
         $patterns = ['src/*.php'];
         $paths = iterator_to_array($resolver->resolveAllPaths($patterns));
 
-        $this->assertContains($this->testAppPath . '/src/TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
         $this->assertNotEmpty($paths);
     }
 
@@ -198,7 +198,7 @@ class PathResolverTest extends TestCase
         ];
 
         foreach ($structure as $file) {
-            $fullPath = $this->testAppPath . '/' . $file;
+            $fullPath = $this->testAppPath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
             $dir = dirname($fullPath);
 
             if (!is_dir($dir)) {
@@ -218,7 +218,7 @@ class PathResolverTest extends TestCase
         $files = array_diff(scandir($dir), ['.', '..']);
 
         foreach ($files as $file) {
-            $path = $dir . '/' . $file;
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {

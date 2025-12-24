@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Utility\PathNormalizer;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Exception;
@@ -40,33 +41,40 @@ class AttributeParser
             throw new Exception('File not found: ' . $filePath);
         }
 
+        // Normalize the file path to use realpath for consistent comparison
+        $realFilePath = realpath($filePath);
+        if ($realFilePath === false) {
+            throw new Exception('Could not resolve real path for: ' . $filePath);
+        }
+
         $attributes = [];
-        $fileModTime = filemtime($filePath);
+        $fileModTime = filemtime($realFilePath);
         if ($fileModTime === false) {
-            throw new Exception('Could not get modification time for file: ' . $filePath);
+            throw new Exception('Could not get modification time for file: ' . $realFilePath);
         }
 
         try {
             // Get classes from this file using diff or reflection
-            $fileClasses = $this->getClassesFromFile($filePath);
+            $fileClasses = $this->getClassesFromFile($realFilePath);
 
             foreach ($fileClasses as $className) {
                 try {
                     /** @var class-string $className */
                     $reflection = new ReflectionClass($className);
 
-                    // Skip classes not from this file
-                    if ($reflection->getFileName() !== $filePath) {
+                    // Skip classes not from this file (normalize both paths for comparison)
+                    $reflectionFile = $reflection->getFileName();
+                    if ($reflectionFile === false || realpath($reflectionFile) !== $realFilePath) {
                         continue;
                     }
 
                     $attributes = [
                         ...$attributes,
-                        ...$this->extractClassAttributes($reflection, $filePath, $fileModTime),
-                        ...$this->extractMethodAttributes($reflection, $filePath, $fileModTime),
-                        ...$this->extractPropertyAttributes($reflection, $filePath, $fileModTime),
-                        ...$this->extractParameterAttributes($reflection, $filePath, $fileModTime),
-                        ...$this->extractConstantAttributes($reflection, $filePath, $fileModTime),
+                        ...$this->extractClassAttributes($reflection, $realFilePath, $fileModTime),
+                        ...$this->extractMethodAttributes($reflection, $realFilePath, $fileModTime),
+                        ...$this->extractPropertyAttributes($reflection, $realFilePath, $fileModTime),
+                        ...$this->extractParameterAttributes($reflection, $realFilePath, $fileModTime),
+                        ...$this->extractConstantAttributes($reflection, $realFilePath, $fileModTime),
                     ];
                 } catch (Throwable $e) {
                     // Skip classes that can't be reflected
@@ -375,7 +383,7 @@ class AttributeParser
      * Uses class diffing when file is not yet loaded, falls back to
      * iterating declared classes when file was already included.
      *
-     * @param string $filePath File path to get classes from
+     * @param string $filePath File path to get classes from (should be normalized with realpath)
      * @return array<string> Class names from the file
      */
     private function getClassesFromFile(string $filePath): array
@@ -392,12 +400,20 @@ class AttributeParser
         }
 
         // Fallback: file already loaded, find classes by checking their file
+        // Normalize target path once for comparison
+        $normalizedFilePath = PathNormalizer::normalize($filePath);
+
         $fileClasses = [];
         foreach (get_declared_classes() as $className) {
             try {
                 $reflection = new ReflectionClass($className);
-                if ($reflection->getFileName() === $filePath) {
-                    $fileClasses[] = $className;
+                $reflectionFile = $reflection->getFileName();
+                // Normalize reflection file path for cross-platform comparison
+                if ($reflectionFile !== false) {
+                    $normalizedReflectionFile = PathNormalizer::normalize($reflectionFile);
+                    if ($normalizedReflectionFile === $normalizedFilePath) {
+                        $fileClasses[] = $className;
+                    }
                 }
             } catch (Throwable) {
                 continue;

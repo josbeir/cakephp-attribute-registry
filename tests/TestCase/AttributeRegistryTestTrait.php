@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
+use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\Service\PluginPathResolver;
 
@@ -37,14 +37,24 @@ trait AttributeRegistryTestTrait
     }
 
     /**
-     * Create a new AttributeCache instance.
+     * Create a new CompiledCache instance.
      *
-     * @param string $cacheKey Cache configuration key
+     * @param string $cachePath Cache directory path (relative paths will be placed in TMP/cache)
      * @param bool $enabled Whether caching is enabled
      */
-    protected function createCache(string $cacheKey, bool $enabled = false): AttributeCache
+    protected function createCache(string $cachePath, bool $enabled = false): CompiledCache
     {
-        return new AttributeCache($cacheKey, $enabled);
+        // Convert relative paths to absolute paths under TMP/cache
+        // Check for Unix absolute paths (/), Windows drive letters (C:\), and UNC paths (\\server\share)
+        $isAbsolute = str_starts_with($cachePath, '/') ||
+                      str_contains($cachePath, ':\\') ||
+                      str_starts_with($cachePath, '\\\\');
+
+        if (!$isAbsolute) {
+            $cachePath = CACHE . $cachePath;
+        }
+
+        return new CompiledCache($cachePath, $enabled);
     }
 
     /**
@@ -69,17 +79,17 @@ trait AttributeRegistryTestTrait
     /**
      * Create a new AttributeRegistry instance with default test configuration.
      *
-     * @param string $cacheKey Cache configuration key
+     * @param string $cachePath Cache directory path
      * @param bool $cacheEnabled Whether caching is enabled
      * @param array<string, mixed> $scannerConfig Scanner configuration options
      */
     protected function createRegistry(
-        string $cacheKey,
+        string $cachePath,
         bool $cacheEnabled = false,
         array $scannerConfig = [],
     ): AttributeRegistry {
         $scanner = $this->createScanner(config: $scannerConfig);
-        $cache = $this->createCache($cacheKey, $cacheEnabled);
+        $cache = $this->createCache($cachePath, $cacheEnabled);
 
         return new AttributeRegistry($scanner, $cache);
     }
@@ -90,12 +100,12 @@ trait AttributeRegistryTestTrait
      * This is useful for integration tests that need to discover attributes
      * from loaded plugins (including local plugins).
      *
-     * @param string $cacheKey Cache configuration key
+     * @param string $cachePath Cache directory path
      * @param bool $cacheEnabled Whether caching is enabled
      * @param array<string, mixed> $scannerConfig Scanner configuration options
      */
     protected function createRegistryWithPlugins(
-        string $cacheKey,
+        string $cachePath,
         bool $cacheEnabled = false,
         array $scannerConfig = [],
     ): AttributeRegistry {
@@ -119,7 +129,7 @@ trait AttributeRegistryTestTrait
             $pathResolver,
             $scannerConfig + $defaultConfig,
         );
-        $cache = $this->createCache($cacheKey, $cacheEnabled);
+        $cache = $this->createCache($cachePath, $cacheEnabled);
 
         return new AttributeRegistry($scanner, $cache);
     }

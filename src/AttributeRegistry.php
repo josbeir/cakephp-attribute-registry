@@ -5,12 +5,11 @@ namespace AttributeRegistry;
 
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Service\AttributeCache;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
+use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\Service\PluginPathResolver;
-use AttributeRegistry\ValueObject\AttributeInfo;
 use Cake\Core\Configure;
 
 /**
@@ -42,11 +41,11 @@ class AttributeRegistry
 
     /**
      * @param \AttributeRegistry\Service\AttributeScanner $scanner Scanner service
-     * @param \AttributeRegistry\Service\AttributeCache $cache Cache service
+     * @param \AttributeRegistry\Service\CompiledCache $cache Cache service
      */
     public function __construct(
         private readonly AttributeScanner $scanner,
-        private readonly AttributeCache $cache,
+        private readonly CompiledCache $cache,
     ) {
     }
 
@@ -92,8 +91,11 @@ class AttributeRegistry
             fn(): array => (new PluginPathResolver())->getEnabledPluginPaths(),
         );
 
-        $cache = new AttributeCache(
-            (string)($cacheConfig['config'] ?? 'default'),
+        // Determine cache path from config
+        $cachePath = (string)($cacheConfig['path'] ?? CACHE . 'attribute_registry' . DS);
+
+        $cache = new CompiledCache(
+            $cachePath,
             (bool)($cacheConfig['enabled'] ?? true),
         );
         $parser = new AttributeParser(
@@ -142,10 +144,10 @@ class AttributeRegistry
             return new AttributeCollection($this->discoveredAttributes);
         }
 
-        /** @var array<array<string, mixed>>|null $cached */
+        /** @var array<\AttributeRegistry\ValueObject\AttributeInfo>|null $cached */
         $cached = $this->cache->get(self::REGISTRY_CACHE_KEY_ALL);
         if ($cached !== null) {
-            $this->discoveredAttributes = $this->hydrateFromCache($cached);
+            $this->discoveredAttributes = $cached;
 
             return new AttributeCollection($this->discoveredAttributes);
         }
@@ -155,7 +157,7 @@ class AttributeRegistry
             $attributes[] = $attribute;
         }
 
-        $this->cache->set(self::REGISTRY_CACHE_KEY_ALL, $this->serializeForCache($attributes));
+        $this->cache->set(self::REGISTRY_CACHE_KEY_ALL, $attributes);
         $this->discoveredAttributes = $attributes;
 
         return new AttributeCollection($attributes);
@@ -242,33 +244,5 @@ class AttributeRegistry
         $this->discover();
 
         return true;
-    }
-
-    /**
-     * Serialize attributes for cache storage.
-     *
-     * @param array<\AttributeRegistry\ValueObject\AttributeInfo> $attributes Attributes to serialize
-     * @return array<array<string, mixed>>
-     */
-    private function serializeForCache(array $attributes): array
-    {
-        return array_map(
-            fn(AttributeInfo $attr): array => $attr->toArray(),
-            $attributes,
-        );
-    }
-
-    /**
-     * Hydrate attributes from cached data.
-     *
-     * @param array<array<string, mixed>> $cached Cached attribute data
-     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
-     */
-    private function hydrateFromCache(array $cached): array
-    {
-        return array_map(
-            fn(array $data): AttributeInfo => AttributeInfo::fromArray($data),
-            $cached,
-        );
     }
 }

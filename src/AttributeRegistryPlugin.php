@@ -6,8 +6,6 @@ namespace AttributeRegistry;
 use AttributeRegistry\Command\AttributeDiscoverCommand;
 use AttributeRegistry\Command\AttributeInspectCommand;
 use AttributeRegistry\Command\AttributeListCommand;
-use Cake\Cache\Cache;
-use Cake\Cache\Engine\FileEngine;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
@@ -30,34 +28,12 @@ class AttributeRegistryPlugin extends BasePlugin
     {
         parent::bootstrap($app);
 
-        $configFile = $this->getConfigPath() . 'app_attribute_registry.php';
+        $configFile = $this->getConfigPath() . 'attribute_registry.php';
         if (file_exists($configFile)) {
-            Configure::load('AttributeRegistry.app_attribute_registry');
+            Configure::load('AttributeRegistry.attribute_registry');
         }
 
-        $this->registerCacheConfig();
         $this->registerDebugKitPanel();
-    }
-
-    /**
-     * Register the attribute_registry cache configuration.
-     *
-     * Uses CACHE_ATTRIBUTE_REGISTRY_URL env var if set,
-     * otherwise uses a file-based cache with long duration.
-     */
-    private function registerCacheConfig(): void
-    {
-        if (Cache::getConfig('attribute_registry') !== null) {
-            return;
-        }
-
-        Cache::setConfig('attribute_registry', [
-            'className' => FileEngine::class,
-            'path' => CACHE . 'attribute_registry' . DS,
-            'duration' => '+1 month',
-            'prefix' => 'attr_',
-            'url' => env('CACHE_ATTRIBUTE_REGISTRY_URL'),
-        ]);
     }
 
     /**

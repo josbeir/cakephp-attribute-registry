@@ -146,6 +146,7 @@ class PluginPathResolverTest extends TestCase
                 break;
             }
         }
+
         $this->assertTrue($hasTestPlugin, 'TestLocalPlugin should be in paths');
 
         // Note: The packagePath branch (lines 43-44) is covered when:
@@ -169,15 +170,13 @@ class PluginPathResolverTest extends TestCase
 
         // Check each plugin and verify unloaded ones aren't in paths
         foreach ($allPlugins as $name => $config) {
-            if (($config['isLoaded'] ?? false) !== true) {
-                // If it has a packagePath, verify it's NOT in our paths
-                if (isset($config['packagePath'])) {
-                    $this->assertNotContains(
-                        $config['packagePath'],
-                        $paths,
-                        "Unloaded plugin '$name' should not be in paths",
-                    );
-                }
+            // If it has a packagePath, verify it's NOT in our paths
+            if (($config['isLoaded'] ?? false) !== true && isset($config['packagePath'])) {
+                $this->assertNotContains(
+                    $config['packagePath'],
+                    $paths,
+                    sprintf("Unloaded plugin '%s' should not be in paths", $name),
+                );
             }
         }
 

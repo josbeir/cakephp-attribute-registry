@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Service;
 
+use AttributeRegistry\Utility\PathNormalizer;
 use Closure;
 use Generator;
 use RecursiveDirectoryIterator;
@@ -78,8 +79,11 @@ class PathResolver
     private function resolvePatternsForPath(string $basePath, array $globPatterns): Generator
     {
         foreach ($globPatterns as $pattern) {
+            // Ensure pattern uses forward slashes for glob compatibility on all platforms
+            $pattern = PathNormalizer::toUnixStyle($pattern);
+
             $fullPattern = rtrim($basePath, DIRECTORY_SEPARATOR) .
-                DIRECTORY_SEPARATOR . ltrim($pattern, DIRECTORY_SEPARATOR);
+                DIRECTORY_SEPARATOR . ltrim($pattern, '/');
             foreach ($this->expandGlobPattern($fullPattern) as $path) {
                 yield $path;
             }
@@ -97,8 +101,13 @@ class PathResolver
         if (strpos($pattern, '**') !== false) {
             yield from $this->expandRecursivePattern($pattern);
         } else {
+            // Convert to forward slashes for glob on all platforms
+            $pattern = PathNormalizer::toUnixStyle($pattern);
             $files = glob($pattern, GLOB_BRACE | GLOB_NOSORT) ?: [];
-            yield from $files;
+            foreach ($files as $file) {
+                // Normalize returned paths to platform separator
+                yield PathNormalizer::normalize($file);
+            }
         }
     }
 
@@ -111,8 +120,8 @@ class PathResolver
     private function expandRecursivePattern(string $pattern): Generator
     {
         $parts = explode('**', $pattern, 2);
-        $basePath = rtrim($parts[0], DIRECTORY_SEPARATOR);
-        $suffix = isset($parts[1]) ? ltrim($parts[1], DIRECTORY_SEPARATOR) : '';
+        $basePath = rtrim($parts[0], '/\\');
+        $suffix = isset($parts[1]) ? ltrim($parts[1], '/\\') : '';
 
         if (!is_dir($basePath)) {
             return;
@@ -125,8 +134,10 @@ class PathResolver
 
         foreach ($iterator as $file) {
             $filePath = $file->getPathname();
-            if (empty($suffix) || fnmatch('*' . $suffix, basename($filePath))) {
-                yield $filePath;
+            // Normalize path separators for consistent comparison
+            $normalizedPath = PathNormalizer::normalize($filePath);
+            if (empty($suffix) || fnmatch('*' . $suffix, basename($normalizedPath))) {
+                yield $normalizedPath;
             }
         }
     }
