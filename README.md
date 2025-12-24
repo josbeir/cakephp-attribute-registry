@@ -16,6 +16,11 @@ A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attribute
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
+    - [Configuration Options](#configuration-options)
+    - [Disabling Cache](#disabling-cache)
+    - [Smart Cache Validation](#smart-cache-validation)
+    - [Cache Configuration](#cache-configuration)
+    - [Attribute Argument Requirements](#attribute-argument-requirements)
 - [Usage](#usage)
     - [Accessing the AttributeRegistry](#accessing-the-attributeregistry)
         - [Option 1: Singleton](#option-1-singleton)
@@ -102,6 +107,10 @@ return [
             'enabled' => true,
             // Cache directory (defaults to CACHE . 'attribute_registry' . DS)
             'path' => CACHE . 'attribute_registry' . DS,
+            // Validate file hashes on cache retrieval (default: false)
+            // When enabled, cached entries are validated against file content changes
+            // Set to Configure::read('debug') to enable in debug mode only
+            'validateFiles' => false,
         ],
         'scanner' => [
             // Glob patterns for files to scan (relative to base paths)
@@ -141,6 +150,38 @@ You can disable caching for development purposes by setting `cache.enabled` to `
 > [!WARNING]
 > Disabling cache will cause attributes to be re-discovered on every request, which may impact performance. Only use this for development.
 
+### Smart Cache Validation
+
+Instead of disabling the cache entirely, you can enable **file hash validation** to automatically invalidate stale cache entries when files change:
+
+```php
+use Cake\Core\Configure;
+
+'AttributeRegistry' => [
+    'cache' => [
+        'enabled' => true,
+        // Auto-enable validation in debug mode
+        'validateFiles' => Configure::read('debug', false),
+    ],
+],
+```
+
+When `validateFiles` is enabled:
+- ✅ **Cache remains active** - Fast performance
+- ✅ **Auto-detects changes** - Validates file content hashes (xxh3) on cache load
+- ✅ **Granular invalidation** - Only rebuilds when cached files are modified
+
+> [!IMPORTANT]
+> **Limitation:** This only validates **existing cached entries**. When you add **new attributes** to your codebase, you still need to manually refresh the cache:
+> ```bash
+> bin/cake attribute discover
+> # or in code:
+> $registry->clearCache();
+> ```
+
+> [!TIP]
+> This is the recommended approach for development - you get cache performance benefits and automatic detection of changes to existing attributes, while only needing manual cache clearing when adding new ones.
+
 ### Cache Configuration
 
 The plugin uses **compiled cache files** for zero-cost attribute caching. Discovered attributes are stored as pre-compiled PHP files with direct object instantiation, leveraging OPcache for maximum performance.
@@ -169,6 +210,45 @@ The plugin uses **compiled cache files** for zero-cost attribute caching. Discov
     'disableCacheClearListener' => true,
 ],
 ```
+
+### Attribute Argument Requirements
+
+The compiled cache uses `var_export()` to serialize attribute arguments. Most PHP types work seamlessly:
+
+**Supported Types** (no special handling needed):
+- Scalars: `string`, `int`, `float`, `bool`, `null`
+- Arrays of supported types
+- Enums (PHP 8.1+, natively supported)
+
+**Object Arguments** require `__set_state()` implementation:
+
+```php
+class MyArgument
+{
+    public function __construct(
+        public string $value,
+    ) {}
+
+    // Required for cache serialization
+    public static function __set_state(array $data): self
+    {
+        return new self(
+            value: $data['value'],
+        );
+    }
+}
+
+#[Attribute]
+class MyAttribute
+{
+    public function __construct(
+        public MyArgument $arg, // Object argument - needs __set_state()
+    ) {}
+}
+```
+
+> [!TIP]
+> If caching fails because an object lacks `__set_state()`, an error will be logged at `logs/error.log` and the attribute will be skipped from the cache.
 
 ## Usage
 

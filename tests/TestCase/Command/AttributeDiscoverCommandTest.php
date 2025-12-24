@@ -170,7 +170,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->command->execute($args, $this->io);
 
         // Get initial cache state
-        $initialAttributes = $this->registry->discover();
+        $this->registry->discover();
 
         // Execute again with --no-clear-cache
         $this->out = new StubConsoleOutput();

@@ -415,6 +415,11 @@ class CompiledCacheTest extends TestCase
     public function testFileHashIsStoredInCache(): void
     {
         $testFile = __FILE__;
+        $fileModTime = filemtime($testFile);
+        $this->assertNotFalse($fileModTime);
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+
         $attr = new AttributeInfo(
             className: 'App\\Controller\\TestController',
             attributeName: 'App\\Route',
@@ -425,13 +430,14 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileModTime: filemtime($testFile),
-            fileHash: hash('xxh3', file_get_contents($testFile)),
+            fileModTime: $fileModTime,
+            fileHash: hash('xxh3', $fileContent),
         );
 
         $this->cache->set('test', [$attr]);
         $loaded = $this->cache->get('test');
 
+        $this->assertIsArray($loaded);
         $this->assertNotEmpty($loaded[0]->fileHash);
         $this->assertEquals($attr->fileHash, $loaded[0]->fileHash);
     }
@@ -457,7 +463,12 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $originalHash = hash('xxh3', file_get_contents($testFile));
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+        $originalHash = hash('xxh3', $fileContent);
+
+        $fileModTime = filemtime($testFile);
+        $this->assertNotFalse($fileModTime);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -469,7 +480,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileModTime: filemtime($testFile),
+            fileModTime: $fileModTime,
             fileHash: $originalHash,
         );
 
@@ -479,6 +490,7 @@ class CompiledCacheTest extends TestCase
 
         // Verify original is cached
         $loaded = $cache->get('test');
+        $this->assertIsArray($loaded);
         $this->assertCount(1, $loaded);
 
         // Modify the file content
@@ -497,7 +509,12 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source2.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $originalHash = hash('xxh3', file_get_contents($testFile));
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+        $originalHash = hash('xxh3', $fileContent);
+
+        $fileModTime = filemtime($testFile);
+        $this->assertNotFalse($fileModTime);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -509,7 +526,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileModTime: filemtime($testFile),
+            fileModTime: $fileModTime,
             fileHash: $originalHash,
         );
 
@@ -522,7 +539,7 @@ class CompiledCacheTest extends TestCase
 
         // Get cache again - should still return cached value
         $reloaded = $cache->get('test');
-        $this->assertNotNull($reloaded);
+        $this->assertIsArray($reloaded);
         $this->assertCount(1, $reloaded);
     }
 
@@ -531,6 +548,9 @@ class CompiledCacheTest extends TestCase
      */
     public function testBackwardCompatibilityWithoutFileHash(): void
     {
+        $fileModTime = filemtime(__FILE__);
+        $this->assertNotFalse($fileModTime);
+
         $attr = new AttributeInfo(
             className: 'App\\Controller\\TestController',
             attributeName: 'App\\Route',
@@ -541,15 +561,17 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileModTime: filemtime(__FILE__),
+            fileModTime: $fileModTime,
             fileHash: '', // Empty hash for backward compatibility
         );
 
         $cache = new CompiledCache($this->tempPath, true, true);
         $cache->set('test', [$attr]);
+
         $loaded = $cache->get('test');
 
         // Should not filter entries without hash
+        $this->assertIsArray($loaded);
         $this->assertCount(1, $loaded);
     }
 }

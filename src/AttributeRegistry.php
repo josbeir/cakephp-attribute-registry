@@ -97,6 +97,7 @@ class AttributeRegistry
         $cache = new CompiledCache(
             $cachePath,
             (bool)($cacheConfig['enabled'] ?? true),
+            (bool)($cacheConfig['validateFiles'] ?? false),
         );
         $parser = new AttributeParser(
             (array)($scannerConfig['exclude_attributes'] ?? []),
