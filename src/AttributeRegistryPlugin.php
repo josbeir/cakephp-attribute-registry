@@ -125,7 +125,7 @@ class AttributeRegistryPlugin extends BasePlugin
                 if ($command instanceof CacheClearallCommand) {
                     $command->executeCommand(
                         AttributeDiscoverCommand::class,
-                        ['no-discover' => true],
+                        ['--no-discover'],
                     );
                 }
             });
