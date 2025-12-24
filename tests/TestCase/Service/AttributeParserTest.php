@@ -25,7 +25,9 @@ class AttributeParserTest extends TestCase
     {
         parent::setUp();
         $this->parser = new AttributeParser();
-        $this->testFilePath = dirname(__DIR__, 2) . '/data/TestController.php';
+        // Normalize path with realpath to match what AttributeParser returns
+        $testFilePath = dirname(__DIR__, 2) . '/data/TestController.php';
+        $this->testFilePath = realpath($testFilePath) ?: $testFilePath;
 
         // Load the test attributes first
         require_once dirname(__DIR__, 2) . '/data/TestAttributes.php';

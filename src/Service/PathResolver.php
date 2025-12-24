@@ -78,11 +78,11 @@ class PathResolver
     private function resolvePatternsForPath(string $basePath, array $globPatterns): Generator
     {
         foreach ($globPatterns as $pattern) {
-            // Normalize pattern to use platform's directory separator
-            $normalizedPattern = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $pattern);
+            // Ensure pattern uses forward slashes for glob compatibility on all platforms
+            $pattern = str_replace('\\', '/', $pattern);
 
             $fullPattern = rtrim($basePath, DIRECTORY_SEPARATOR) .
-                DIRECTORY_SEPARATOR . ltrim($normalizedPattern, DIRECTORY_SEPARATOR);
+                DIRECTORY_SEPARATOR . ltrim($pattern, '/');
             foreach ($this->expandGlobPattern($fullPattern) as $path) {
                 yield $path;
             }
@@ -100,8 +100,13 @@ class PathResolver
         if (strpos($pattern, '**') !== false) {
             yield from $this->expandRecursivePattern($pattern);
         } else {
+            // Convert to forward slashes for glob on all platforms
+            $pattern = str_replace('\\', '/', $pattern);
             $files = glob($pattern, GLOB_BRACE | GLOB_NOSORT) ?: [];
-            yield from $files;
+            foreach ($files as $file) {
+                // Normalize returned paths to platform separator
+                yield str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file);
+            }
         }
     }
 
@@ -114,8 +119,8 @@ class PathResolver
     private function expandRecursivePattern(string $pattern): Generator
     {
         $parts = explode('**', $pattern, 2);
-        $basePath = rtrim($parts[0], DIRECTORY_SEPARATOR);
-        $suffix = isset($parts[1]) ? ltrim($parts[1], DIRECTORY_SEPARATOR) : '';
+        $basePath = rtrim($parts[0], '/\\');
+        $suffix = isset($parts[1]) ? ltrim($parts[1], '/\\') : '';
 
         if (!is_dir($basePath)) {
             return;
