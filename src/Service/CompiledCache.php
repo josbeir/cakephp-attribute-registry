@@ -10,6 +10,7 @@ use Cake\Log\Log;
 use Closure;
 use RuntimeException;
 use Throwable;
+use UnitEnum;
 
 /**
  * Compiled cache service for zero-cost attribute caching.
@@ -156,6 +157,11 @@ class CompiledCache
             return true; // Nothing to delete is success
         }
 
+        // Invalidate OPcache before deleting
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($filePath, true); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+        }
+
         return @unlink($filePath); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
     }
 
@@ -183,6 +189,11 @@ class CompiledCache
         }
 
         foreach ($files as $file) {
+            // Invalidate OPcache before deleting
+            if (function_exists('opcache_invalidate')) {
+                @opcache_invalidate($file, true); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
+            }
+
             @unlink($file); // phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged
         }
 
@@ -304,8 +315,21 @@ class CompiledCache
             return $value ? 'true' : 'false';
         }
 
-        if (is_int($value) || is_float($value)) {
+        if (is_int($value)) {
             return (string)$value;
+        }
+
+        if (is_float($value)) {
+            // Handle special float values
+            if (is_infinite($value)) {
+                return $value > 0 ? 'INF' : '-INF';
+            }
+
+            if (is_nan($value)) {
+                return 'NAN';
+            }
+
+            return var_export($value, true);
         }
 
         if (is_array($value)) {
@@ -313,7 +337,21 @@ class CompiledCache
         }
 
         if (is_object($value)) {
-            // For objects, use var_export which will create an object from __set_state
+            // Enums are natively supported by var_export (PHP 8.1+)
+            if ($value instanceof UnitEnum) {
+                return var_export($value, true);
+            }
+
+            // For other objects, only allow those that can be reconstructed via __set_state
+            if (!method_exists($value, '__set_state')) {
+                throw new RuntimeException(
+                    sprintf(
+                        'Unsupported object type for export: %s must implement __set_state().',
+                        get_debug_type($value),
+                    ),
+                );
+            }
+
             return var_export($value, true);
         }
 
@@ -411,8 +449,10 @@ PHP;
                 return false;
             }
 
-            // Set permissions
-            chmod($tempFile, 0644);
+            // Set permissions - log warning if it fails but continue
+            if (!chmod($tempFile, 0644)) {
+                Log::warning('Failed to chmod cache file: ' . $tempFile);
+            }
 
             // Atomic rename
             if (!rename($tempFile, $filePath)) {
@@ -442,10 +482,12 @@ PHP;
      */
     private function getCacheFilePath(string $key): string
     {
-        // Sanitize key for filesystem
+        // Sanitize key for filesystem (for readability)
         $safeKey = preg_replace('/[^a-z0-9_-]/i', '_', $key);
+        // Append a hash of the original key to avoid collisions between different keys
+        $hash = hash('xxh3', $key);
 
-        return $this->cachePath . $safeKey . '.php';
+        return $this->cachePath . $safeKey . '_' . $hash . '.php';
     }
 
     /**

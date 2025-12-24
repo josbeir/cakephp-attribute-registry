@@ -67,6 +67,16 @@ readonly class AttributeInfo
     }
 
     /**
+     * Restore object state for var_export() support.
+     *
+     * @param array<string, mixed> $data State data
+     */
+    public static function __set_state(array $data): self
+    {
+        return self::fromArray($data);
+    }
+
+    /**
      * Instantiate the actual attribute object.
      *
      * Returns the attribute instance with its arguments applied,

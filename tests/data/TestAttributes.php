@@ -104,6 +104,19 @@ class TestAttributeArgument
         public ?int $count = null,
     ) {
     }
+
+    /**
+     * Restore object state for var_export() support.
+     *
+     * @param array<string, mixed> $data State data
+     */
+    public static function __set_state(array $data): self
+    {
+        return new self(
+            value: $data['value'],
+            count: $data['count'] ?? null,
+        );
+    }
 }
 
 /**

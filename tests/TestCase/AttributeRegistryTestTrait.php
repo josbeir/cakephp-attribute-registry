@@ -45,7 +45,12 @@ trait AttributeRegistryTestTrait
     protected function createCache(string $cachePath, bool $enabled = false): CompiledCache
     {
         // Convert relative paths to absolute paths under TMP/cache
-        if (!str_starts_with($cachePath, '/') && !str_contains($cachePath, ':\\')) {
+        // Check for Unix absolute paths (/), Windows drive letters (C:\), and UNC paths (\\server\share)
+        $isAbsolute = str_starts_with($cachePath, '/') ||
+                      str_contains($cachePath, ':\\') ||
+                      str_starts_with($cachePath, '\\\\');
+
+        if (!$isAbsolute) {
             $cachePath = CACHE . $cachePath;
         }
 

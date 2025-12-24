@@ -48,4 +48,18 @@ readonly class AttributeTarget
             parentClass: isset($data['parentClass']) ? (string)$data['parentClass'] : null,
         );
     }
+
+    /**
+     * Restore object state for var_export() support.
+     *
+     * @param array<string, mixed> $data State data
+     */
+    public static function __set_state(array $data): self
+    {
+        return new self(
+            type: $data['type'],
+            targetName: $data['targetName'],
+            parentClass: $data['parentClass'] ?? null,
+        );
+    }
 }

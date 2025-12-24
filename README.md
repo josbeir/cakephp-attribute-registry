@@ -380,7 +380,7 @@ if ($registry->isCacheEnabled()) {
 }
 ```
 
-The cache automatically invalidates when source files are modified (tracked via `filemtime`).
+The cache records file modification timestamps (`filemtime`) for discovered attributes, which you can use to detect when source files have changed and decide when to rebuild or clear the cache.
 
 ### Working with AttributeInfo
 

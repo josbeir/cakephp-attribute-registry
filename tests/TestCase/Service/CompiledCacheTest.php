@@ -8,6 +8,7 @@ use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\TestSuite\TestCase;
+use stdClass;
 
 class CompiledCacheTest extends TestCase
 {
@@ -278,7 +279,8 @@ class CompiledCacheTest extends TestCase
         $attr = $this->createTestAttribute();
         $this->cache->set('test', [$attr]);
 
-        $filePath = $this->tempPath . 'test.php';
+        // Cache filename now includes hash to prevent collisions
+        $filePath = $this->tempPath . 'test_9ec9f7918d7dfc40.php';
         $this->assertFileExists($filePath);
 
         // Read the file and check for valid PHP
@@ -295,7 +297,8 @@ class CompiledCacheTest extends TestCase
         $attr = $this->createTestAttribute();
         $this->cache->set('test', [$attr]);
 
-        $filePath = $this->tempPath . 'test.php';
+        // Cache filename now includes hash to prevent collisions
+        $filePath = $this->tempPath . 'test_9ec9f7918d7dfc40.php';
         $content = file_get_contents($filePath);
         $this->assertNotFalse($content);
 
@@ -337,5 +340,72 @@ class CompiledCacheTest extends TestCase
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
         $this->assertEquals('Different\\Class', $result[0]->className);
+    }
+
+    /**
+     * Test that Closures in attribute arguments are rejected
+     */
+    public function testSetRejectsClosuresInArguments(): void
+    {
+        $target = new AttributeTarget(AttributeTargetType::CLASS_TYPE, 'Test\\MyClass');
+        $attr = new AttributeInfo(
+            className: 'Test\\MyClass',
+            attributeName: 'Test\\MyAttribute',
+            arguments: ['callback' => fn(): string => 'test'],
+            filePath: '/test/file.php',
+            lineNumber: 10,
+            target: $target,
+            fileModTime: 1703347200,
+        );
+
+        $result = $this->cache->set('test', [$attr]);
+        $this->assertFalse($result, 'set() should return false when attributes contain closures');
+    }
+
+    /**
+     * Test that resources in attribute arguments are rejected
+     */
+    public function testSetRejectsResourcesInArguments(): void
+    {
+        $resource = fopen('php://memory', 'r');
+        try {
+            $target = new AttributeTarget(AttributeTargetType::CLASS_TYPE, 'Test\\MyClass');
+            $attr = new AttributeInfo(
+                className: 'Test\\MyClass',
+                attributeName: 'Test\\MyAttribute',
+                arguments: ['handle' => $resource],
+                filePath: '/test/file.php',
+                lineNumber: 10,
+                target: $target,
+                fileModTime: 1703347200,
+            );
+
+            $result = $this->cache->set('test', [$attr]);
+            $this->assertFalse($result, 'set() should return false when attributes contain resources');
+        } finally {
+            if (is_resource($resource)) {
+                fclose($resource);
+            }
+        }
+    }
+
+    /**
+     * Test that objects without __set_state are rejected
+     */
+    public function testSetRejectsObjectsWithoutSetState(): void
+    {
+        $target = new AttributeTarget(AttributeTargetType::CLASS_TYPE, 'Test\\MyClass');
+        $attr = new AttributeInfo(
+            className: 'Test\\MyClass',
+            attributeName: 'Test\\MyAttribute',
+            arguments: ['obj' => new stdClass()],
+            filePath: '/test/file.php',
+            lineNumber: 10,
+            target: $target,
+            fileModTime: 1703347200,
+        );
+
+        $result = $this->cache->set('test', [$attr]);
+        $this->assertFalse($result, 'set() should return false when attributes contain objects without __set_state');
     }
 }
