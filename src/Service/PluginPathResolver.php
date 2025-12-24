@@ -33,21 +33,23 @@ class PluginPathResolver
         $allPlugins = PluginConfig::getAppConfig();
         $pluginCollection = Plugin::getCollection();
 
-        foreach ($allPlugins as $name => $config) {
+        foreach ($allPlugins as $config) {
             if (($config['isLoaded'] ?? false) !== true) {
                 continue;
             }
 
-            // First try to use packagePath from config
+            // Use packagePath from config if available
             if (isset($config['packagePath'])) {
                 $paths[] = $config['packagePath'];
-                continue;
             }
+        }
 
-            // Fallback for local plugins without packagePath:
-            // Try to get path from loaded plugin instance
-            if ($pluginCollection->has($name)) {
-                $paths[] = $pluginCollection->get($name)->getPath();
+        // Also check plugin collection for any plugins not in config
+        // This ensures we don't miss plugins loaded directly via Plugin::getCollection()->add()
+        foreach ($pluginCollection as $plugin) {
+            $pluginPath = $plugin->getPath();
+            if (!in_array($pluginPath, $paths, true)) {
+                $paths[] = $pluginPath;
             }
         }
 
