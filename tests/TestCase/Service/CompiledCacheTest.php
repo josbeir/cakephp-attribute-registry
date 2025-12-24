@@ -408,4 +408,148 @@ class CompiledCacheTest extends TestCase
         $result = $this->cache->set('test', [$attr]);
         $this->assertFalse($result, 'set() should return false when attributes contain objects without __set_state');
     }
+
+    /**
+     * RED TEST: Test that fileHash is stored when provided
+     */
+    public function testFileHashIsStoredInCache(): void
+    {
+        $testFile = __FILE__;
+        $attr = new AttributeInfo(
+            className: 'App\\Controller\\TestController',
+            attributeName: 'App\\Route',
+            arguments: ['path' => '/test'],
+            filePath: $testFile,
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestController',
+            ),
+            fileModTime: filemtime($testFile),
+            fileHash: hash('xxh3', file_get_contents($testFile)),
+        );
+
+        $this->cache->set('test', [$attr]);
+        $loaded = $this->cache->get('test');
+
+        $this->assertNotEmpty($loaded[0]->fileHash);
+        $this->assertEquals($attr->fileHash, $loaded[0]->fileHash);
+    }
+
+    /**
+     * RED TEST: Test that cache validation can be enabled
+     */
+    public function testCacheValidationCanBeConfigured(): void
+    {
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $this->assertTrue($cache->isValidationEnabled());
+
+        $cache = new CompiledCache($this->tempPath, true, false);
+        $this->assertFalse($cache->isValidationEnabled());
+    }
+
+    /**
+     * RED TEST: Test that stale entries are filtered when validation is enabled
+     */
+    public function testStaleEntriesAreFilteredWithValidation(): void
+    {
+        // Create a temporary file to test with
+        $testFile = $this->tempPath . 'test_source.php';
+        file_put_contents($testFile, '<?php class TestClass {}');
+
+        $originalHash = hash('xxh3', file_get_contents($testFile));
+
+        $attr = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileModTime: filemtime($testFile),
+            fileHash: $originalHash,
+        );
+
+        // Cache with validation enabled
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr]);
+
+        // Verify original is cached
+        $loaded = $cache->get('test');
+        $this->assertCount(1, $loaded);
+
+        // Modify the file content
+        file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
+
+        // Get cache again - should return null because hash changed
+        $reloaded = $cache->get('test');
+        $this->assertNull($reloaded);
+    }
+
+    /**
+     * RED TEST: Test that validation is skipped when disabled
+     */
+    public function testValidationSkippedWhenDisabled(): void
+    {
+        $testFile = $this->tempPath . 'test_source2.php';
+        file_put_contents($testFile, '<?php class TestClass {}');
+
+        $originalHash = hash('xxh3', file_get_contents($testFile));
+
+        $attr = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileModTime: filemtime($testFile),
+            fileHash: $originalHash,
+        );
+
+        // Cache with validation DISABLED
+        $cache = new CompiledCache($this->tempPath, true, false);
+        $cache->set('test', [$attr]);
+
+        // Modify the file
+        file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
+
+        // Get cache again - should still return cached value
+        $reloaded = $cache->get('test');
+        $this->assertNotNull($reloaded);
+        $this->assertCount(1, $reloaded);
+    }
+
+    /**
+     * RED TEST: Test backward compatibility with entries without fileHash
+     */
+    public function testBackwardCompatibilityWithoutFileHash(): void
+    {
+        $attr = new AttributeInfo(
+            className: 'App\\Controller\\TestController',
+            attributeName: 'App\\Route',
+            arguments: [],
+            filePath: __FILE__,
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestController',
+            ),
+            fileModTime: filemtime(__FILE__),
+            fileHash: '', // Empty hash for backward compatibility
+        );
+
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr]);
+        $loaded = $cache->get('test');
+
+        // Should not filter entries without hash
+        $this->assertCount(1, $loaded);
+    }
 }
