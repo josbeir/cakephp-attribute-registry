@@ -45,6 +45,17 @@ class AttributeDiscoverCommand extends Command
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser->setDescription(static::getDescription());
+        $parser->addOption('clear-cache', [
+            'short' => 'c',
+            'boolean' => true,
+            'default' => true,
+            'help' => 'Clear the attribute cache before discovering (default: true)',
+        ]);
+        $parser->addOption('no-discover', [
+            'boolean' => true,
+            'default' => false,
+            'help' => 'Only clear cache without discovering attributes',
+        ]);
 
         return $parser;
     }
@@ -58,20 +69,25 @@ class AttributeDiscoverCommand extends Command
             $io->warning('Cache is disabled. Attributes will be re-discovered on every request.');
         }
 
-        $io->out('<info>Clearing attribute cache...</info>');
-        $this->registry->clearCache();
+        if ($args->getOption('clear-cache')) {
+            $io->out('<info>Clearing attribute cache...</info>');
+            $this->registry->clearCache();
+        }
 
-        $io->out('<info>Discovering attributes...</info>');
+        // Only discover if --no-discover is not set
+        if (!$args->getOption('no-discover')) {
+            $io->out('<info>Discovering attributes...</info>');
 
-        $startTime = microtime(true);
-        $attributes = $this->registry->discover();
-        $elapsed = round(microtime(true) - $startTime, 3);
+            $startTime = microtime(true);
+            $attributes = $this->registry->discover();
+            $elapsed = round(microtime(true) - $startTime, 3);
 
-        $io->success(sprintf(
-            'Discovered %d attributes in %ss',
-            count($attributes),
-            $elapsed,
-        ));
+            $io->success(sprintf(
+                'Discovered %d attributes in %ss',
+                count($attributes),
+                $elapsed,
+            ));
+        }
 
         return static::CODE_SUCCESS;
     }

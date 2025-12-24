@@ -162,6 +162,14 @@ The plugin uses **compiled cache files** for zero-cost attribute caching. Discov
 
 **Performance**: Compiled cache eliminates deserialization overhead entirely - loading cached attributes is as fast as requiring a PHP file with predefined objects.
 
+**Automatic Cache Clearing**: When you run `bin/cake cache clear_all`, the AttributeRegistry cache is automatically refreshed via the attribute discovery process. Disable this behavior if needed:
+
+```php
+'AttributeRegistry' => [
+    'disableCacheClearListener' => true,
+],
+```
+
 ## Usage
 
 ### Accessing the AttributeRegistry

@@ -6,12 +6,15 @@ namespace AttributeRegistry;
 use AttributeRegistry\Command\AttributeDiscoverCommand;
 use AttributeRegistry\Command\AttributeInspectCommand;
 use AttributeRegistry\Command\AttributeListCommand;
+use Cake\Command\CacheClearallCommand;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Core\Plugin;
 use Cake\Core\PluginApplicationInterface;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\Routing\RouteBuilder;
 
 /**
@@ -90,5 +93,27 @@ class AttributeRegistryPlugin extends BasePlugin
     public function services(ContainerInterface $container): void
     {
         $container->addServiceProvider(new ServiceProvider());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function events(EventManagerInterface $eventManager): EventManagerInterface
+    {
+        if (!Configure::read('AttributeRegistry.disableCacheClearListener', false)) {
+            $eventManager->on('Command.afterExecute', function (Event $event): void {
+                $command = $event->getSubject();
+
+                // Clear AttributeRegistry cache when cache:clear_all is run
+                if ($command instanceof CacheClearallCommand) {
+                    $command->executeCommand(
+                        AttributeDiscoverCommand::class,
+                        ['clear-cache' => true, 'no-discover' => true],
+                    );
+                }
+            });
+        }
+
+        return $eventManager;
     }
 }

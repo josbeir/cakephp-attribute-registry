@@ -60,6 +60,12 @@ class AttributeDiscoverCommandTest extends TestCase
     {
         $parser = $this->command->getOptionParser();
 
+        // Apply default values for options
+        $defaults = [
+            'clear-cache' => true,
+        ];
+        $options = array_merge($defaults, $options);
+
         return new Arguments(
             $args,
             $options,
@@ -155,5 +161,59 @@ class AttributeDiscoverCommandTest extends TestCase
 
         $output = $this->err->output();
         $this->assertStringNotContainsString('Cache is disabled', $output);
+    }
+
+    public function testDiscoverCommandWithoutClearCacheDoesNotClearCache(): void
+    {
+        // Discover once to populate cache
+        $args = $this->createArgs();
+        $this->command->execute($args, $this->io);
+
+        // Get initial cache state
+        $this->registry->discover();
+
+        // Execute again with --no-clear-cache
+        $this->out = new StubConsoleOutput();
+        $this->err = new StubConsoleOutput();
+        $this->io = new ConsoleIo($this->out, $this->err);
+
+        $args = $this->createArgs([], ['clear-cache' => false]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringNotContainsString('Clearing attribute cache', $output);
+    }
+
+    public function testDiscoverCommandWithClearCacheClears(): void
+    {
+        // Discover once to populate cache
+        $args = $this->createArgs([], ['clear-cache' => true]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringContainsString('Clearing attribute cache', $output);
+    }
+
+    public function testDiscoverCommandWithNoDiscoverSkipsDiscovery(): void
+    {
+        $args = $this->createArgs([], ['clear-cache' => true, 'no-discover' => true]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        // Should clear cache
+        $this->assertStringContainsString('Clearing attribute cache', $output);
+        // Should NOT discover
+        $this->assertStringNotContainsString('Discovering attributes', $output);
+        $this->assertStringNotContainsString('Discovered', $output);
+    }
+
+    public function testDiscoverCommandWithoutNoDiscoverDiscoveryRuns(): void
+    {
+        $args = $this->createArgs([], ['clear-cache' => true, 'no-discover' => false]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringContainsString('Discovering attributes', $output);
+        $this->assertStringContainsString('Discovered', $output);
     }
 }
