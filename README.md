@@ -482,7 +482,6 @@ foreach ($registry->discover() as $attr) {
     echo $attr->className;      // Class containing the attribute
     echo $attr->filePath;       // File where attribute was found
     echo $attr->lineNumber;     // Line number in file
-    echo $attr->fileModTime;    // File modification timestamp
 
     // Attribute arguments
     print_r($attr->arguments);  // Array of constructor arguments

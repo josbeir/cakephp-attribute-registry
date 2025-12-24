@@ -36,7 +36,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 15,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $this->assertEquals('App\Controller\MyController', $attributeInfo->className);
@@ -45,7 +44,6 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals('/app/src/Controller/MyController.php', $attributeInfo->filePath);
         $this->assertEquals(15, $attributeInfo->lineNumber);
         $this->assertEquals($target, $attributeInfo->target);
-        $this->assertEquals(1640995200, $attributeInfo->fileModTime);
     }
 
     public function testAttributeInfoWithEmptyArguments(): void
@@ -63,7 +61,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 25,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $this->assertEmpty($attributeInfo->arguments);
@@ -85,7 +82,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Model/Entity/User.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         // This should not be allowed in PHP 8.2+ readonly objects
@@ -108,7 +104,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $instance = $attributeInfo->getInstance();
@@ -132,7 +127,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 15,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $instance = $attributeInfo->getInstance(TestColumn::class);
@@ -156,7 +150,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/SomeClass.php',
             lineNumber: 5,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $this->expectException(RuntimeException::class);
@@ -178,7 +171,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -200,7 +192,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $this->assertTrue($attributeInfo->isInstanceOf(TestRoute::class));
@@ -222,7 +213,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 20,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $array = $attributeInfo->toArray();
@@ -232,7 +222,6 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals(['path' => '/users'], $array['arguments']);
         $this->assertEquals('/app/src/Controller/MyController.php', $array['filePath']);
         $this->assertEquals(20, $array['lineNumber']);
-        $this->assertEquals(1640995200, $array['fileModTime']);
         $this->assertIsArray($array['target']);
         $this->assertEquals('method', $array['target']['type']);
         $this->assertEquals('index', $array['target']['targetName']);
@@ -252,7 +241,6 @@ class AttributeInfoTest extends TestCase
                 'targetName' => 'view',
                 'parentClass' => 'UserController',
             ],
-            'fileModTime' => 1640995200,
         ];
 
         $attributeInfo = AttributeInfo::fromArray($data);
@@ -262,7 +250,6 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals(['path' => '/users/{id}'], $attributeInfo->arguments);
         $this->assertEquals('/app/src/Controller/UserController.php', $attributeInfo->filePath);
         $this->assertEquals(30, $attributeInfo->lineNumber);
-        $this->assertEquals(1640995200, $attributeInfo->fileModTime);
         $this->assertEquals(AttributeTargetType::METHOD, $attributeInfo->target->type);
         $this->assertEquals('view', $attributeInfo->target->targetName);
         $this->assertEquals('UserController', $attributeInfo->target->parentClass);
@@ -283,7 +270,6 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 25,
             target: $target,
-            fileModTime: 1640995200,
         );
 
         $array = $original->toArray();
@@ -294,7 +280,6 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals($original->arguments, $restored->arguments);
         $this->assertEquals($original->filePath, $restored->filePath);
         $this->assertEquals($original->lineNumber, $restored->lineNumber);
-        $this->assertEquals($original->fileModTime, $restored->fileModTime);
         $this->assertEquals($original->target->type, $restored->target->type);
         $this->assertEquals($original->target->targetName, $restored->target->targetName);
         $this->assertEquals($original->target->parentClass, $restored->target->parentClass);

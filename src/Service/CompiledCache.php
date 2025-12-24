@@ -257,7 +257,6 @@ class CompiledCache
             "%s    filePath: %s,\n" .
             "%s    lineNumber: %d,\n" .
             "%s    target: %s,\n" .
-            "%s    fileModTime: %d,\n" .
             "%s    fileHash: %s,\n" .
             '%s)',
             $indent,
@@ -273,8 +272,6 @@ class CompiledCache
             $attr->lineNumber,
             $indent,
             $this->generateAttributeTarget($attr->target, 2),
-            $indent,
-            $attr->fileModTime,
             $indent,
             $this->exportString($attr->fileHash),
             $indent,
@@ -566,6 +563,9 @@ PHP;
      */
     private function validateCachedData(array $data): ?array
     {
+        // Cache file hashes to avoid redundant reads when multiple attributes come from the same file
+        $fileHashCache = [];
+
         foreach ($data as $attr) {
             // Skip validation for entries without hash (backward compatibility)
             if ($attr->fileHash === '') {
@@ -577,14 +577,22 @@ PHP;
                 return null;
             }
 
-            // Check if file content has changed
-            $currentContent = file_get_contents($attr->filePath);
-            if ($currentContent === false) {
-                return null;
+            // Get hash from cache or compute it
+            if (!isset($fileHashCache[$attr->filePath])) {
+                $currentHash = hash_file('xxh3', $attr->filePath);
+                if ($currentHash === false) {
+                    Log::warning(sprintf(
+                        'Failed to compute hash for file "%s" while validating cached data.',
+                        $attr->filePath,
+                    ));
+
+                    return null;
+                }
+
+                $fileHashCache[$attr->filePath] = $currentHash;
             }
 
-            $currentHash = hash('xxh3', $currentContent);
-            if ($currentHash !== $attr->fileHash) {
+            if ($fileHashCache[$attr->filePath] !== $attr->fileHash) {
                 // File has changed, cache is stale
                 return null;
             }
