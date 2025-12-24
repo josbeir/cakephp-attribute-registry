@@ -30,7 +30,7 @@ class AttributeCollectionTest extends TestCase
                 filePath: '/app/src/Controller/UsersController.php',
                 lineNumber: 10,
                 target: new AttributeTarget(AttributeTargetType::CLASS_TYPE, 'UsersController'),
-                fileModTime: 1000,
+                fileHash: '',
             ),
             new AttributeInfo(
                 className: 'App\\Controller\\UsersController',
@@ -39,7 +39,7 @@ class AttributeCollectionTest extends TestCase
                 filePath: '/app/src/Controller/UsersController.php',
                 lineNumber: 20,
                 target: new AttributeTarget(AttributeTargetType::METHOD, 'view', 'UsersController'),
-                fileModTime: 1000,
+                fileHash: '',
             ),
             new AttributeInfo(
                 className: 'App\\Controller\\Api\\PostsController',
@@ -48,7 +48,7 @@ class AttributeCollectionTest extends TestCase
                 filePath: '/app/src/Controller/Api/PostsController.php',
                 lineNumber: 15,
                 target: new AttributeTarget(AttributeTargetType::METHOD, 'add', 'PostsController'),
-                fileModTime: 1000,
+                fileHash: '',
             ),
             new AttributeInfo(
                 className: 'App\\Model\\Entity\\User',
@@ -57,7 +57,7 @@ class AttributeCollectionTest extends TestCase
                 filePath: '/app/src/Model/Entity/User.php',
                 lineNumber: 12,
                 target: new AttributeTarget(AttributeTargetType::PROPERTY, 'name', 'User'),
-                fileModTime: 1000,
+                fileHash: '',
             ),
             new AttributeInfo(
                 className: 'App\\Service\\UserService',
@@ -66,7 +66,7 @@ class AttributeCollectionTest extends TestCase
                 filePath: '/app/src/Service/UserService.php',
                 lineNumber: 8,
                 target: new AttributeTarget(AttributeTargetType::PARAMETER, 'repository', '__construct'),
-                fileModTime: 1000,
+                fileHash: '',
             ),
         ];
     }

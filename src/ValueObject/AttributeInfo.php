@@ -17,7 +17,7 @@ readonly class AttributeInfo
      * @param string $filePath File path where attribute was found
      * @param int $lineNumber Line number where attribute was found
      * @param \AttributeRegistry\ValueObject\AttributeTarget $target Target information
-     * @param int $fileModTime File modification time
+     * @param string $fileHash File content hash (xxh3) for validation
      */
     public function __construct(
         public string $className,
@@ -26,7 +26,7 @@ readonly class AttributeInfo
         public string $filePath,
         public int $lineNumber,
         public AttributeTarget $target,
-        public int $fileModTime,
+        public string $fileHash = '',
     ) {
     }
 
@@ -44,7 +44,7 @@ readonly class AttributeInfo
             'filePath' => $this->filePath,
             'lineNumber' => $this->lineNumber,
             'target' => $this->target->toArray(),
-            'fileModTime' => $this->fileModTime,
+            'fileHash' => $this->fileHash,
         ];
     }
 
@@ -62,7 +62,7 @@ readonly class AttributeInfo
             filePath: (string)$data['filePath'],
             lineNumber: (int)$data['lineNumber'],
             target: AttributeTarget::fromArray((array)$data['target']),
-            fileModTime: (int)$data['fileModTime'],
+            fileHash: (string)($data['fileHash'] ?? ''),
         );
     }
 

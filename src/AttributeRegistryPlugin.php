@@ -6,6 +6,7 @@ namespace AttributeRegistry;
 use AttributeRegistry\Command\AttributeDiscoverCommand;
 use AttributeRegistry\Command\AttributeInspectCommand;
 use AttributeRegistry\Command\AttributeListCommand;
+use AttributeRegistry\Utility\ConfigMerger;
 use Cake\Command\CacheClearallCommand;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
@@ -31,12 +32,28 @@ class AttributeRegistryPlugin extends BasePlugin
     {
         parent::bootstrap($app);
 
+        $this->loadDefaultConfig();
+        $this->registerDebugKitPanel();
+    }
+
+    /**
+     * Load default plugin configuration without overwriting user settings.
+     *
+     * Only sets configuration values that haven't been explicitly configured by the user.
+     */
+    private function loadDefaultConfig(): void
+    {
         $configFile = $this->getConfigPath() . 'attribute_registry.php';
-        if (file_exists($configFile)) {
-            Configure::load('AttributeRegistry.attribute_registry');
+        if (!file_exists($configFile)) {
+            return;
         }
 
-        $this->registerDebugKitPanel();
+        $defaults = (array)include $configFile;
+        $pluginDefaults = $defaults['AttributeRegistry'] ?? [];
+        $userConfig = (array)Configure::read('AttributeRegistry', []);
+
+        $merged = ConfigMerger::merge($pluginDefaults, $userConfig);
+        Configure::write('AttributeRegistry', $merged);
     }
 
     /**
@@ -108,7 +125,7 @@ class AttributeRegistryPlugin extends BasePlugin
                 if ($command instanceof CacheClearallCommand) {
                     $command->executeCommand(
                         AttributeDiscoverCommand::class,
-                        ['clear-cache' => true, 'no-discover' => true],
+                        ['no-discover' => true],
                     );
                 }
             });

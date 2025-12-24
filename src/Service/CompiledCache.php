@@ -32,10 +32,12 @@ class CompiledCache
      *
      * @param string $cachePath Path to store compiled cache files (will be normalized with trailing separator)
      * @param bool $enabled Whether caching is enabled
+     * @param bool $validateFiles Whether to validate file hashes on cache retrieval (development mode)
      */
     public function __construct(
         string $cachePath,
         private readonly bool $enabled = true,
+        private readonly bool $validateFiles = false,
     ) {
         // Ensure cachePath ends with directory separator
         if ($cachePath !== '' && !str_ends_with($cachePath, DIRECTORY_SEPARATOR)) {
@@ -56,6 +58,16 @@ class CompiledCache
     }
 
     /**
+     * Check if file validation is enabled.
+     *
+     * @return bool Whether file validation is enabled
+     */
+    public function isValidationEnabled(): bool
+    {
+        return $this->validateFiles;
+    }
+
+    /**
      * Get cached data by key.
      *
      * @param string $key Cache key
@@ -67,8 +79,8 @@ class CompiledCache
             return null;
         }
 
-        // Check in-memory cache first
-        if (isset($this->memoryCache[$key])) {
+        // Check in-memory cache first (but skip if validation is enabled)
+        if (!$this->validateFiles && isset($this->memoryCache[$key])) {
             return $this->memoryCache[$key];
         }
 
@@ -81,6 +93,17 @@ class CompiledCache
             $data = require $filePath;
 
             if (is_array($data)) {
+                // Validate file hashes if enabled
+                if ($this->validateFiles && $data !== []) {
+                    $validated = $this->validateCachedData($data);
+                    if ($validated === null) {
+                        // Validation failed, cache is stale
+                        return null;
+                    }
+
+                    $data = $validated;
+                }
+
                 $this->memoryCache[$key] = $data;
 
                 return $data;
@@ -234,7 +257,7 @@ class CompiledCache
             "%s    filePath: %s,\n" .
             "%s    lineNumber: %d,\n" .
             "%s    target: %s,\n" .
-            "%s    fileModTime: %d,\n" .
+            "%s    fileHash: %s,\n" .
             '%s)',
             $indent,
             $indent,
@@ -250,7 +273,7 @@ class CompiledCache
             $indent,
             $this->generateAttributeTarget($attr->target, 2),
             $indent,
-            $attr->fileModTime,
+            $this->exportString($attr->fileHash),
             $indent,
         );
     }
@@ -527,5 +550,54 @@ PHP;
         }
 
         // Allow objects - var_export will handle them
+    }
+
+    /**
+     * Validate cached data by checking file hashes.
+     *
+     * Returns null if any files have changed (cache is stale).
+     * Returns the filtered array if all files are valid or have empty hashes (backward compatibility).
+     *
+     * @param array<\AttributeRegistry\ValueObject\AttributeInfo> $data Cached attribute data
+     * @return array<\AttributeRegistry\ValueObject\AttributeInfo>|null Validated data or null if stale
+     */
+    private function validateCachedData(array $data): ?array
+    {
+        // Cache file hashes to avoid redundant reads when multiple attributes come from the same file
+        $fileHashCache = [];
+
+        foreach ($data as $attr) {
+            // Skip validation for entries without hash (backward compatibility)
+            if ($attr->fileHash === '') {
+                continue;
+            }
+
+            // Check if file still exists
+            if (!file_exists($attr->filePath)) {
+                return null;
+            }
+
+            // Get hash from cache or compute it
+            if (!isset($fileHashCache[$attr->filePath])) {
+                $currentHash = hash_file('xxh3', $attr->filePath);
+                if ($currentHash === false) {
+                    Log::warning(sprintf(
+                        'Failed to compute hash for file "%s" while validating cached data.',
+                        $attr->filePath,
+                    ));
+
+                    return null;
+                }
+
+                $fileHashCache[$attr->filePath] = $currentHash;
+            }
+
+            if ($fileHashCache[$attr->filePath] !== $attr->fileHash) {
+                // File has changed, cache is stale
+                return null;
+            }
+        }
+
+        return $data;
     }
 }

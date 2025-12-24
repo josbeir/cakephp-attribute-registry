@@ -156,4 +156,21 @@ class AttributeTargetTest extends TestCase
             $this->assertEquals($type, $restored->type);
         }
     }
+
+    public function testSetStateUsesFromArray(): void
+    {
+        // Simulate var_export/var_import behavior
+        $state = [
+            'type' => 'method',
+            'targetName' => 'testMethod',
+            'parentClass' => 'TestClass',
+        ];
+
+        $restored = AttributeTarget::__set_state($state);
+
+        $this->assertInstanceOf(AttributeTarget::class, $restored);
+        $this->assertEquals(AttributeTargetType::METHOD, $restored->type);
+        $this->assertEquals('testMethod', $restored->targetName);
+        $this->assertEquals('TestClass', $restored->parentClass);
+    }
 }

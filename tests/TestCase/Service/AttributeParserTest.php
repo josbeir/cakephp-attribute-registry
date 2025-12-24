@@ -256,4 +256,23 @@ class AttributeParserTest extends TestCase
         $this->assertEquals('STATUS_ACTIVE', $constAttr->target->targetName);
         $this->assertEquals('TestController', $constAttr->target->parentClass);
     }
+
+    public function testParseFileGeneratesFileHash(): void
+    {
+        $attributes = $this->parser->parseFile($this->testFilePath);
+
+        $this->assertNotEmpty($attributes);
+
+        // All attributes should have a non-empty file hash
+        foreach ($attributes as $attr) {
+            $this->assertNotEmpty($attr->fileHash, 'fileHash should not be empty');
+            $this->assertMatchesRegularExpression('/^[a-f0-9]+$/', $attr->fileHash, 'fileHash should be a hex string');
+        }
+
+        // All attributes from the same file should have the same hash
+        $firstHash = $attributes[0]->fileHash;
+        foreach ($attributes as $attr) {
+            $this->assertEquals($firstHash, $attr->fileHash, 'All attributes from same file should have same hash');
+        }
+    }
 }

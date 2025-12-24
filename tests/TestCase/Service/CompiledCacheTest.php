@@ -59,7 +59,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'UsersController',
             ),
-            fileModTime: 1703347200,
+            fileHash: '',
         );
     }
 
@@ -125,7 +125,6 @@ class CompiledCacheTest extends TestCase
         $this->assertEquals($attr->arguments, $getResult[0]->arguments);
         $this->assertEquals($attr->filePath, $getResult[0]->filePath);
         $this->assertEquals($attr->lineNumber, $getResult[0]->lineNumber);
-        $this->assertEquals($attr->fileModTime, $getResult[0]->fileModTime);
         $this->assertEquals($attr->target->type, $getResult[0]->target->type);
         $this->assertEquals($attr->target->targetName, $getResult[0]->target->targetName);
         $this->assertEquals($attr->target->parentClass, $getResult[0]->target->parentClass);
@@ -145,7 +144,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'PostsController',
             ),
-            fileModTime: 1703347300,
+            fileHash: '',
         );
 
         $this->cache->set('test_key', [$attr1, $attr2]);
@@ -181,7 +180,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'UsersController',
             ),
-            fileModTime: 1703347200,
+            fileHash: '',
         );
 
         $this->cache->set('complex', [$attr]);
@@ -206,7 +205,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: "Test'Class",
             ),
-            fileModTime: 1703347200,
+            fileHash: '',
         );
 
         $this->cache->set('special', [$attr]);
@@ -230,7 +229,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Controller',
             ),
-            fileModTime: 1703347200,
+            fileHash: '',
         );
 
         $this->cache->set('namespaces', [$attr]);
@@ -330,7 +329,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Different',
             ),
-            fileModTime: 1703347300,
+            fileHash: '',
         );
 
         $this->cache->set('test', [$attr1]);
@@ -355,7 +354,7 @@ class CompiledCacheTest extends TestCase
             filePath: '/test/file.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1703347200,
+            fileHash: '',
         );
 
         $result = $this->cache->set('test', [$attr]);
@@ -377,7 +376,7 @@ class CompiledCacheTest extends TestCase
                 filePath: '/test/file.php',
                 lineNumber: 10,
                 target: $target,
-                fileModTime: 1703347200,
+                fileHash: '',
             );
 
             $result = $this->cache->set('test', [$attr]);
@@ -402,10 +401,244 @@ class CompiledCacheTest extends TestCase
             filePath: '/test/file.php',
             lineNumber: 10,
             target: $target,
-            fileModTime: 1703347200,
         );
 
         $result = $this->cache->set('test', [$attr]);
         $this->assertFalse($result, 'set() should return false when attributes contain objects without __set_state');
+    }
+
+    /**
+     * RED TEST: Test that fileHash is stored when provided
+     */
+    public function testFileHashIsStoredInCache(): void
+    {
+        $testFile = __FILE__;
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+
+        $attr = new AttributeInfo(
+            className: 'App\\Controller\\TestController',
+            attributeName: 'App\\Route',
+            arguments: ['path' => '/test'],
+            filePath: $testFile,
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestController',
+            ),
+            fileHash: hash('xxh3', $fileContent),
+        );
+
+        $this->cache->set('test', [$attr]);
+        $loaded = $this->cache->get('test');
+
+        $this->assertIsArray($loaded);
+        $this->assertNotEmpty($loaded[0]->fileHash);
+        $this->assertEquals($attr->fileHash, $loaded[0]->fileHash);
+    }
+
+    /**
+     * RED TEST: Test that cache validation can be enabled
+     */
+    public function testCacheValidationCanBeConfigured(): void
+    {
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $this->assertTrue($cache->isValidationEnabled());
+
+        $cache = new CompiledCache($this->tempPath, true, false);
+        $this->assertFalse($cache->isValidationEnabled());
+    }
+
+    /**
+     * RED TEST: Test that stale entries are filtered when validation is enabled
+     */
+    public function testStaleEntriesAreFilteredWithValidation(): void
+    {
+        // Create a temporary file to test with
+        $testFile = $this->tempPath . 'test_source.php';
+        file_put_contents($testFile, '<?php class TestClass {}');
+
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+        $originalHash = hash('xxh3', $fileContent);
+
+        $attr = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileHash: $originalHash,
+        );
+
+        // Cache with validation enabled
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr]);
+
+        // Verify original is cached
+        $loaded = $cache->get('test');
+        $this->assertIsArray($loaded);
+        $this->assertCount(1, $loaded);
+
+        // Modify the file content
+        file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
+
+        // Get cache again - should return null because hash changed
+        $reloaded = $cache->get('test');
+        $this->assertNull($reloaded);
+    }
+
+    /**
+     * RED TEST: Test that validation is skipped when disabled
+     */
+    public function testValidationSkippedWhenDisabled(): void
+    {
+        $testFile = $this->tempPath . 'test_source2.php';
+        file_put_contents($testFile, '<?php class TestClass {}');
+
+        $fileContent = file_get_contents($testFile);
+        $this->assertNotFalse($fileContent);
+        $originalHash = hash('xxh3', $fileContent);
+
+        $attr = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileHash: $originalHash,
+        );
+
+        // Cache with validation DISABLED
+        $cache = new CompiledCache($this->tempPath, true, false);
+        $cache->set('test', [$attr]);
+
+        // Modify the file
+        file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
+
+        // Get cache again - should still return cached value
+        $reloaded = $cache->get('test');
+        $this->assertIsArray($reloaded);
+        $this->assertCount(1, $reloaded);
+    }
+
+    /**
+     * RED TEST: Test backward compatibility with entries without fileHash
+     */
+    public function testBackwardCompatibilityWithoutFileHash(): void
+    {
+        $attr = new AttributeInfo(
+            className: 'App\\Controller\\TestController',
+            attributeName: 'App\\Route',
+            arguments: [],
+            filePath: __FILE__,
+            lineNumber: 10,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestController',
+            ),
+            fileHash: '', // Empty hash for backward compatibility
+        );
+
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr]);
+
+        $loaded = $cache->get('test');
+
+        // Should not filter entries without hash
+        $this->assertIsArray($loaded);
+        $this->assertCount(1, $loaded);
+    }
+
+    public function testValidationHandlesHashFailureGracefully(): void
+    {
+        // Create a test file
+        $testFile = $this->tempPath . 'test_file.php';
+        $fileContent = '<?php class TestClass {}';
+        file_put_contents($testFile, $fileContent);
+
+        $fileHash = hash_file('xxh3', $testFile);
+        $this->assertNotFalse($fileHash);
+
+        // Create attribute with valid hash
+        $attr = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileHash: $fileHash,
+        );
+
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr]);
+
+        // Delete the file to trigger hash failure
+        unlink($testFile);
+
+        $loaded = $cache->get('test');
+
+        // Should return null when file doesn't exist
+        $this->assertNull($loaded);
+    }
+
+    public function testValidationOptimizesMultipleAttributesFromSameFile(): void
+    {
+        // Create a test file
+        $testFile = $this->tempPath . 'shared_file.php';
+        $fileContent = '<?php class TestClass {}';
+        file_put_contents($testFile, $fileContent);
+
+        $fileHash = hash_file('xxh3', $testFile);
+        $this->assertNotFalse($fileHash);
+
+        // Create multiple attributes from the same file
+        $attr1 = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'Attribute1',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'TestClass',
+            ),
+            fileHash: $fileHash,
+        );
+
+        $attr2 = new AttributeInfo(
+            className: 'TestClass',
+            attributeName: 'Attribute2',
+            arguments: [],
+            filePath: $testFile,
+            lineNumber: 2,
+            target: new AttributeTarget(
+                type: AttributeTargetType::METHOD,
+                targetName: 'testMethod',
+                parentClass: 'TestClass',
+            ),
+            fileHash: $fileHash,
+        );
+
+        $cache = new CompiledCache($this->tempPath, true, true);
+        $cache->set('test', [$attr1, $attr2]);
+
+        $loaded = $cache->get('test');
+
+        // Should successfully validate both attributes (file hash computed only once)
+        $this->assertIsArray($loaded);
+        $this->assertCount(2, $loaded);
     }
 }

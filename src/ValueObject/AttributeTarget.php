@@ -56,10 +56,6 @@ readonly class AttributeTarget
      */
     public static function __set_state(array $data): self
     {
-        return new self(
-            type: $data['type'],
-            targetName: $data['targetName'],
-            parentClass: $data['parentClass'] ?? null,
-        );
+        return self::fromArray($data);
     }
 }

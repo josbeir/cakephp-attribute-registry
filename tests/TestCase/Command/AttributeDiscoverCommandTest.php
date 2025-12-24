@@ -62,7 +62,7 @@ class AttributeDiscoverCommandTest extends TestCase
 
         // Apply default values for options
         $defaults = [
-            'clear-cache' => true,
+            'no-clear-cache' => false,
         ];
         $options = array_merge($defaults, $options);
 
@@ -177,7 +177,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->err = new StubConsoleOutput();
         $this->io = new ConsoleIo($this->out, $this->err);
 
-        $args = $this->createArgs([], ['clear-cache' => false]);
+        $args = $this->createArgs([], ['no-clear-cache' => true]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
@@ -186,8 +186,8 @@ class AttributeDiscoverCommandTest extends TestCase
 
     public function testDiscoverCommandWithClearCacheClears(): void
     {
-        // Discover once to populate cache
-        $args = $this->createArgs([], ['clear-cache' => true]);
+        // Discover once to populate cache - cache clearing is default behavior
+        $args = $this->createArgs();
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
@@ -196,11 +196,11 @@ class AttributeDiscoverCommandTest extends TestCase
 
     public function testDiscoverCommandWithNoDiscoverSkipsDiscovery(): void
     {
-        $args = $this->createArgs([], ['clear-cache' => true, 'no-discover' => true]);
+        $args = $this->createArgs([], ['no-discover' => true]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
-        // Should clear cache
+        // Should clear cache (default behavior)
         $this->assertStringContainsString('Clearing attribute cache', $output);
         // Should NOT discover
         $this->assertStringNotContainsString('Discovering attributes', $output);
@@ -209,7 +209,7 @@ class AttributeDiscoverCommandTest extends TestCase
 
     public function testDiscoverCommandWithoutNoDiscoverDiscoveryRuns(): void
     {
-        $args = $this->createArgs([], ['clear-cache' => true, 'no-discover' => false]);
+        $args = $this->createArgs([], ['no-discover' => false]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();

@@ -45,11 +45,10 @@ class AttributeDiscoverCommand extends Command
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser->setDescription(static::getDescription());
-        $parser->addOption('clear-cache', [
-            'short' => 'c',
+        $parser->addOption('no-clear-cache', [
             'boolean' => true,
-            'default' => true,
-            'help' => 'Clear the attribute cache before discovering (default: true)',
+            'default' => false,
+            'help' => 'Skip clearing the attribute cache before discovering',
         ]);
         $parser->addOption('no-discover', [
             'boolean' => true,
@@ -69,7 +68,8 @@ class AttributeDiscoverCommand extends Command
             $io->warning('Cache is disabled. Attributes will be re-discovered on every request.');
         }
 
-        if ($args->getOption('clear-cache')) {
+        // Clear cache by default unless --no-clear-cache is set
+        if (!$args->getOption('no-clear-cache')) {
             $io->out('<info>Clearing attribute cache...</info>');
             $this->registry->clearCache();
         }
