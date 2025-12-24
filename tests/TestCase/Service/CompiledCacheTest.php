@@ -59,6 +59,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'UsersController',
             ),
+            fileHash: '',
         );
     }
 
@@ -143,6 +144,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'PostsController',
             ),
+            fileHash: '',
         );
 
         $this->cache->set('test_key', [$attr1, $attr2]);
@@ -178,6 +180,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'UsersController',
             ),
+            fileHash: '',
         );
 
         $this->cache->set('complex', [$attr]);
@@ -202,6 +205,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: "Test'Class",
             ),
+            fileHash: '',
         );
 
         $this->cache->set('special', [$attr]);
@@ -225,6 +229,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Controller',
             ),
+            fileHash: '',
         );
 
         $this->cache->set('namespaces', [$attr]);
@@ -324,6 +329,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Different',
             ),
+            fileHash: '',
         );
 
         $this->cache->set('test', [$attr1]);
@@ -348,6 +354,7 @@ class CompiledCacheTest extends TestCase
             filePath: '/test/file.php',
             lineNumber: 10,
             target: $target,
+            fileHash: '',
         );
 
         $result = $this->cache->set('test', [$attr]);
@@ -369,6 +376,7 @@ class CompiledCacheTest extends TestCase
                 filePath: '/test/file.php',
                 lineNumber: 10,
                 target: $target,
+                fileHash: '',
             );
 
             $result = $this->cache->set('test', [$attr]);

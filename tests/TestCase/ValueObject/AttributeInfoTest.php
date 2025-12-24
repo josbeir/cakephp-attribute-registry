@@ -36,6 +36,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 15,
             target: $target,
+            fileHash: '',
         );
 
         $this->assertEquals('App\Controller\MyController', $attributeInfo->className);
@@ -61,6 +62,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 25,
             target: $target,
+            fileHash: '',
         );
 
         $this->assertEmpty($attributeInfo->arguments);
@@ -82,6 +84,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Model/Entity/User.php',
             lineNumber: 10,
             target: $target,
+            fileHash: '',
         );
 
         // This should not be allowed in PHP 8.2+ readonly objects
@@ -104,6 +107,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
+            fileHash: '',
         );
 
         $instance = $attributeInfo->getInstance();
@@ -127,6 +131,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 15,
             target: $target,
+            fileHash: '',
         );
 
         $instance = $attributeInfo->getInstance(TestColumn::class);
@@ -150,6 +155,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/SomeClass.php',
             lineNumber: 5,
             target: $target,
+            fileHash: '',
         );
 
         $this->expectException(RuntimeException::class);
@@ -192,6 +198,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
+            fileHash: '',
         );
 
         $this->assertTrue($attributeInfo->isInstanceOf(TestRoute::class));
@@ -213,6 +220,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 20,
             target: $target,
+            fileHash: '',
         );
 
         $array = $attributeInfo->toArray();
@@ -270,6 +278,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 25,
             target: $target,
+            fileHash: '',
         );
 
         $array = $original->toArray();
