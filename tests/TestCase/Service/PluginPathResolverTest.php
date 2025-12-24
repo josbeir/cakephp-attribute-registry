@@ -186,4 +186,95 @@ class PluginPathResolverTest extends TestCase
         // If we have unloaded plugins, the test verified they're excluded
         // If we don't, that's fine - the code path is still tested (the continue would execute if encountered)
     }
+
+    /**
+     * Test getPluginPathMap returns mapping of paths to plugin names
+     */
+    public function testGetPluginPathMapReturnsPathToNameMapping(): void
+    {
+        $map = $this->resolver->getPluginPathMap();
+
+        $this->assertNotEmpty($map, 'Should have at least one plugin');
+
+        // Verify structure: paths as keys, names as values
+        foreach ($map as $path => $name) {
+            $this->assertIsString($path);
+            $this->assertIsString($name);
+            $this->assertDirectoryExists($path);
+        }
+    }
+
+    /**
+     * Test getPluginPathMap includes TestLocalPlugin
+     */
+    public function testGetPluginPathMapIncludesTestLocalPlugin(): void
+    {
+        $map = $this->resolver->getPluginPathMap();
+
+        $localPluginPath = ROOT . DS . 'plugins' . DS . 'TestLocalPlugin' . DS;
+
+        $this->assertArrayHasKey($localPluginPath, $map);
+        $this->assertEquals('TestLocalPlugin', $map[$localPluginPath]);
+    }
+
+    /**
+     * Test getPluginPathMap caches results
+     */
+    public function testGetPluginPathMapCachesResults(): void
+    {
+        $map1 = $this->resolver->getPluginPathMap();
+        $map2 = $this->resolver->getPluginPathMap();
+
+        $this->assertSame($map1, $map2, 'Should return same cached instance');
+    }
+
+    /**
+     * Test getPluginNameFromPath returns correct plugin name
+     */
+    public function testGetPluginNameFromPathReturnsCorrectName(): void
+    {
+        $localPluginPath = ROOT . DS . 'plugins' . DS . 'TestLocalPlugin' . DS;
+        $testFile = $localPluginPath . 'src' . DS . 'Controller' . DS . 'TestLocalController.php';
+
+        $pluginName = $this->resolver->getPluginNameFromPath($testFile);
+
+        $this->assertEquals('TestLocalPlugin', $pluginName);
+    }
+
+    /**
+     * Test getPluginNameFromPath returns null for App files
+     */
+    public function testGetPluginNameFromPathReturnsNullForAppFiles(): void
+    {
+        $appFile = ROOT . DS . 'src' . DS . 'Controller' . DS . 'AppController.php';
+
+        $pluginName = $this->resolver->getPluginNameFromPath($appFile);
+
+        $this->assertNull($pluginName);
+    }
+
+    /**
+     * Test getPluginNameFromPath with nested file path
+     */
+    public function testGetPluginNameFromPathWithNestedPath(): void
+    {
+        $localPluginPath = ROOT . DS . 'plugins' . DS . 'TestLocalPlugin' . DS;
+        $nestedFile = $localPluginPath . 'src' . DS . 'Controller' . DS . 'Admin' . DS . 'UsersController.php';
+
+        $pluginName = $this->resolver->getPluginNameFromPath($nestedFile);
+
+        $this->assertEquals('TestLocalPlugin', $pluginName);
+    }
+
+    /**
+     * Test getPluginNameFromPath returns null for non-existent paths
+     */
+    public function testGetPluginNameFromPathReturnsNullForNonExistentPath(): void
+    {
+        $fakePath = '/some/random/path/that/does/not/exist.php';
+
+        $pluginName = $this->resolver->getPluginNameFromPath($fakePath);
+
+        $this->assertNull($pluginName);
+    }
 }

@@ -27,9 +27,11 @@ class AttributeParser
      * Constructor for AttributeParser.
      *
      * @param array<string> $excludeAttributes List of attribute FQCNs to exclude (supports wildcards)
+     * @param \AttributeRegistry\Service\PluginPathResolver|null $pluginPathResolver Plugin path resolver for plugin detection
      */
     public function __construct(
         private array $excludeAttributes = [],
+        private ?PluginPathResolver $pluginPathResolver = null,
     ) {
     }
 
@@ -333,6 +335,8 @@ class AttributeParser
         string $fileHash,
         AttributeTarget $target,
     ): AttributeInfo {
+        $pluginName = $this->pluginPathResolver?->getPluginNameFromPath($filePath);
+
         return new AttributeInfo(
             className: $className,
             attributeName: $attribute->getName(),
@@ -341,6 +345,7 @@ class AttributeParser
             lineNumber: $lineNumber,
             target: $target,
             fileHash: $fileHash,
+            pluginName: $pluginName,
         );
     }
 

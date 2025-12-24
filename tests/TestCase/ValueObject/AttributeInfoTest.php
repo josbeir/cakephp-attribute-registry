@@ -8,6 +8,7 @@ use AttributeRegistry\Test\Data\TestColumn;
 use AttributeRegistry\Test\Data\TestRoute;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
+use DebugKit\Controller\PanelsController;
 use Error;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -324,5 +325,112 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals($original->lineNumber, $restored->lineNumber);
         $this->assertEquals($original->target->type, $restored->target->type);
         $this->assertEquals($original->fileHash, $restored->fileHash);
+    }
+
+    public function testPluginNameCanBeSet(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::CLASS_TYPE,
+            'PanelsController',
+        );
+
+        $attributeInfo = new AttributeInfo(
+            className: PanelsController::class,
+            attributeName: TestRoute::class,
+            arguments: ['path' => '/debug-kit/panels'],
+            filePath: '/plugins/DebugKit/src/Controller/PanelsController.php',
+            lineNumber: 10,
+            target: $target,
+            fileHash: '',
+            pluginName: 'DebugKit',
+        );
+
+        $this->assertEquals('DebugKit', $attributeInfo->pluginName);
+    }
+
+    public function testPluginNameDefaultsToNull(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::CLASS_TYPE,
+            'UsersController',
+        );
+
+        $attributeInfo = new AttributeInfo(
+            className: 'App\Controller\UsersController',
+            attributeName: TestRoute::class,
+            arguments: ['path' => '/users'],
+            filePath: '/app/src/Controller/UsersController.php',
+            lineNumber: 10,
+            target: $target,
+            fileHash: '',
+        );
+
+        $this->assertNull($attributeInfo->pluginName);
+    }
+
+    public function testPluginNameInToArray(): void
+    {
+        $target = new AttributeTarget(
+            AttributeTargetType::CLASS_TYPE,
+            'TestController',
+        );
+
+        $attributeInfo = new AttributeInfo(
+            className: 'MyPlugin\Controller\TestController',
+            attributeName: TestRoute::class,
+            arguments: ['path' => '/test'],
+            filePath: '/plugins/MyPlugin/src/Controller/TestController.php',
+            lineNumber: 10,
+            target: $target,
+            fileHash: '',
+            pluginName: 'MyPlugin',
+        );
+
+        $array = $attributeInfo->toArray();
+
+        $this->assertArrayHasKey('pluginName', $array);
+        $this->assertEquals('MyPlugin', $array['pluginName']);
+    }
+
+    public function testPluginNameFromArray(): void
+    {
+        $data = [
+            'className' => 'Bake\Controller\GenerateController',
+            'attributeName' => TestRoute::class,
+            'arguments' => ['path' => '/bake/generate'],
+            'filePath' => '/plugins/Bake/src/Controller/GenerateController.php',
+            'lineNumber' => 15,
+            'target' => [
+                'type' => 'class',
+                'targetName' => 'GenerateController',
+            ],
+            'fileHash' => 'abc123',
+            'pluginName' => 'Bake',
+        ];
+
+        $attributeInfo = AttributeInfo::fromArray($data);
+
+        $this->assertEquals('Bake', $attributeInfo->pluginName);
+    }
+
+    public function testPluginNameBackwardCompatibilityWithMissingKey(): void
+    {
+        $data = [
+            'className' => 'App\Controller\UserController',
+            'attributeName' => TestRoute::class,
+            'arguments' => ['path' => '/users'],
+            'filePath' => '/app/src/Controller/UserController.php',
+            'lineNumber' => 20,
+            'target' => [
+                'type' => 'class',
+                'targetName' => 'UserController',
+            ],
+            'fileHash' => '',
+            // Notice: pluginName key is missing (backward compatibility test)
+        ];
+
+        $attributeInfo = AttributeInfo::fromArray($data);
+
+        $this->assertNull($attributeInfo->pluginName);
     }
 }

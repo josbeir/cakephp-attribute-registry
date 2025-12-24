@@ -15,6 +15,13 @@ use Cake\Core\PluginConfig;
 class PluginPathResolver
 {
     /**
+     * Cache for path to plugin name mapping
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $pathToPluginMap = null;
+
+    /**
      * Get paths for all enabled plugins
      *
      * This method returns paths for ALL plugins that are configured to load,
@@ -29,7 +36,24 @@ class PluginPathResolver
      */
     public function getEnabledPluginPaths(): array
     {
-        $paths = [];
+        return array_keys($this->getPluginPathMap());
+    }
+
+    /**
+     * Get mapping of plugin paths to plugin names
+     *
+     * Returns a mapping of absolute plugin paths to their corresponding plugin names.
+     * Results are cached for performance.
+     *
+     * @return array<string, string> ['path/to/plugin' => 'PluginName']
+     */
+    public function getPluginPathMap(): array
+    {
+        if ($this->pathToPluginMap !== null) {
+            return $this->pathToPluginMap;
+        }
+
+        $map = [];
         $allPlugins = PluginConfig::getAppConfig();
         $pluginCollection = Plugin::getCollection();
 
@@ -38,9 +62,11 @@ class PluginPathResolver
                 continue;
             }
 
+            $pluginName = $config['name'] ?? null;
+
             // Use packagePath from config if available
-            if (isset($config['packagePath'])) {
-                $paths[] = $config['packagePath'];
+            if (isset($config['packagePath']) && $pluginName) {
+                $map[$config['packagePath']] = $pluginName;
             }
         }
 
@@ -48,11 +74,38 @@ class PluginPathResolver
         // This ensures we don't miss plugins loaded directly via Plugin::getCollection()->add()
         foreach ($pluginCollection as $plugin) {
             $pluginPath = $plugin->getPath();
-            if (!in_array($pluginPath, $paths, true)) {
-                $paths[] = $pluginPath;
+            $pluginName = $plugin->getName();
+
+            if (!isset($map[$pluginPath])) {
+                $map[$pluginPath] = $pluginName;
             }
         }
 
-        return $paths;
+        $this->pathToPluginMap = $map;
+
+        return $map;
+    }
+
+    /**
+     * Get plugin name from file path
+     *
+     * Determines which plugin a file belongs to by checking if its path
+     * starts with any known plugin path.
+     *
+     * @param string $filePath Absolute file path
+     * @return string|null Plugin name or null if file is in App namespace
+     */
+    public function getPluginNameFromPath(string $filePath): ?string
+    {
+        $map = $this->getPluginPathMap();
+
+        // Check if file path starts with any plugin path
+        foreach ($map as $pluginPath => $pluginName) {
+            if (str_starts_with($filePath, $pluginPath)) {
+                return $pluginName;
+            }
+        }
+
+        return null;
     }
 }

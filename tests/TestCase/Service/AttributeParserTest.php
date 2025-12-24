@@ -5,6 +5,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeParser;
+use AttributeRegistry\Service\PluginPathResolver;
 use AttributeRegistry\Test\Data\TestColumn;
 use AttributeRegistry\Test\Data\TestConst;
 use AttributeRegistry\Test\Data\TestController;
@@ -273,6 +274,44 @@ class AttributeParserTest extends TestCase
         $firstHash = $attributes[0]->fileHash;
         foreach ($attributes as $attr) {
             $this->assertEquals($firstHash, $attr->fileHash, 'All attributes from same file should have same hash');
+        }
+    }
+
+    public function testParseFileDetectsPluginNameForAppFiles(): void
+    {
+        // Test file is in tests/data - should be null (app file)
+        $attributes = $this->parser->parseFile($this->testFilePath);
+
+        $this->assertNotEmpty($attributes);
+
+        foreach ($attributes as $attr) {
+            $this->assertNull($attr->pluginName, 'App files should have null pluginName');
+        }
+    }
+
+    public function testParserAcceptsPluginPathResolverInConstructor(): void
+    {
+        $resolver = $this->createStub(PluginPathResolver::class);
+        $parser = new AttributeParser(pluginPathResolver: $resolver);
+
+        $this->assertInstanceOf(AttributeParser::class, $parser);
+    }
+
+    public function testParseFileUsesPluginPathResolverToDetectPluginName(): void
+    {
+        $resolver = $this->createMock(PluginPathResolver::class);
+        $resolver->expects($this->atLeastOnce())
+            ->method('getPluginNameFromPath')
+            ->with($this->testFilePath)
+            ->willReturn('TestPlugin');
+
+        $parser = new AttributeParser(pluginPathResolver: $resolver);
+        $attributes = $parser->parseFile($this->testFilePath);
+
+        $this->assertNotEmpty($attributes);
+
+        foreach ($attributes as $attr) {
+            $this->assertEquals('TestPlugin', $attr->pluginName);
         }
     }
 }

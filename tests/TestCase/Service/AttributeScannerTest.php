@@ -165,7 +165,7 @@ class AttributeScannerTest extends TestCase
             // The malformed file should not produce any valid attributes
             $malformedAttrs = array_filter(
                 $attributes,
-                fn($attr) => str_contains($attr->filePath, 'malformed.php'),
+                fn(AttributeInfo $attr): bool => str_contains($attr->filePath, 'malformed.php'),
             );
             $this->assertEmpty($malformedAttrs);
         } finally {
