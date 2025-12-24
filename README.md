@@ -100,9 +100,8 @@ return [
             // Enable/disable caching (default: true)
             // When disabled, attributes are re-discovered on every request
             'enabled' => true,
-            // Cache configuration name (plugin auto-registers 'attribute_registry')
-            // Override with CACHE_ATTRIBUTE_REGISTRY_URL env var for custom backends
-            'config' => 'attribute_registry',
+            // Cache directory (defaults to CACHE . 'attribute_registry' . DS)
+            'path' => CACHE . 'attribute_registry' . DS,
         ],
         'scanner' => [
             // Glob patterns for files to scan (relative to base paths)
