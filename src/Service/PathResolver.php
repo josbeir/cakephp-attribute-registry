@@ -78,8 +78,11 @@ class PathResolver
     private function resolvePatternsForPath(string $basePath, array $globPatterns): Generator
     {
         foreach ($globPatterns as $pattern) {
+            // Normalize pattern to use platform's directory separator
+            $normalizedPattern = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $pattern);
+
             $fullPattern = rtrim($basePath, DIRECTORY_SEPARATOR) .
-                DIRECTORY_SEPARATOR . ltrim($pattern, DIRECTORY_SEPARATOR);
+                DIRECTORY_SEPARATOR . ltrim($normalizedPattern, DIRECTORY_SEPARATOR);
             foreach ($this->expandGlobPattern($fullPattern) as $path) {
                 yield $path;
             }
@@ -125,8 +128,10 @@ class PathResolver
 
         foreach ($iterator as $file) {
             $filePath = $file->getPathname();
-            if (empty($suffix) || fnmatch('*' . $suffix, basename($filePath))) {
-                yield $filePath;
+            // Normalize path separators for consistent comparison
+            $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $filePath);
+            if (empty($suffix) || fnmatch('*' . $suffix, basename($normalizedPath))) {
+                yield $normalizedPath;
             }
         }
     }
