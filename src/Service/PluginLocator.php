@@ -7,12 +7,12 @@ use Cake\Core\Plugin;
 use Cake\Core\PluginConfig;
 
 /**
- * Resolves plugin paths for attribute scanning
+ * Locates and identifies plugins for attribute scanning
  *
  * This class retrieves all enabled plugins (including CLI-only plugins)
  * regardless of the current request context (CLI vs web).
  */
-class PluginPathResolver
+class PluginLocator
 {
     /**
      * Cache for path to plugin name mapping
@@ -90,7 +90,9 @@ class PluginPathResolver
      * Get plugin name from file path
      *
      * Determines which plugin a file belongs to by checking if its path
-     * starts with any known plugin path.
+     * starts with any known plugin path. Paths are checked in descending
+     * length order to ensure more specific (longer) paths match first,
+     * preventing issues with paths that are substrings of each other.
      *
      * @param string $filePath Absolute file path
      * @return string|null Plugin name or null if file is in App namespace
@@ -98,6 +100,10 @@ class PluginPathResolver
     public function getPluginNameFromPath(string $filePath): ?string
     {
         $map = $this->getPluginPathMap();
+
+        // Sort paths by length descending to check more specific paths first
+        // This prevents '/plugins/Test' from matching before '/plugins/TestExtended'
+        uksort($map, fn(string $a, string $b): int => strlen($b) - strlen($a));
 
         // Check if file path starts with any plugin path
         foreach ($map as $pluginPath => $pluginName) {

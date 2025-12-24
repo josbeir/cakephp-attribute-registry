@@ -5,7 +5,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeParser;
-use AttributeRegistry\Service\PluginPathResolver;
+use AttributeRegistry\Service\PluginLocator;
 use AttributeRegistry\Test\Data\TestColumn;
 use AttributeRegistry\Test\Data\TestConst;
 use AttributeRegistry\Test\Data\TestController;
@@ -289,23 +289,23 @@ class AttributeParserTest extends TestCase
         }
     }
 
-    public function testParserAcceptsPluginPathResolverInConstructor(): void
+    public function testParserAcceptsPluginLocatorInConstructor(): void
     {
-        $resolver = $this->createStub(PluginPathResolver::class);
-        $parser = new AttributeParser(pluginPathResolver: $resolver);
+        $locator = $this->createStub(PluginLocator::class);
+        $parser = new AttributeParser(pluginLocator: $locator);
 
         $this->assertInstanceOf(AttributeParser::class, $parser);
     }
 
-    public function testParseFileUsesPluginPathResolverToDetectPluginName(): void
+    public function testParseFileUsesPluginLocatorToDetectPluginName(): void
     {
-        $resolver = $this->createMock(PluginPathResolver::class);
-        $resolver->expects($this->atLeastOnce())
+        $locator = $this->createMock(PluginLocator::class);
+        $locator->expects($this->atLeastOnce())
             ->method('getPluginNameFromPath')
             ->with($this->testFilePath)
             ->willReturn('TestPlugin');
 
-        $parser = new AttributeParser(pluginPathResolver: $resolver);
+        $parser = new AttributeParser(pluginLocator: $locator);
         $attributes = $parser->parseFile($this->testFilePath);
 
         $this->assertNotEmpty($attributes);

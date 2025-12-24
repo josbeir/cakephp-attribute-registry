@@ -9,7 +9,7 @@ use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
-use AttributeRegistry\Service\PluginPathResolver;
+use AttributeRegistry\Service\PluginLocator;
 use Cake\Core\Configure;
 
 /**
@@ -88,7 +88,7 @@ class AttributeRegistry
         // The callback is only invoked when scanning is needed (cache miss)
         $pathResolver = new PathResolver(
             ROOT,
-            fn(): array => (new PluginPathResolver())->getEnabledPluginPaths(),
+            fn(): array => (new PluginLocator())->getEnabledPluginPaths(),
         );
 
         // Determine cache path from config

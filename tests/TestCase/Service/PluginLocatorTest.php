@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase\Service;
 
-use AttributeRegistry\Service\PluginPathResolver;
+use AttributeRegistry\Service\PluginLocator;
 use Cake\Core\PluginConfig;
 use Cake\TestSuite\TestCase;
 
 /**
- * PluginPathResolver Test Case
+ * PluginLocator Test Case
  */
-class PluginPathResolverTest extends TestCase
+class PluginLocatorTest extends TestCase
 {
-    private PluginPathResolver $resolver;
+    private PluginLocator $resolver;
 
     /**
      * setUp method
@@ -24,7 +24,7 @@ class PluginPathResolverTest extends TestCase
         // Load test local plugin using CakePHP test helper
         $this->loadPlugins(['TestLocalPlugin']);
 
-        $this->resolver = new PluginPathResolver();
+        $this->resolver = new PluginLocator();
     }
 
     /**
@@ -276,5 +276,36 @@ class PluginPathResolverTest extends TestCase
         $pluginName = $this->resolver->getPluginNameFromPath($fakePath);
 
         $this->assertNull($pluginName);
+    }
+
+    /**
+     * Test getPluginNameFromPath prioritizes longer paths to avoid substring matches
+     */
+    public function testGetPluginNameFromPathPrioritizesLongerPaths(): void
+    {
+        $longerPath = '/var/www/plugins/TestExtended/';
+
+        // File in TestExtended plugin should match TestExtended, not Test
+        $fileInExtended = $longerPath . 'src/Controller/UsersController.php';
+
+        // Create anonymous class to inject test data
+        $resolver = new class extends PluginLocator {
+            public function getPluginPathMap(): array
+            {
+                // Return paths in arbitrary order to test sorting
+                return [
+                    '/var/www/plugins/Test/' => 'Test',
+                    '/var/www/plugins/TestExtended/' => 'TestExtended',
+                ];
+            }
+        };
+
+        $result = $resolver->getPluginNameFromPath($fileInExtended);
+
+        $this->assertEquals(
+            'TestExtended',
+            $result,
+            'Should match the more specific (longer) path first',
+        );
     }
 }

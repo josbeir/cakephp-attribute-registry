@@ -8,7 +8,7 @@ use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
-use AttributeRegistry\Service\PluginPathResolver;
+use AttributeRegistry\Service\PluginLocator;
 
 /**
  * Trait providing factory methods for common test objects.
@@ -110,8 +110,8 @@ trait AttributeRegistryTestTrait
         array $scannerConfig = [],
     ): AttributeRegistry {
         // Build path string including test data + all loaded plugins
-        $pluginPathResolver = new PluginPathResolver();
-        $pluginPaths = $pluginPathResolver->getEnabledPluginPaths();
+        $pluginLocator = new PluginLocator();
+        $pluginPaths = $pluginLocator->getEnabledPluginPaths();
         $allPaths = array_merge([$this->getTestDataPath()], $pluginPaths);
         $pathString = implode(PATH_SEPARATOR, $allPaths);
 
