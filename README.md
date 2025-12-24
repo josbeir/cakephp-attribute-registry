@@ -109,7 +109,8 @@ return [
             'path' => CACHE . 'attribute_registry' . DS,
             // Validate file hashes on cache retrieval (default: false)
             // When enabled, cached entries are validated against file content changes
-            // Set to Configure::read('debug') to enable in debug mode only
+            // Useful in development to auto-rebuild cache when files change
+            // Example: Configure::read('debug') enables validation only in debug mode
             'validateFiles' => false,
         ],
         'scanner' => [
