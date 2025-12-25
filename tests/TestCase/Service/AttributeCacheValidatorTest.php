@@ -213,4 +213,34 @@ class AttributeCacheValidatorTest extends TestCase
         $this->assertTrue($result->valid);
         $this->assertEmpty($result->errors);
     }
+
+    /**
+     * Test helper methods on validation result
+     */
+    public function testValidationResultHelperMethods(): void
+    {
+        // Test success result
+        $successResult = AttributeCacheValidationResult::success(10, 5);
+        $this->assertTrue($successResult->valid);
+        $this->assertFalse($successResult->hasErrors());
+        $this->assertFalse($successResult->hasWarnings());
+        $this->assertEquals(10, $successResult->totalAttributes);
+        $this->assertEquals(5, $successResult->totalFiles);
+
+        // Test failure result with errors
+        $failureResult = AttributeCacheValidationResult::failure(['Error 1', 'Error 2'], 10, 5);
+        $this->assertFalse($failureResult->valid);
+        $this->assertTrue($failureResult->hasErrors());
+        $this->assertFalse($failureResult->hasWarnings());
+        $this->assertCount(2, $failureResult->errors);
+
+        // Test notCached result
+        $notCachedResult = AttributeCacheValidationResult::notCached();
+        $this->assertFalse($notCachedResult->valid);
+        $this->assertTrue($notCachedResult->hasErrors());
+        $this->assertFalse($notCachedResult->hasWarnings());
+        $this->assertEquals(0, $notCachedResult->totalAttributes);
+        $this->assertEquals(0, $notCachedResult->totalFiles);
+        $this->assertStringContainsString('Cache not found', $notCachedResult->errors[0]);
+    }
 }
