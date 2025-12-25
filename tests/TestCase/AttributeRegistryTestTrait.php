@@ -4,11 +4,14 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\Service\PluginLocator;
+use AttributeRegistry\ValueObject\AttributeInfo;
+use AttributeRegistry\ValueObject\AttributeTarget;
 
 /**
  * Trait providing factory methods for common test objects.
@@ -169,5 +172,47 @@ trait AttributeRegistryTestTrait
     protected function loadTestPlugins(): void
     {
         $this->loadPlugins(['TestLocalPlugin']);
+    }
+
+    /**
+     * Create a test AttributeInfo instance.
+     *
+     * Useful for tests that need to inject mock attribute data.
+     *
+     * @param string $filePath File path where attribute was found
+     * @param string $hash File hash (xxh3) for validation
+     * @param string $className Class name containing the attribute
+     * @param string $attributeName Attribute class name
+     * @param array<string, mixed> $arguments Attribute arguments
+     * @param int $lineNumber Line number where attribute was found
+     * @param \AttributeRegistry\ValueObject\AttributeTarget|null $target Target information (defaults to CLASS_TYPE)
+     * @param string|null $pluginName Plugin name or null for App namespace
+     * @return \AttributeRegistry\ValueObject\AttributeInfo
+     */
+    protected function createTestAttribute(
+        string $filePath,
+        string $hash = '',
+        string $className = 'Test\\Class',
+        string $attributeName = 'TestAttribute',
+        array $arguments = [],
+        int $lineNumber = 1,
+        ?AttributeTarget $target = null,
+        ?string $pluginName = null,
+    ): AttributeInfo {
+        $target ??= new AttributeTarget(
+            type: AttributeTargetType::CLASS_TYPE,
+            targetName: 'Class',
+        );
+
+        return new AttributeInfo(
+            className: $className,
+            attributeName: $attributeName,
+            arguments: $arguments,
+            filePath: $filePath,
+            lineNumber: $lineNumber,
+            target: $target,
+            fileHash: $hash,
+            pluginName: $pluginName,
+        );
     }
 }

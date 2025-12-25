@@ -11,6 +11,7 @@ use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
 use Cake\TestSuite\TestCase;
+use ReflectionClass;
 
 class AttributesCacheCommandTest extends TestCase
 {
@@ -64,6 +65,7 @@ class AttributesCacheCommandTest extends TestCase
         $defaults = [
             'no-clear' => false,
             'clear-only' => false,
+            'validate' => false,
         ];
         $options = array_merge($defaults, $options);
 
@@ -216,5 +218,59 @@ class AttributesCacheCommandTest extends TestCase
         $output = $this->out->output();
         $this->assertStringContainsString('Discovering attributes', $output);
         $this->assertStringContainsString('Discovered', $output);
+    }
+
+    public function testCacheCommandWithValidateOptionValidatesCache(): void
+    {
+        $args = $this->createArgs([], ['validate' => true]);
+        $result = $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringContainsString('Validating cache integrity', $output);
+        $this->assertStringContainsString('Cache validation passed', $output);
+        $this->assertEquals(AttributesCacheCommand::CODE_SUCCESS, $result);
+    }
+
+    public function testCacheCommandWithoutValidateOptionSkipsValidation(): void
+    {
+        $args = $this->createArgs([], ['validate' => false]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringNotContainsString('Validating cache integrity', $output);
+        $this->assertStringNotContainsString('Cache validation', $output);
+    }
+
+    public function testCacheCommandWithValidateShowsAttributeAndFileCount(): void
+    {
+        $args = $this->createArgs([], ['validate' => true]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertMatchesRegularExpression('/Cache validation passed: \d+ attributes, \d+ files/', $output);
+    }
+
+    public function testCacheCommandWithValidateReturnsErrorOnValidationFailure(): void
+    {
+        // First, discover and cache attributes
+        $this->registry->discover();
+
+        // Inject invalid data - attribute with non-existent file
+        $attr = $this->createTestAttribute('/tmp/non_existent_file_' . uniqid() . '.php', 'deadbeef');
+        $reflection = new ReflectionClass($this->registry);
+        $property = $reflection->getProperty('discoveredAttributes');
+        $property->setValue($this->registry, [$attr]);
+
+        // Run command with validation
+        $args = $this->createArgs([], ['validate' => true, 'no-clear' => true]);
+        $result = $this->command->execute($args, $this->io);
+
+        // Check error output
+        $errorOutput = $this->err->output();
+        $this->assertStringContainsString('Cache validation failed', $errorOutput);
+        $this->assertStringContainsString('File not found', $errorOutput);
+
+        // Should return error code
+        $this->assertEquals(AttributesCacheCommand::CODE_ERROR, $result);
     }
 }

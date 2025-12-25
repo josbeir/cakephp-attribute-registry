@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Command;
 
 use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\Service\AttributeCacheValidator;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
@@ -55,6 +56,11 @@ class AttributesCacheCommand extends Command
             'default' => false,
             'help' => 'Only clear cache without discovering attributes',
         ]);
+        $parser->addOption('validate', [
+            'boolean' => true,
+            'default' => false,
+            'help' => 'Validate cache integrity after building',
+        ]);
 
         return $parser;
     }
@@ -87,6 +93,28 @@ class AttributesCacheCommand extends Command
                 count($attributes),
                 $elapsed,
             ));
+
+            // Validate cache if --validate option is set
+            if ($args->getOption('validate')) {
+                $io->out('<info>Validating cache integrity...</info>');
+                $validator = new AttributeCacheValidator($this->registry);
+                $result = $validator->validate();
+
+                if ($result->valid) {
+                    $io->success(sprintf(
+                        'Cache validation passed: %d attributes, %d files',
+                        $result->totalAttributes,
+                        $result->totalFiles,
+                    ));
+                } else {
+                    $io->error('Cache validation failed:');
+                    foreach ($result->errors as $error) {
+                        $io->err('  - ' . $error);
+                    }
+
+                    return static::CODE_ERROR;
+                }
+            }
         }
 
         return static::CODE_SUCCESS;

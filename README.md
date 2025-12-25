@@ -561,9 +561,24 @@ Discovered 42 attributes in 0.234s
 ```
 
 Options:
-- `--clear-only` - Only clear cache without discovering attributes
 - `--no-clear` - Skip clearing the cache before discovering
-- `--quiet` - Suppress output messages
+- `--clear-only` - Only clear cache without discovering attributes
+- `--validate` - Validate cache integrity after building
+
+Example with validation:
+
+```bash
+bin/cake attributes cache --validate
+```
+
+Output:
+```
+Clearing attribute cache...
+Discovering attributes...
+Discovered 42 attributes in 0.234s
+Validating cache integrity...
+Cache validation passed: 42 attributes, 15 files
+```
 
 ### List Attributes
 
