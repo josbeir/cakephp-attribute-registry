@@ -107,7 +107,7 @@ class HashUtilityTest extends TestCase
         unlink($tempFile);
     }
 
-    public function testHashAndHashFileProduceDifferentResults(): void
+    public function testHashAndHashFileProduceSameResults(): void
     {
         $content = 'test content';
         $tempFile = tempnam(sys_get_temp_dir(), 'hash_test_');
