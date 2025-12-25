@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Command;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Command\AttributeInspectCommand;
+use AttributeRegistry\Command\AttributesInspectCommand;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use Cake\Cache\Cache;
 use Cake\Console\Arguments;
@@ -12,13 +12,13 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
 use Cake\TestSuite\TestCase;
 
-class AttributeInspectCommandTest extends TestCase
+class AttributesInspectCommandTest extends TestCase
 {
     use AttributeRegistryTestTrait;
 
     private AttributeRegistry $registry;
 
-    private AttributeInspectCommand $command;
+    private AttributesInspectCommand $command;
 
     private StubConsoleOutput $out;
 
@@ -38,7 +38,7 @@ class AttributeInspectCommandTest extends TestCase
         $this->loadTestAttributes();
 
         $this->registry = $this->createRegistry('attribute_test', true);
-        $this->command = new AttributeInspectCommand($this->registry);
+        $this->command = new AttributesInspectCommand($this->registry);
 
         $this->out = new StubConsoleOutput();
         $this->err = new StubConsoleOutput();
@@ -74,7 +74,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestRoute'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $this->assertStringContainsString('Found', $this->out->output());
         $this->assertStringContainsString('TestRoute', $this->out->output());
     }
@@ -84,7 +84,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['NonExistentAttribute'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_ERROR, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_ERROR, $result);
         $this->assertStringContainsString('No attributes found', $this->err->output());
     }
 
@@ -93,7 +93,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs([], ['class' => 'TestController']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $this->assertStringContainsString('Found', $this->out->output());
         $this->assertStringContainsString('TestController', $this->out->output());
     }
@@ -103,7 +103,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs([], ['class' => 'NonExistentClass']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_ERROR, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_ERROR, $result);
         $this->assertStringContainsString('No attributes found', $this->err->output());
     }
 
@@ -112,7 +112,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs([], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_ERROR, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_ERROR, $result);
         $this->assertStringContainsString('provide an attribute name or use --class', $this->err->output());
     }
 
@@ -121,7 +121,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestRoute'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $this->assertStringContainsString('Class:', $this->out->output());
         $this->assertStringContainsString('Target:', $this->out->output());
         $this->assertStringContainsString('File:', $this->out->output());
@@ -132,7 +132,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs([], ['class' => 'TestController']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // TestController has TestRoute (class), TestColumn (properties), TestGet (methods)
         $this->assertStringContainsString('TestRoute', $output);
@@ -154,7 +154,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestConfig'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // Should display array as JSON
         $this->assertStringContainsString('Arguments:', $output);
@@ -166,7 +166,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestConfig'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // Should display bool values as 'true' or 'false'
         $this->assertStringContainsString('enabled:', $output);
@@ -178,7 +178,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestConfig'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // Should display null values as 'null'
         $this->assertStringContainsString('name:', $output);
@@ -190,7 +190,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestWithEnum'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // Should display backed enum value (TestCategory::Text = 'text')
         $this->assertStringContainsString('category:', $output);
@@ -202,7 +202,7 @@ class AttributeInspectCommandTest extends TestCase
         $args = $this->createArgs(['TestWithEnum'], []);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeInspectCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesInspectCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         // Should display unit enum name (TestPriority::High)
         $this->assertStringContainsString('priority:', $output);
@@ -211,12 +211,12 @@ class AttributeInspectCommandTest extends TestCase
 
     public function testDefaultNameReturnsCorrectValue(): void
     {
-        $this->assertSame('attribute inspect', AttributeInspectCommand::defaultName());
+        $this->assertSame('attributes inspect', AttributesInspectCommand::defaultName());
     }
 
     public function testGetDescriptionReturnsString(): void
     {
-        $description = AttributeInspectCommand::getDescription();
+        $description = AttributesInspectCommand::getDescription();
         $this->assertNotEmpty($description);
     }
 }

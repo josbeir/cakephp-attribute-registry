@@ -5,6 +5,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\CompiledCache;
+use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\TestSuite\TestCase;
@@ -12,6 +13,8 @@ use stdClass;
 
 class CompiledCacheTest extends TestCase
 {
+    use AttributeRegistryTestTrait;
+
     private CompiledCache $cache;
 
     private string $tempPath;
@@ -47,22 +50,6 @@ class CompiledCacheTest extends TestCase
         rmdir($dir);
     }
 
-    private function createTestAttribute(): AttributeInfo
-    {
-        return new AttributeInfo(
-            className: 'App\\Controller\\UsersController',
-            attributeName: 'App\\Route',
-            arguments: ['path' => '/users'],
-            filePath: '/app/src/Controller/UsersController.php',
-            lineNumber: 15,
-            target: new AttributeTarget(
-                type: AttributeTargetType::CLASS_TYPE,
-                targetName: 'UsersController',
-            ),
-            fileHash: '',
-        );
-    }
-
     public function testCompiledCacheCanBeCreated(): void
     {
         $cache = new CompiledCache($this->tempPath, true);
@@ -89,7 +76,7 @@ class CompiledCacheTest extends TestCase
     public function testGetReturnsNullWhenDisabled(): void
     {
         $cache = new CompiledCache($this->tempPath, false);
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $cache->set('test_key', [$attr]);
         $result = $cache->get('test_key');
@@ -100,7 +87,7 @@ class CompiledCacheTest extends TestCase
     public function testSetReturnsFalseWhenDisabled(): void
     {
         $cache = new CompiledCache($this->tempPath, false);
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $result = $cache->set('test_key', [$attr]);
 
@@ -109,7 +96,7 @@ class CompiledCacheTest extends TestCase
 
     public function testSetAndGetSimpleAttribute(): void
     {
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $setResult = $this->cache->set('test_key', [$attr]);
         $this->assertTrue($setResult);
@@ -132,7 +119,7 @@ class CompiledCacheTest extends TestCase
 
     public function testSetAndGetMultipleAttributes(): void
     {
-        $attr1 = $this->createTestAttribute();
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $attr2 = new AttributeInfo(
             className: 'App\\Controller\\PostsController',
             attributeName: 'App\\Cache',
@@ -242,7 +229,7 @@ class CompiledCacheTest extends TestCase
 
     public function testDeleteRemovesCacheFile(): void
     {
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test_key', [$attr]);
 
         $result = $this->cache->delete('test_key');
@@ -260,7 +247,7 @@ class CompiledCacheTest extends TestCase
 
     public function testClearRemovesAllCacheFiles(): void
     {
-        $attr1 = $this->createTestAttribute();
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('key1', [$attr1]);
         $this->cache->set('key2', [$attr1]);
         $this->cache->set('key3', [$attr1]);
@@ -275,7 +262,7 @@ class CompiledCacheTest extends TestCase
 
     public function testGeneratesValidPHPSyntax(): void
     {
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
         // Cache filename now includes hash to prevent collisions
@@ -293,7 +280,7 @@ class CompiledCacheTest extends TestCase
 
     public function testCacheFileContainsMetadata(): void
     {
-        $attr = $this->createTestAttribute();
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
         // Cache filename now includes hash to prevent collisions
@@ -318,7 +305,7 @@ class CompiledCacheTest extends TestCase
 
     public function testOverwritesExistingCache(): void
     {
-        $attr1 = $this->createTestAttribute();
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $attr2 = new AttributeInfo(
             className: 'Different\\Class',
             attributeName: 'Different\\Attr',

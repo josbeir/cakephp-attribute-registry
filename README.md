@@ -175,7 +175,7 @@ When `validateFiles` is enabled:
 > [!IMPORTANT]
 > **Limitation:** This only validates **existing cached entries**. When you add **new attributes** to your codebase, you still need to manually refresh the cache:
 > ```bash
-> bin/cake attribute discover
+> bin/cake attributes cache
 > # or in code:
 > $registry->clearCache();
 > ```
@@ -304,7 +304,7 @@ Both approaches return the same singleton instance, ensuring consistent caching 
 The `AttributeRegistry` service provides several methods for finding attributes:
 
 > [!NOTE]
-> All query methods (`findByAttribute`, `findByClass`, `findByTargetType`) internally call `discover()`. The discovery result is cached after the first call, so subsequent queries within the same request are fast. When adding new attributes to your codebase, clear the cache using `$registry->clearCache()` or run `bin/cake attribute discover` to refresh the registry.
+> All query methods (`findByAttribute`, `findByClass`, `findByTargetType`) internally call `discover()`. The discovery result is cached after the first call, so subsequent queries within the same request are fast. When adding new attributes to your codebase, clear the cache using `$registry->clearCache()` or run `bin/cake attributes cache` to refresh the registry.
 
 #### Discover All Attributes
 
@@ -545,12 +545,12 @@ foreach ($routes as $routeInfo) {
 
 The plugin provides three console commands for managing attributes:
 
-### Discover Attributes
+### Cache Attributes
 
-Scan and cache all attributes:
+Manage the attribute cache (clear and rebuild):
 
 ```bash
-bin/cake attribute discover
+bin/cake attributes cache
 ```
 
 Output:
@@ -560,22 +560,42 @@ Discovering attributes...
 Discovered 42 attributes in 0.234s
 ```
 
+Options:
+- `--no-clear` - Skip clearing the cache before discovering
+- `--clear-only` - Only clear cache without discovering attributes
+- `--validate` - Validate cache integrity after building
+
+Example with validation:
+
+```bash
+bin/cake attributes cache --validate
+```
+
+Output:
+```
+Clearing attribute cache...
+Discovering attributes...
+Discovered 42 attributes in 0.234s
+Validating cache integrity...
+Cache validation passed: 42 attributes, 15 files
+```
+
 ### List Attributes
 
 List discovered attributes with optional filtering:
 
 ```bash
 # List all attributes
-bin/cake attribute list
+bin/cake attributes list
 
 # Filter by attribute name
-bin/cake attribute list --attribute Route
+bin/cake attributes list --attribute Route
 
 # Filter by class name
-bin/cake attribute list --class UserController
+bin/cake attributes list --class UserController
 
 # Filter by target type
-bin/cake attribute list --type method
+bin/cake attributes list --type method
 ```
 
 Output:
@@ -599,11 +619,11 @@ View detailed information about specific attributes:
 
 ```bash
 # Inspect by attribute name
-bin/cake attribute inspect Route
+bin/cake attributes inspect Route
 
 # Inspect attributes on a specific class
-bin/cake attribute inspect --class UserController
-bin/cake attribute inspect -c UserController
+bin/cake attributes inspect --class UserController
+bin/cake attributes inspect -c UserController
 ```
 
 Output:

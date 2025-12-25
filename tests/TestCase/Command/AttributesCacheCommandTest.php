@@ -4,21 +4,22 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Command;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Command\AttributeDiscoverCommand;
+use AttributeRegistry\Command\AttributesCacheCommand;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use Cake\Cache\Cache;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
 use Cake\TestSuite\TestCase;
+use ReflectionClass;
 
-class AttributeDiscoverCommandTest extends TestCase
+class AttributesCacheCommandTest extends TestCase
 {
     use AttributeRegistryTestTrait;
 
     private AttributeRegistry $registry;
 
-    private AttributeDiscoverCommand $command;
+    private AttributesCacheCommand $command;
 
     private StubConsoleOutput $out;
 
@@ -38,7 +39,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->loadTestAttributes();
 
         $this->registry = $this->createRegistry('attribute_test', true);
-        $this->command = new AttributeDiscoverCommand($this->registry);
+        $this->command = new AttributesCacheCommand($this->registry);
 
         $this->out = new StubConsoleOutput();
         $this->err = new StubConsoleOutput();
@@ -62,7 +63,9 @@ class AttributeDiscoverCommandTest extends TestCase
 
         // Apply default values for options
         $defaults = [
-            'no-clear-cache' => false,
+            'no-clear' => false,
+            'clear-only' => false,
+            'validate' => false,
         ];
         $options = array_merge($defaults, $options);
 
@@ -73,15 +76,15 @@ class AttributeDiscoverCommandTest extends TestCase
         );
     }
 
-    public function testDiscoverCommandReturnsSuccess(): void
+    public function testCacheCommandReturnsSuccess(): void
     {
         $args = $this->createArgs();
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeDiscoverCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesCacheCommand::CODE_SUCCESS, $result);
     }
 
-    public function testDiscoverCommandClearsCache(): void
+    public function testCacheCommandClearsCache(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -90,7 +93,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringContainsString('Clearing attribute cache', $output);
     }
 
-    public function testDiscoverCommandOutputsDiscoveryMessage(): void
+    public function testCacheCommandOutputsDiscoveryMessage(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -99,7 +102,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringContainsString('Discovering attributes', $output);
     }
 
-    public function testDiscoverCommandOutputsAttributeCount(): void
+    public function testCacheCommandOutputsAttributeCount(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -109,7 +112,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringContainsString('attributes', $output);
     }
 
-    public function testDiscoverCommandOutputsElapsedTime(): void
+    public function testCacheCommandOutputsElapsedTime(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -119,7 +122,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertMatchesRegularExpression('/\d+\.?\d*s/', $output);
     }
 
-    public function testDiscoverCommandActuallyDiscoverAttributes(): void
+    public function testCacheCommandActuallycacheAttributes(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -131,21 +134,21 @@ class AttributeDiscoverCommandTest extends TestCase
 
     public function testDefaultNameIsCorrect(): void
     {
-        $this->assertSame('attribute discover', AttributeDiscoverCommand::defaultName());
+        $this->assertSame('attributes cache', AttributesCacheCommand::defaultName());
     }
 
     public function testOptionParserHasDescription(): void
     {
         $parser = $this->command->getOptionParser();
 
-        $this->assertStringContainsString('Discover', $parser->getDescription());
+        $this->assertStringContainsString('cache', $parser->getDescription());
     }
 
-    public function testDiscoverCommandShowsWarningWhenCacheIsDisabled(): void
+    public function testCacheCommandShowsWarningWhenCacheIsDisabled(): void
     {
         // Create a new registry with disabled cache
         $registry = $this->createRegistry('attribute_test', false);
-        $command = new AttributeDiscoverCommand($registry);
+        $command = new AttributesCacheCommand($registry);
 
         $args = $this->createArgs();
         $command->execute($args, $this->io);
@@ -154,7 +157,7 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringContainsString('Cache is disabled', $output);
     }
 
-    public function testDiscoverCommandNoWarningWhenCacheIsEnabled(): void
+    public function testCacheCommandNoWarningWhenCacheIsEnabled(): void
     {
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
@@ -163,9 +166,9 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringNotContainsString('Cache is disabled', $output);
     }
 
-    public function testDiscoverCommandWithoutClearCacheDoesNotClearCache(): void
+    public function testCacheCommandWithoutClearCacheDoesNotClearCache(): void
     {
-        // Discover once to populate cache
+        // cache once to populate cache
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
 
@@ -177,16 +180,16 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->err = new StubConsoleOutput();
         $this->io = new ConsoleIo($this->out, $this->err);
 
-        $args = $this->createArgs([], ['no-clear-cache' => true]);
+        $args = $this->createArgs([], ['no-clear' => true]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
         $this->assertStringNotContainsString('Clearing attribute cache', $output);
     }
 
-    public function testDiscoverCommandWithClearCacheClears(): void
+    public function testCacheCommandWithClearCacheClears(): void
     {
-        // Discover once to populate cache - cache clearing is default behavior
+        // cache once to populate cache - cache clearing is default behavior
         $args = $this->createArgs();
         $this->command->execute($args, $this->io);
 
@@ -194,9 +197,9 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringContainsString('Clearing attribute cache', $output);
     }
 
-    public function testDiscoverCommandWithNoDiscoverSkipsDiscovery(): void
+    public function testCacheCommandWithNocacheSkipscachey(): void
     {
-        $args = $this->createArgs([], ['no-discover' => true]);
+        $args = $this->createArgs([], ['clear-only' => true]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
@@ -207,13 +210,67 @@ class AttributeDiscoverCommandTest extends TestCase
         $this->assertStringNotContainsString('Discovered', $output);
     }
 
-    public function testDiscoverCommandWithoutNoDiscoverDiscoveryRuns(): void
+    public function testCacheCommandWithoutClearOnlyDiscoveryRuns(): void
     {
-        $args = $this->createArgs([], ['no-discover' => false]);
+        $args = $this->createArgs([], ['clear-only' => false]);
         $this->command->execute($args, $this->io);
 
         $output = $this->out->output();
         $this->assertStringContainsString('Discovering attributes', $output);
         $this->assertStringContainsString('Discovered', $output);
+    }
+
+    public function testCacheCommandWithValidateOptionValidatesCache(): void
+    {
+        $args = $this->createArgs([], ['validate' => true]);
+        $result = $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringContainsString('Validating cache integrity', $output);
+        $this->assertStringContainsString('Cache validation passed', $output);
+        $this->assertEquals(AttributesCacheCommand::CODE_SUCCESS, $result);
+    }
+
+    public function testCacheCommandWithoutValidateOptionSkipsValidation(): void
+    {
+        $args = $this->createArgs([], ['validate' => false]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertStringNotContainsString('Validating cache integrity', $output);
+        $this->assertStringNotContainsString('Cache validation', $output);
+    }
+
+    public function testCacheCommandWithValidateShowsAttributeAndFileCount(): void
+    {
+        $args = $this->createArgs([], ['validate' => true]);
+        $this->command->execute($args, $this->io);
+
+        $output = $this->out->output();
+        $this->assertMatchesRegularExpression('/Cache validation passed: \d+ attributes, \d+ files/', $output);
+    }
+
+    public function testCacheCommandWithValidateReturnsErrorOnValidationFailure(): void
+    {
+        // First, discover and cache attributes
+        $this->registry->discover();
+
+        // Inject invalid data - attribute with non-existent file
+        $attr = $this->createTestAttribute('/tmp/non_existent_file_' . uniqid() . '.php', 'deadbeef');
+        $reflection = new ReflectionClass($this->registry);
+        $property = $reflection->getProperty('discoveredAttributes');
+        $property->setValue($this->registry, [$attr]);
+
+        // Run command with validation
+        $args = $this->createArgs([], ['validate' => true, 'no-clear' => true]);
+        $result = $this->command->execute($args, $this->io);
+
+        // Check error output
+        $errorOutput = $this->err->output();
+        $this->assertStringContainsString('Cache validation failed', $errorOutput);
+        $this->assertStringContainsString('File not found', $errorOutput);
+
+        // Should return error code
+        $this->assertEquals(AttributesCacheCommand::CODE_ERROR, $result);
     }
 }

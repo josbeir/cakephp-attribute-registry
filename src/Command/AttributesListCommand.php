@@ -13,7 +13,7 @@ use Cake\Console\ConsoleOptionParser;
 /**
  * Command to list discovered attributes.
  */
-class AttributeListCommand extends Command
+class AttributesListCommand extends Command
 {
     /**
      * @param \AttributeRegistry\AttributeRegistry $registry Attribute registry
@@ -29,7 +29,7 @@ class AttributeListCommand extends Command
      */
     public static function defaultName(): string
     {
-        return 'attribute list';
+        return 'attributes list';
     }
 
     /**

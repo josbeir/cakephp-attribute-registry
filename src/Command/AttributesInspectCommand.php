@@ -15,7 +15,7 @@ use UnitEnum;
 /**
  * Command to inspect details of a specific attribute.
  */
-class AttributeInspectCommand extends Command
+class AttributesInspectCommand extends Command
 {
     /**
      * @param \AttributeRegistry\AttributeRegistry $registry Attribute registry
@@ -31,7 +31,7 @@ class AttributeInspectCommand extends Command
      */
     public static function defaultName(): string
     {
-        return 'attribute inspect';
+        return 'attributes inspect';
     }
 
     /**

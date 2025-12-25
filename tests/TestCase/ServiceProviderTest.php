@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Command\AttributeDiscoverCommand;
-use AttributeRegistry\Command\AttributeInspectCommand;
-use AttributeRegistry\Command\AttributeListCommand;
+use AttributeRegistry\Command\AttributesCacheCommand;
+use AttributeRegistry\Command\AttributesInspectCommand;
+use AttributeRegistry\Command\AttributesListCommand;
 use AttributeRegistry\ServiceProvider;
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -61,9 +61,9 @@ class ServiceProviderTest extends TestCase
     public function testServiceProviderProvidesCommands(): void
     {
         $provider = new ServiceProvider();
-        $this->assertTrue($provider->provides(AttributeDiscoverCommand::class));
-        $this->assertTrue($provider->provides(AttributeListCommand::class));
-        $this->assertTrue($provider->provides(AttributeInspectCommand::class));
+        $this->assertTrue($provider->provides(AttributesCacheCommand::class));
+        $this->assertTrue($provider->provides(AttributesListCommand::class));
+        $this->assertTrue($provider->provides(AttributesInspectCommand::class));
     }
 
     public function testServiceProviderRegistersAttributeRegistry(): void
@@ -79,9 +79,9 @@ class ServiceProviderTest extends TestCase
         $container = new Container();
         $container->addServiceProvider(new ServiceProvider());
 
-        $this->assertTrue($container->has(AttributeDiscoverCommand::class));
-        $this->assertTrue($container->has(AttributeListCommand::class));
-        $this->assertTrue($container->has(AttributeInspectCommand::class));
+        $this->assertTrue($container->has(AttributesCacheCommand::class));
+        $this->assertTrue($container->has(AttributesListCommand::class));
+        $this->assertTrue($container->has(AttributesInspectCommand::class));
     }
 
     public function testAttributeRegistryIsShared(): void
@@ -100,14 +100,14 @@ class ServiceProviderTest extends TestCase
         $container = new Container();
         $container->addServiceProvider(new ServiceProvider());
 
-        $command = $container->get(AttributeDiscoverCommand::class);
-        $this->assertInstanceOf(AttributeDiscoverCommand::class, $command);
+        $command = $container->get(AttributesCacheCommand::class);
+        $this->assertInstanceOf(AttributesCacheCommand::class, $command);
 
-        $listCommand = $container->get(AttributeListCommand::class);
-        $this->assertInstanceOf(AttributeListCommand::class, $listCommand);
+        $listCommand = $container->get(AttributesListCommand::class);
+        $this->assertInstanceOf(AttributesListCommand::class, $listCommand);
 
-        $inspectCommand = $container->get(AttributeInspectCommand::class);
-        $this->assertInstanceOf(AttributeInspectCommand::class, $inspectCommand);
+        $inspectCommand = $container->get(AttributesInspectCommand::class);
+        $this->assertInstanceOf(AttributesInspectCommand::class, $inspectCommand);
     }
 
     public function testServiceProviderRespectsDisabledCache(): void
