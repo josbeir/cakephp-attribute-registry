@@ -43,6 +43,7 @@ class AttributeRegistryTest extends TestCase
         if (is_dir($this->tempPath)) {
             (new Filesystem())->deleteDir($this->tempPath);
         }
+
         $this->clearPlugins();
     }
 
