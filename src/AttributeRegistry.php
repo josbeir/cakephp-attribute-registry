@@ -87,11 +87,7 @@ class AttributeRegistry
         $pluginLocator = new PluginLocator();
 
         // Create PathResolver with lazy plugin path resolution
-        // The callback is only invoked when scanning is needed (cache miss)
-        $pathResolver = new PathResolver(
-            ROOT,
-            fn(): array => $pluginLocator->getEnabledPluginPaths(),
-        );
+        $pathResolver = new PathResolver(ROOT, $pluginLocator);
 
         // Determine cache path from config
         $cachePath = (string)($cacheConfig['path'] ?? CACHE . 'attribute_registry' . DS);

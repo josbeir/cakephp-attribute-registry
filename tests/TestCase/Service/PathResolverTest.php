@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Service\PathResolver;
+use AttributeRegistry\Service\PluginLocator;
 use PHPUnit\Framework\TestCase;
 
 class PathResolverTest extends TestCase
@@ -99,55 +100,41 @@ class PathResolverTest extends TestCase
 
     public function testLazyPluginPathCallbackIsNotInvokedOnConstruction(): void
     {
-        $callbackInvoked = false;
-        $callback = function () use (&$callbackInvoked): array {
-            $callbackInvoked = true;
+        $pluginLocator = $this->createMock(PluginLocator::class);
+        $pluginLocator->expects($this->never())
+            ->method('getEnabledPluginPaths');
 
-            return ['/some/plugin/path'];
-        };
-
-        new PathResolver($this->testAppPath, $callback);
-
-        // Callback should NOT be invoked during construction
-        $this->assertFalse($callbackInvoked, 'Plugin path callback should not be invoked during construction');
+        new PathResolver($this->testAppPath, $pluginLocator);
     }
 
     public function testLazyPluginPathCallbackIsInvokedOnFirstResolve(): void
     {
-        $callbackInvoked = false;
-        $callback = function () use (&$callbackInvoked): array {
-            $callbackInvoked = true;
+        $pluginLocator = $this->createMock(PluginLocator::class);
+        $pluginLocator->expects($this->once())
+            ->method('getEnabledPluginPaths')
+            ->willReturn([]);
 
-            return [];
-        };
+        $resolver = new PathResolver($this->testAppPath, $pluginLocator);
 
-        $resolver = new PathResolver($this->testAppPath, $callback);
-
-        // Invoke resolveAllPaths to trigger callback
+        // Invoke resolveAllPaths to trigger getEnabledPluginPaths()
         iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
-
-        // Callback should be invoked on first resolve
-        $this->assertTrue($callbackInvoked, 'Plugin path callback should be invoked on first path resolution');
     }
 
     public function testLazyPluginPathCallbackIsOnlyInvokedOnce(): void
     {
-        $callbackInvokeCount = 0;
-        $callback = function () use (&$callbackInvokeCount): array {
-            $callbackInvokeCount++;
+        $pluginLocator = $this->createMock(PluginLocator::class);
+        $pluginLocator->expects($this->once())
+            ->method('getEnabledPluginPaths')
+            ->willReturn([]);
 
-            return [];
-        };
-
-        $resolver = new PathResolver($this->testAppPath, $callback);
+        $resolver = new PathResolver($this->testAppPath, $pluginLocator);
 
         // Invoke resolveAllPaths multiple times
         iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
         iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
         iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
 
-        // Callback should only be invoked once
-        $this->assertSame(1, $callbackInvokeCount, 'Plugin path callback should only be invoked once');
+        // getEnabledPluginPaths() should only be invoked once
     }
 
     public function testLazyPluginPathsAreMergedWithBasePath(): void
@@ -157,9 +144,12 @@ class PathResolverTest extends TestCase
         mkdir($pluginPath . DIRECTORY_SEPARATOR . 'src', 0755, true);
         file_put_contents($pluginPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'PluginClass.php', "<?php\n// Plugin file");
 
-        $callback = fn(): array => [$pluginPath];
+        $pluginLocator = $this->createMock(PluginLocator::class);
+        $pluginLocator->expects($this->once())
+            ->method('getEnabledPluginPaths')
+            ->willReturn([$pluginPath]);
 
-        $resolver = new PathResolver($this->testAppPath, $callback);
+        $resolver = new PathResolver($this->testAppPath, $pluginLocator);
 
         $patterns = ['src/*.php'];
         $paths = iterator_to_array($resolver->resolveAllPaths($patterns));

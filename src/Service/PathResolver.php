@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Utility\PathNormalizer;
-use Closure;
 use Generator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -22,11 +21,11 @@ class PathResolver
      * Constructor for PathResolver.
      *
      * @param string $basePath Primary base path (typically ROOT)
-     * @param \Closure|null $pluginPathsCallback Optional lazy callback returning additional plugin paths
+     * @param \AttributeRegistry\Service\PluginLocator|null $pluginLocator Optional plugin locator for lazy plugin path resolution
      */
     public function __construct(
         string $basePath,
-        private readonly ?Closure $pluginPathsCallback = null,
+        private readonly ?PluginLocator $pluginLocator = null,
     ) {
         $this->basePaths = array_filter(explode(PATH_SEPARATOR, $basePath));
     }
@@ -41,8 +40,8 @@ class PathResolver
             return;
         }
 
-        if ($this->pluginPathsCallback instanceof Closure) {
-            $pluginPaths = ($this->pluginPathsCallback)();
+        if ($this->pluginLocator instanceof PluginLocator) {
+            $pluginPaths = $this->pluginLocator->getEnabledPluginPaths();
             foreach ($pluginPaths as $path) {
                 $this->basePaths[] = $path;
             }
