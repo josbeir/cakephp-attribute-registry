@@ -30,7 +30,7 @@ use Cake\Core\Configure;
  */
 class AttributeRegistry
 {
-    private const REGISTRY_CACHE_KEY_ALL = 'attribute_registry_all';
+    private const CACHE_KEY = 'attribute_registry';
 
     private static ?self $instance = null;
 
@@ -145,7 +145,7 @@ class AttributeRegistry
         }
 
         /** @var array<\AttributeRegistry\ValueObject\AttributeInfo>|null $cached */
-        $cached = $this->cache->get(self::REGISTRY_CACHE_KEY_ALL);
+        $cached = $this->cache->get(self::CACHE_KEY);
         if ($cached !== null) {
             $this->discoveredAttributes = $cached;
 
@@ -157,7 +157,7 @@ class AttributeRegistry
             $attributes[] = $attribute;
         }
 
-        $this->cache->set(self::REGISTRY_CACHE_KEY_ALL, $attributes);
+        $this->cache->set(self::CACHE_KEY, $attributes);
         $this->discoveredAttributes = $attributes;
 
         return new AttributeCollection($attributes);
@@ -213,7 +213,7 @@ class AttributeRegistry
     {
         $this->discoveredAttributes = null;
 
-        return $this->cache->delete(self::REGISTRY_CACHE_KEY_ALL);
+        return $this->cache->delete(self::CACHE_KEY);
     }
 
     /**

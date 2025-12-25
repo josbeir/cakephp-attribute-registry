@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\AttributeRegistry;
+use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
 
 /**
@@ -61,7 +62,7 @@ class AttributeCacheValidator
 
             // Check hash if present (backward compatibility - skip if empty)
             if (!empty($fileHash)) {
-                $actualHash = hash_file('xxh3', $filePath);
+                $actualHash = HashUtility::hashFile($filePath);
                 if ($actualHash !== $fileHash) {
                     $errors[] = 'Hash mismatch for file: ' . $filePath;
                 }

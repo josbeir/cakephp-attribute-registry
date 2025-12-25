@@ -6,6 +6,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
+use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\TestSuite\TestCase;
@@ -413,7 +414,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileHash: hash('xxh3', $fileContent),
+            fileHash: HashUtility::hash($fileContent),
         );
 
         $this->cache->set('test', [$attr]);
@@ -447,7 +448,7 @@ class CompiledCacheTest extends TestCase
 
         $fileContent = file_get_contents($testFile);
         $this->assertNotFalse($fileContent);
-        $originalHash = hash('xxh3', $fileContent);
+        $originalHash = HashUtility::hash($fileContent);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -489,7 +490,7 @@ class CompiledCacheTest extends TestCase
 
         $fileContent = file_get_contents($testFile);
         $this->assertNotFalse($fileContent);
-        $originalHash = hash('xxh3', $fileContent);
+        $originalHash = HashUtility::hash($fileContent);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -552,7 +553,7 @@ class CompiledCacheTest extends TestCase
         $fileContent = '<?php class TestClass {}';
         file_put_contents($testFile, $fileContent);
 
-        $fileHash = hash_file('xxh3', $testFile);
+        $fileHash = HashUtility::hashFile($testFile);
         $this->assertNotFalse($fileHash);
 
         // Create attribute with valid hash
@@ -588,7 +589,7 @@ class CompiledCacheTest extends TestCase
         $fileContent = '<?php class TestClass {}';
         file_put_contents($testFile, $fileContent);
 
-        $fileHash = hash_file('xxh3', $testFile);
+        $fileHash = HashUtility::hashFile($testFile);
         $this->assertNotFalse($fileHash);
 
         // Create multiple attributes from the same file
@@ -649,7 +650,7 @@ class CompiledCacheTest extends TestCase
 
         // Check that the generated PHP code includes pluginName
         $safeKey = 'plugin_test';
-        $hash = hash('xxh3', 'plugin_test');
+        $hash = HashUtility::hash('plugin_test');
         $cacheFile = $this->tempPath . $safeKey . '_' . $hash . '.php';
         $this->assertFileExists($cacheFile);
 

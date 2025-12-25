@@ -98,7 +98,7 @@ class PathResolverTest extends TestCase
         rmdir($pluginPath);
     }
 
-    public function testLazyPluginPathCallbackIsNotInvokedOnConstruction(): void
+    public function testPluginPathsNotLoadedOnConstruction(): void
     {
         $pluginLocator = $this->createMock(PluginLocator::class);
         $pluginLocator->expects($this->never())
@@ -107,7 +107,7 @@ class PathResolverTest extends TestCase
         new PathResolver($this->testAppPath, $pluginLocator);
     }
 
-    public function testLazyPluginPathCallbackIsInvokedOnFirstResolve(): void
+    public function testPluginPathsLoadedOnFirstResolve(): void
     {
         $pluginLocator = $this->createMock(PluginLocator::class);
         $pluginLocator->expects($this->once())
@@ -120,7 +120,7 @@ class PathResolverTest extends TestCase
         iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
     }
 
-    public function testLazyPluginPathCallbackIsOnlyInvokedOnce(): void
+    public function testPluginPathsOnlyLoadedOnce(): void
     {
         $pluginLocator = $this->createMock(PluginLocator::class);
         $pluginLocator->expects($this->once())
@@ -137,7 +137,7 @@ class PathResolverTest extends TestCase
         // getEnabledPluginPaths() should only be invoked once
     }
 
-    public function testLazyPluginPathsAreMergedWithBasePath(): void
+    public function testPluginPathsMergedWithBasePath(): void
     {
         // Create a plugin path
         $pluginPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'attribute_registry_lazy_plugin_' . uniqid();
