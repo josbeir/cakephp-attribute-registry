@@ -168,6 +168,9 @@ class AttributeRegistry implements EventDispatcherInterface
             return $collection;
         }
 
+        // Dispatch before scan event
+        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_SCAN);
+
         $attributes = [];
         foreach ($this->scanner->scanAll() as $attribute) {
             $attributes[] = $attribute;
@@ -177,6 +180,12 @@ class AttributeRegistry implements EventDispatcherInterface
         $this->discoveredAttributes = $attributes;
 
         $collection = new AttributeCollection($attributes);
+
+        // Dispatch after scan event
+        $this->dispatchEvent(AttributeRegistryEvents::AFTER_SCAN, [
+            'attributes' => $collection,
+        ]);
+
         $this->dispatchAfterDiscover($collection);
 
         return $collection;
@@ -230,9 +239,16 @@ class AttributeRegistry implements EventDispatcherInterface
      */
     public function clearCache(): bool
     {
-        $this->discoveredAttributes = null;
+        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_CACHE_CLEAR);
 
-        return $this->cache->delete(self::CACHE_KEY);
+        $this->discoveredAttributes = null;
+        $success = $this->cache->delete(self::CACHE_KEY);
+
+        $this->dispatchEvent(AttributeRegistryEvents::AFTER_CACHE_CLEAR, [
+            'success' => $success,
+        ]);
+
+        return $success;
     }
 
     /**
@@ -262,7 +278,6 @@ class AttributeRegistry implements EventDispatcherInterface
      * Dispatch the after discover event with the collection.
      *
      * @param \AttributeRegistry\Collection\AttributeCollection $collection The discovered attributes collection
-     * @return void
      */
     private function dispatchAfterDiscover(AttributeCollection $collection): void
     {

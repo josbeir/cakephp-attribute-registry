@@ -32,6 +32,7 @@ A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attribute
         - [Find by Class Name](#find-by-class-name)
         - [Find by Target Type](#find-by-target-type)
         - [Cache Management](#cache-management)
+    - [Events](#events)
     - [Working with AttributeInfo](#working-with-attributeinfo)
     - [Example: Building a Route Registry](#example-building-a-route-registry)
 - [Console Commands](#console-commands)
@@ -469,6 +470,76 @@ if ($registry->isCacheEnabled()) {
 ```
 
 The cache records file modification timestamps (`filemtime`) for discovered attributes, which you can use to detect when source files have changed and decide when to rebuild or clear the cache.
+
+### Events
+
+The AttributeRegistry dispatches events at key points in the discovery and caching lifecycle. You can listen to these events to implement custom functionality like performance monitoring, logging, or integration with other systems.
+
+**Available Events:**
+
+| Event Name | When Fired | Event Data | Description |
+|------------|------------|------------|-------------|
+| `AttributeRegistry.beforeDiscover` | Start of `discover()` | None | Fired before attribute discovery begins (every call) |
+| `AttributeRegistry.afterDiscover` | End of `discover()` | `attributes` (AttributeCollection) | Fired after discovery completes with the result collection |
+| `AttributeRegistry.beforeScan` | Before file scanning | None | Fired only when scanning files (not when using cached data) |
+| `AttributeRegistry.afterScan` | After file scanning | `attributes` (AttributeCollection) | Fired after scanning completes with discovered attributes |
+| `AttributeRegistry.beforeCacheClear` | Start of `clearCache()` | None | Fired before clearing the cache |
+| `AttributeRegistry.afterCacheClear` | End of `clearCache()` | `success` (bool) | Fired after cache clearing with success status |
+
+**Event Listener Example:**
+
+```php
+use Cake\Event\EventInterface;
+use Cake\Event\EventManager;
+use AttributeRegistry\Event\AttributeRegistryEvents;
+
+// Listen to the afterDiscover event
+EventManager::instance()->on(
+    AttributeRegistryEvents::AFTER_DISCOVER,
+    function (EventInterface $event) {
+        $attributes = $event->getData('attributes');
+        $count = $attributes->count();
+
+        Log::info("Discovered {$count} attributes");
+    }
+);
+
+// Track scanning performance
+$scanTimer = null;
+
+EventManager::instance()->on(
+    AttributeRegistryEvents::BEFORE_SCAN,
+    function (EventInterface $event) use (&$scanTimer) {
+        $scanTimer = microtime(true);
+    }
+);
+
+EventManager::instance()->on(
+    AttributeRegistryEvents::AFTER_SCAN,
+    function (EventInterface $event) use (&$scanTimer) {
+        $duration = microtime(true) - $scanTimer;
+        $attributes = $event->getData('attributes');
+
+        Log::info(sprintf(
+            'Scanned %d attributes in %.2fms',
+            $attributes->count(),
+            $duration * 1000
+        ));
+    }
+);
+
+// Clear related caches when AttributeRegistry cache is cleared
+EventManager::instance()->on(
+    AttributeRegistryEvents::AFTER_CACHE_CLEAR,
+    function (EventInterface $event) {
+        if ($event->getData('success')) {
+            // Clear your custom route cache, API documentation cache, etc.
+            Cache::delete('my_route_cache');
+            Cache::delete('api_docs');
+        }
+    }
+);
+```
 
 ### Working with AttributeInfo
 
