@@ -5,12 +5,15 @@ namespace AttributeRegistry;
 
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Event\AttributeRegistryEvents;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\Service\PluginLocator;
 use Cake\Core\Configure;
+use Cake\Event\EventDispatcherInterface;
+use Cake\Event\EventDispatcherTrait;
 
 /**
  * Main registry for discovering and querying PHP attributes.
@@ -27,9 +30,14 @@ use Cake\Core\Configure;
  * // Via dependency injection (in controllers, commands, etc.)
  * public function index(AttributeRegistry $registry): Response
  * ```
+ *
+ * @implements \Cake\Event\EventDispatcherInterface<\AttributeRegistry\AttributeRegistry>
  */
-class AttributeRegistry
+class AttributeRegistry implements EventDispatcherInterface
 {
+    /** @use \Cake\Event\EventDispatcherTrait<\AttributeRegistry\AttributeRegistry> */
+    use EventDispatcherTrait;
+
     private const CACHE_KEY = 'attribute_registry';
 
     private static ?self $instance = null;
@@ -140,16 +148,24 @@ class AttributeRegistry
      */
     public function discover(): AttributeCollection
     {
+        // Dispatch before discover event
+        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_DISCOVER);
+
         if ($this->discoveredAttributes !== null) {
-            return new AttributeCollection($this->discoveredAttributes);
+            $collection = new AttributeCollection($this->discoveredAttributes);
+            $this->dispatchAfterDiscover($collection);
+
+            return $collection;
         }
 
         /** @var array<\AttributeRegistry\ValueObject\AttributeInfo>|null $cached */
         $cached = $this->cache->get(self::CACHE_KEY);
         if ($cached !== null) {
             $this->discoveredAttributes = $cached;
+            $collection = new AttributeCollection($this->discoveredAttributes);
+            $this->dispatchAfterDiscover($collection);
 
-            return new AttributeCollection($this->discoveredAttributes);
+            return $collection;
         }
 
         $attributes = [];
@@ -160,7 +176,10 @@ class AttributeRegistry
         $this->cache->set(self::CACHE_KEY, $attributes);
         $this->discoveredAttributes = $attributes;
 
-        return new AttributeCollection($attributes);
+        $collection = new AttributeCollection($attributes);
+        $this->dispatchAfterDiscover($collection);
+
+        return $collection;
     }
 
     /**
@@ -237,5 +256,18 @@ class AttributeRegistry
         $this->discover();
 
         return true;
+    }
+
+    /**
+     * Dispatch the after discover event with the collection.
+     *
+     * @param \AttributeRegistry\Collection\AttributeCollection $collection The discovered attributes collection
+     * @return void
+     */
+    private function dispatchAfterDiscover(AttributeCollection $collection): void
+    {
+        $this->dispatchEvent(AttributeRegistryEvents::AFTER_DISCOVER, [
+            'attributes' => $collection,
+        ]);
     }
 }
