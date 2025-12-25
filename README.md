@@ -57,6 +57,7 @@ The CakePHP Attribute Registry Plugin provides a centralized system for discover
 - 🔌 **Plugin Support** - Automatically scans all loaded CakePHP plugins
 - 🖥️ **CLI Tools** - Console commands for discovery, listing, and inspection
 - 🏗️ **Service-Oriented** - Clean architecture with dependency injection via CakePHP's container
+- 🎯 **Event System** - Hook into discovery and caching lifecycle for logging, monitoring, and custom integrations
 - 🐛 **DebugKit Panel** - Visual panel for browsing discovered attributes during development
 
 **Supported Attribute Targets:**
