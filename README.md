@@ -602,15 +602,15 @@ Output:
 ```
 Found 5 attributes:
 
-+---------------------------+----------------------------------+--------+-----------------+
-| Attribute                 | Class                            | Type   | Target          |
-+---------------------------+----------------------------------+--------+-----------------+
-| App\Attribute\Route       | App\Controller\UsersController   | class  | UsersController |
-| App\Attribute\Get         | App\Controller\UsersController   | method | index           |
-| App\Attribute\Get         | App\Controller\UsersController   | method | view            |
-| MyPlugin\Attribute\Cache  | MyPlugin\Model\Table\PostsTable  | method | findPublished   |
-| MyPlugin\Attribute\Queue  | MyPlugin\Service\EmailService    | method | sendWelcome     |
-+---------------------------+----------------------------------+--------+-----------------+
++---------------------------+----------------------------------+----------+--------+-----------------+
+| Attribute                 | Class                            | Plugin   | Type   | Target          |
++---------------------------+----------------------------------+----------+--------+-----------------+
+| App\Attribute\Route       | App\Controller\UsersController   | -        | class  | UsersController |
+| App\Attribute\Get         | App\Controller\UsersController   | -        | method | index           |
+| App\Attribute\Get         | App\Controller\UsersController   | -        | method | view            |
+| MyPlugin\Attribute\Cache  | MyPlugin\Model\Table\PostsTable  | MyPlugin | method | findPublished   |
+| MyPlugin\Attribute\Queue  | MyPlugin\Service\EmailService    | MyPlugin | method | sendWelcome     |
++---------------------------+----------------------------------+----------+--------+-----------------+
 ```
 
 ### Inspect Attributes
