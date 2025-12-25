@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Test\TestCase\Command;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Command\AttributeListCommand;
+use AttributeRegistry\Command\AttributesListCommand;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use Cake\Cache\Cache;
 use Cake\Console\Arguments;
@@ -12,13 +12,13 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
 use Cake\TestSuite\TestCase;
 
-class AttributeListCommandTest extends TestCase
+class AttributesListCommandTest extends TestCase
 {
     use AttributeRegistryTestTrait;
 
     private AttributeRegistry $registry;
 
-    private AttributeListCommand $command;
+    private AttributesListCommand $command;
 
     private StubConsoleOutput $out;
 
@@ -38,7 +38,7 @@ class AttributeListCommandTest extends TestCase
         $this->loadTestAttributes();
 
         $this->registry = $this->createRegistry('attribute_test', true);
-        $this->command = new AttributeListCommand($this->registry);
+        $this->command = new AttributesListCommand($this->registry);
 
         $this->out = new StubConsoleOutput();
         $this->err = new StubConsoleOutput();
@@ -72,7 +72,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs();
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
     }
 
     public function testListAllAttributesOutputsCount(): void
@@ -103,7 +103,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['attribute' => 'TestRoute']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         $this->assertStringContainsString('TestRoute', $output);
     }
@@ -122,7 +122,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['class' => 'TestController']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         $this->assertStringContainsString('TestController', $output);
     }
@@ -141,7 +141,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['type' => 'method']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->out->output();
         $this->assertStringContainsString('method', $output);
     }
@@ -160,7 +160,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['type' => 'invalid_type']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->err->output();
         $this->assertStringContainsString('No attributes found', $output);
     }
@@ -170,7 +170,7 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['attribute' => 'NonExistentAttribute']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->err->output();
         $this->assertStringContainsString('No attributes found', $output);
     }
@@ -180,14 +180,14 @@ class AttributeListCommandTest extends TestCase
         $args = $this->createArgs([], ['class' => 'NonExistentClass']);
         $result = $this->command->execute($args, $this->io);
 
-        $this->assertSame(AttributeListCommand::CODE_SUCCESS, $result);
+        $this->assertSame(AttributesListCommand::CODE_SUCCESS, $result);
         $output = $this->err->output();
         $this->assertStringContainsString('No attributes found', $output);
     }
 
     public function testDefaultNameIsCorrect(): void
     {
-        $this->assertSame('attribute list', AttributeListCommand::defaultName());
+        $this->assertSame('attributes list', AttributesListCommand::defaultName());
     }
 
     public function testOptionParserHasDescription(): void

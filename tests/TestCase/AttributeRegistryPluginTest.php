@@ -50,9 +50,9 @@ class AttributeRegistryPluginTest extends TestCase
         $result = $this->plugin->console($commands);
 
         $this->assertInstanceOf(CommandCollection::class, $result);
-        $this->assertTrue($result->has('attribute discover'));
-        $this->assertTrue($result->has('attribute list'));
-        $this->assertTrue($result->has('attribute inspect'));
+        $this->assertTrue($result->has('attributes cache'));
+        $this->assertTrue($result->has('attributes list'));
+        $this->assertTrue($result->has('attributes inspect'));
     }
 
     public function testServicesRegistersContainer(): void

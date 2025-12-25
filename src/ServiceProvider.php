@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace AttributeRegistry;
 
-use AttributeRegistry\Command\AttributeDiscoverCommand;
-use AttributeRegistry\Command\AttributeInspectCommand;
-use AttributeRegistry\Command\AttributeListCommand;
+use AttributeRegistry\Command\AttributesCacheCommand;
+use AttributeRegistry\Command\AttributesInspectCommand;
+use AttributeRegistry\Command\AttributesListCommand;
 use Cake\Core\ContainerInterface;
 use Cake\Core\ServiceProvider as CakeServiceProvider;
 
@@ -19,9 +19,9 @@ class ServiceProvider extends CakeServiceProvider
      */
     protected array $provides = [
         AttributeRegistry::class,
-        AttributeDiscoverCommand::class,
-        AttributeListCommand::class,
-        AttributeInspectCommand::class,
+        AttributesCacheCommand::class,
+        AttributesListCommand::class,
+        AttributesInspectCommand::class,
     ];
 
     /**
@@ -33,25 +33,25 @@ class ServiceProvider extends CakeServiceProvider
             return AttributeRegistry::getInstance();
         });
 
-        $container->add(AttributeDiscoverCommand::class, function () use ($container): AttributeDiscoverCommand {
+        $container->add(AttributesCacheCommand::class, function () use ($container): AttributesCacheCommand {
             /** @var \AttributeRegistry\AttributeRegistry $registry */
             $registry = $container->get(AttributeRegistry::class);
 
-            return new AttributeDiscoverCommand($registry);
+            return new AttributesCacheCommand($registry);
         });
 
-        $container->add(AttributeListCommand::class, function () use ($container): AttributeListCommand {
+        $container->add(AttributesListCommand::class, function () use ($container): AttributesListCommand {
             /** @var \AttributeRegistry\AttributeRegistry $registry */
             $registry = $container->get(AttributeRegistry::class);
 
-            return new AttributeListCommand($registry);
+            return new AttributesListCommand($registry);
         });
 
-        $container->add(AttributeInspectCommand::class, function () use ($container): AttributeInspectCommand {
+        $container->add(AttributesInspectCommand::class, function () use ($container): AttributesInspectCommand {
             /** @var \AttributeRegistry\AttributeRegistry $registry */
             $registry = $container->get(AttributeRegistry::class);
 
-            return new AttributeInspectCommand($registry);
+            return new AttributesInspectCommand($registry);
         });
     }
 }

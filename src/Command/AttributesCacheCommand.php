@@ -10,9 +10,9 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 
 /**
- * Command to discover and cache all attributes.
+ * Command to manage attribute cache.
  */
-class AttributeDiscoverCommand extends Command
+class AttributesCacheCommand extends Command
 {
     /**
      * @param \AttributeRegistry\AttributeRegistry $registry Attribute registry
@@ -28,7 +28,7 @@ class AttributeDiscoverCommand extends Command
      */
     public static function defaultName(): string
     {
-        return 'attribute discover';
+        return 'attributes cache';
     }
 
     /**
@@ -36,7 +36,7 @@ class AttributeDiscoverCommand extends Command
      */
     public static function getDescription(): string
     {
-        return 'Discover and cache all PHP attributes in the application.';
+        return 'Manage attribute cache (clear and rebuild).';
     }
 
     /**
@@ -45,12 +45,12 @@ class AttributeDiscoverCommand extends Command
     protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         $parser->setDescription(static::getDescription());
-        $parser->addOption('no-clear-cache', [
+        $parser->addOption('no-clear', [
             'boolean' => true,
             'default' => false,
-            'help' => 'Skip clearing the attribute cache before discovering',
+            'help' => 'Skip clearing the cache before discovering',
         ]);
-        $parser->addOption('no-discover', [
+        $parser->addOption('clear-only', [
             'boolean' => true,
             'default' => false,
             'help' => 'Only clear cache without discovering attributes',
@@ -68,14 +68,14 @@ class AttributeDiscoverCommand extends Command
             $io->warning('Cache is disabled. Attributes will be re-discovered on every request.');
         }
 
-        // Clear cache by default unless --no-clear-cache is set
-        if (!$args->getOption('no-clear-cache')) {
+        // Clear cache by default unless --no-clear is set
+        if (!$args->getOption('no-clear')) {
             $io->out('<info>Clearing attribute cache...</info>');
             $this->registry->clearCache();
         }
 
-        // Only discover if --no-discover is not set
-        if (!$args->getOption('no-discover')) {
+        // Only discover if --clear-only is not set
+        if (!$args->getOption('clear-only')) {
             $io->out('<info>Discovering attributes...</info>');
 
             $startTime = microtime(true);

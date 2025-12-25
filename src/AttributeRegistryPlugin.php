@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace AttributeRegistry;
 
-use AttributeRegistry\Command\AttributeDiscoverCommand;
-use AttributeRegistry\Command\AttributeInspectCommand;
-use AttributeRegistry\Command\AttributeListCommand;
+use AttributeRegistry\Command\AttributesCacheCommand;
+use AttributeRegistry\Command\AttributesInspectCommand;
+use AttributeRegistry\Command\AttributesListCommand;
 use AttributeRegistry\Utility\ConfigMerger;
 use Cake\Command\CacheClearallCommand;
 use Cake\Console\CommandCollection;
@@ -97,9 +97,9 @@ class AttributeRegistryPlugin extends BasePlugin
      */
     public function console(CommandCollection $commands): CommandCollection
     {
-        $commands->add('attribute discover', AttributeDiscoverCommand::class);
-        $commands->add('attribute list', AttributeListCommand::class);
-        $commands->add('attribute inspect', AttributeInspectCommand::class);
+        $commands->add('attributes cache', AttributesCacheCommand::class);
+        $commands->add('attributes list', AttributesListCommand::class);
+        $commands->add('attributes inspect', AttributesInspectCommand::class);
 
         return $commands;
     }
@@ -124,8 +124,8 @@ class AttributeRegistryPlugin extends BasePlugin
                 // Clear AttributeRegistry cache when cache:clear_all is run
                 if ($command instanceof CacheClearallCommand) {
                     $command->executeCommand(
-                        AttributeDiscoverCommand::class,
-                        ['--no-discover'],
+                        AttributesCacheCommand::class,
+                        ['--clear-only'],
                     );
                 }
             });
