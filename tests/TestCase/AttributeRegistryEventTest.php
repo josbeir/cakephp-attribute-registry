@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase;
 
-use Cake\Event\EventInterface;
 use AttributeRegistry\Event\AttributeRegistryEvents;
+use Cake\Event\EventInterface;
 use Cake\Event\EventList;
 use Cake\Event\EventManager;
 use Cake\TestSuite\TestCase;
+use Cake\Utility\Filesystem;
 
 class AttributeRegistryEventTest extends TestCase
 {
@@ -24,7 +25,7 @@ class AttributeRegistryEventTest extends TestCase
     protected function tearDown(): void
     {
         if (file_exists($this->cachePath)) {
-            $this->rrmdir($this->cachePath);
+            (new Filesystem())->deleteDir($this->cachePath);
         }
 
         parent::tearDown();
@@ -147,7 +148,8 @@ class AttributeRegistryEventTest extends TestCase
         assert($eventList instanceof EventList);
 
         $firedEvents = [];
-        for ($i = 0; $i < $eventList->count(); $i++) {
+        $eventCount = $eventList->count();
+        for ($i = 0; $i < $eventCount; $i++) {
             $event = $eventList[$i];
             assert($event instanceof EventInterface);
             $firedEvents[] = $event->getName();
@@ -202,24 +204,5 @@ class AttributeRegistryEventTest extends TestCase
             true,
             $eventManager,
         );
-    }
-
-    private function rrmdir(string $dir): void
-    {
-        if (is_dir($dir)) {
-            $objects = scandir($dir);
-            foreach ($objects as $object) {
-                if ($object !== '.' && $object !== '..') {
-                    $path = $dir . DS . $object;
-                    if (is_dir($path)) {
-                        $this->rrmdir($path);
-                    } else {
-                        unlink($path);
-                    }
-                }
-            }
-
-            rmdir($dir);
-        }
     }
 }

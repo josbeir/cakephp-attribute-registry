@@ -10,6 +10,7 @@ use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\TestSuite\TestCase;
+use Cake\Utility\Filesystem;
 use stdClass;
 
 class CompiledCacheTest extends TestCase
@@ -33,22 +34,9 @@ class CompiledCacheTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        $this->removeDirectory($this->tempPath);
-    }
-
-    private function removeDirectory(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
+        if (is_dir($this->tempPath)) {
+            (new Filesystem())->deleteDir($this->tempPath);
         }
-
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
-        }
-
-        rmdir($dir);
     }
 
     public function testCompiledCacheCanBeCreated(): void
