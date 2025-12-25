@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\Log\Log;
@@ -512,7 +513,7 @@ PHP;
         // Sanitize key for filesystem (for readability)
         $safeKey = preg_replace('/[^a-z0-9_-]/i', '_', $key);
         // Append a hash of the original key to avoid collisions between different keys
-        $hash = hash('xxh3', $key);
+        $hash = HashUtility::hash($key);
 
         return $this->cachePath . $safeKey . '_' . $hash . '.php';
     }
@@ -582,7 +583,7 @@ PHP;
 
             // Get hash from cache or compute it
             if (!isset($fileHashCache[$attr->filePath])) {
-                $currentHash = hash_file('xxh3', $attr->filePath);
+                $currentHash = HashUtility::hashFile($attr->filePath);
                 if ($currentHash === false) {
                     Log::warning(sprintf(
                         'Failed to compute hash for file "%s" while validating cached data.',

@@ -6,6 +6,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Service\AttributeCacheValidator;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
+use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
@@ -124,7 +125,7 @@ class AttributeCacheValidatorTest extends TestCase
     {
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
-        $hash = hash_file('xxh3', $tmpFile);
+        $hash = HashUtility::hashFile($tmpFile);
         assert(is_string($hash));
 
         $attr = $this->createTestAttribute($tmpFile, $hash);
@@ -170,7 +171,7 @@ class AttributeCacheValidatorTest extends TestCase
     {
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
-        $hash = hash_file('xxh3', $tmpFile);
+        $hash = HashUtility::hashFile($tmpFile);
         assert(is_string($hash));
 
         // Two attributes from same file

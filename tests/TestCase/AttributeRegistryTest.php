@@ -143,8 +143,8 @@ class AttributeRegistryTest extends TestCase
         // Populate cache
         $this->registry->discover();
 
-        // Verify cache file exists (with hash suffix from key 'attribute_registry_all')
-        $cacheFile = $this->tempPath . 'attribute_registry_all_de25ebf3aca98eb1.php';
+        // Verify cache file exists (with hash suffix from key 'attribute_registry')
+        $cacheFile = $this->tempPath . 'attribute_registry_da54e0f65aed1014.php';
         $this->assertFileExists($cacheFile);
 
         $this->registry->clearCache();
@@ -161,8 +161,8 @@ class AttributeRegistryTest extends TestCase
         // First discover call should populate cache
         $this->registry->discover();
 
-        // Verify cache file is created (with hash suffix from key 'attribute_registry_all')
-        $cacheFile = $this->tempPath . 'attribute_registry_all_de25ebf3aca98eb1.php';
+        // Verify cache file is created (with hash suffix from key 'attribute_registry')
+        $cacheFile = $this->tempPath . 'attribute_registry_da54e0f65aed1014.php';
         $this->assertFileExists($cacheFile);
 
         // Verify it contains compiled PHP code

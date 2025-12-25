@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
+use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\Utility\PathNormalizer;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
@@ -53,7 +54,7 @@ class AttributeParser
         $attributes = [];
 
         // Generate file content hash for cache validation
-        $fileHash = hash_file('xxh3', $realFilePath);
+        $fileHash = HashUtility::hashFile($realFilePath);
         if ($fileHash === false) {
             throw new RuntimeException(sprintf(
                 'Failed to compute hash for file "%s"',
