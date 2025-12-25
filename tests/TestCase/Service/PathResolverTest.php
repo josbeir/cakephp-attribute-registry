@@ -5,6 +5,7 @@ namespace AttributeRegistry\Test\TestCase\Service;
 
 use AttributeRegistry\Service\PathResolver;
 use AttributeRegistry\Service\PluginLocator;
+use Cake\Utility\Filesystem;
 use PHPUnit\Framework\TestCase;
 
 class PathResolverTest extends TestCase
@@ -201,21 +202,8 @@ class PathResolverTest extends TestCase
 
     private function removeDirectory(string $dir): void
     {
-        if (!is_dir($dir)) {
-            return;
+        if (is_dir($dir)) {
+            (new Filesystem())->deleteDir($dir);
         }
-
-        $files = array_diff(scandir($dir), ['.', '..']);
-
-        foreach ($files as $file) {
-            $path = $dir . DIRECTORY_SEPARATOR . $file;
-            if (is_dir($path)) {
-                $this->removeDirectory($path);
-            } else {
-                unlink($path);
-            }
-        }
-
-        rmdir($dir);
     }
 }

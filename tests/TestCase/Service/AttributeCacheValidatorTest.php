@@ -10,6 +10,7 @@ use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
 use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
+use Cake\Utility\Filesystem;
 use ReflectionClass;
 
 class AttributeCacheValidatorTest extends TestCase
@@ -40,22 +41,9 @@ class AttributeCacheValidatorTest extends TestCase
         parent::tearDown();
         Cache::clear('validator_test');
         Cache::drop('validator_test');
-        $this->removeDirectory($this->tempPath);
-    }
-
-    private function removeDirectory(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
+        if (is_dir($this->tempPath)) {
+            (new Filesystem())->deleteDir($this->tempPath);
         }
-
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            $path = $dir . $file;
-            is_dir($path) ? $this->removeDirectory($path . '/') : unlink($path);
-        }
-
-        rmdir($dir);
     }
 
     /**
