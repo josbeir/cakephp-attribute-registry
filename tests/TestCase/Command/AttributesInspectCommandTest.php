@@ -6,7 +6,6 @@ namespace AttributeRegistry\Test\TestCase\Command;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Command\AttributesInspectCommand;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use Cake\Cache\Cache;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
@@ -30,11 +29,6 @@ class AttributesInspectCommandTest extends TestCase
     {
         parent::setUp();
 
-        Cache::setConfig('attribute_test', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
-
         $this->loadTestAttributes();
 
         $this->registry = $this->createRegistry('attribute_test', true);
@@ -48,8 +42,6 @@ class AttributesInspectCommandTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        Cache::clear('attribute_test');
-        Cache::drop('attribute_test');
     }
 
     /**

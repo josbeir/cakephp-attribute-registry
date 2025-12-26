@@ -5,7 +5,6 @@ namespace AttributeRegistry\Test\TestCase\Controller;
 
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
@@ -22,14 +21,6 @@ class DebugKitControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Set up test cache
-        if (Cache::getConfig('controller_test') === null) {
-            Cache::setConfig('controller_test', [
-                'engine' => 'Array',
-                'duration' => '+1 hour',
-            ]);
-        }
-
         $this->loadTestAttributes();
 
         // Create and inject a test registry
@@ -42,7 +33,6 @@ class DebugKitControllerTest extends TestCase
         parent::tearDown();
         AttributeRegistry::setInstance(null);
         Configure::delete('AttributeRegistry');
-        Cache::clear('controller_test');
     }
 
     public function testDiscoverReturnsJson(): void

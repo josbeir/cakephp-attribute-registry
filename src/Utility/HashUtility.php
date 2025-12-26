@@ -4,14 +4,13 @@ declare(strict_types=1);
 namespace AttributeRegistry\Utility;
 
 /**
- * Hash utility for consistent hashing across the plugin.
+ * File hash utility for consistent file integrity validation.
  *
- * Provides centralized hashing functionality using xxh3 algorithm for:
- * - Cache key generation (fast, collision-resistant)
- * - File integrity validation (detecting source changes)
+ * Provides centralized file hashing functionality using xxh3 algorithm for
+ * detecting when source files have changed and caches need invalidation.
  *
  * xxh3 is chosen for its exceptional speed and quality distribution,
- * making it ideal for both cache keys and file validation.
+ * making it ideal for file validation.
  */
 class HashUtility
 {
@@ -24,20 +23,6 @@ class HashUtility
      * - Native PHP support (PHP 8.1+)
      */
     private const ALGORITHM = 'xxh3';
-
-    /**
-     * Hash a string value.
-     *
-     * Commonly used for cache key generation to create short,
-     * filesystem-safe identifiers.
-     *
-     * @param string $value String to hash
-     * @return string Hash value (16 hex characters for xxh3)
-     */
-    public static function hash(string $value): string
-    {
-        return hash(self::ALGORITHM, $value);
-    }
 
     /**
      * Hash a file's contents.

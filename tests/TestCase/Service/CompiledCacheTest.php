@@ -254,8 +254,7 @@ class CompiledCacheTest extends TestCase
         $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
-        // Cache filename now includes hash to prevent collisions
-        $filePath = $this->tempPath . 'test_9ec9f7918d7dfc40.php';
+        $filePath = $this->tempPath . 'test.php';
         $this->assertFileExists($filePath);
 
         // Read the file and check for valid PHP
@@ -272,8 +271,7 @@ class CompiledCacheTest extends TestCase
         $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
-        // Cache filename now includes hash to prevent collisions
-        $filePath = $this->tempPath . 'test_9ec9f7918d7dfc40.php';
+        $filePath = $this->tempPath . 'test.php';
         $content = file_get_contents($filePath);
         $this->assertNotFalse($content);
 
@@ -389,8 +387,8 @@ class CompiledCacheTest extends TestCase
     public function testFileHashIsStoredInCache(): void
     {
         $testFile = __FILE__;
-        $fileContent = file_get_contents($testFile);
-        $this->assertNotFalse($fileContent);
+        $fileHash = HashUtility::hashFile($testFile);
+        $this->assertNotFalse($fileHash);
 
         $attr = new AttributeInfo(
             className: 'App\\Controller\\TestController',
@@ -402,7 +400,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileHash: HashUtility::hash($fileContent),
+            fileHash: $fileHash,
         );
 
         $this->cache->set('test', [$attr]);
@@ -434,9 +432,8 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $fileContent = file_get_contents($testFile);
-        $this->assertNotFalse($fileContent);
-        $originalHash = HashUtility::hash($fileContent);
+        $originalHash = HashUtility::hashFile($testFile);
+        $this->assertNotFalse($originalHash);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -476,9 +473,8 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source2.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $fileContent = file_get_contents($testFile);
-        $this->assertNotFalse($fileContent);
-        $originalHash = HashUtility::hash($fileContent);
+        $originalHash = HashUtility::hashFile($testFile);
+        $this->assertNotFalse($originalHash);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -638,8 +634,7 @@ class CompiledCacheTest extends TestCase
 
         // Check that the generated PHP code includes pluginName
         $safeKey = 'plugin_test';
-        $hash = HashUtility::hash('plugin_test');
-        $cacheFile = $this->tempPath . $safeKey . '_' . $hash . '.php';
+        $cacheFile = $this->tempPath . $safeKey . '.php';
         $this->assertFileExists($cacheFile);
 
         $contents = file_get_contents($cacheFile);

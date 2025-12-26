@@ -8,7 +8,6 @@ use AttributeRegistry\Command\AttributesCacheCommand;
 use AttributeRegistry\Command\AttributesInspectCommand;
 use AttributeRegistry\Command\AttributesListCommand;
 use AttributeRegistry\ServiceProvider;
-use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Core\Container;
 use Cake\TestSuite\TestCase;
@@ -18,11 +17,6 @@ class ServiceProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        Cache::setConfig('attribute_test', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
 
         // Set up plugin configuration
         Configure::write('AttributeRegistry', [
@@ -40,8 +34,6 @@ class ServiceProviderTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        Cache::clear('attribute_test');
-        Cache::drop('attribute_test');
         Configure::delete('AttributeRegistry');
         AttributeRegistry::setInstance(null);
     }

@@ -5,8 +5,10 @@ namespace AttributeRegistry\Test\TestCase\Command;
 
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Command\AttributesCacheCommand;
+use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use Cake\Cache\Cache;
+use AttributeRegistry\ValueObject\AttributeInfo;
+use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\Console\TestSuite\StubConsoleOutput;
@@ -31,11 +33,6 @@ class AttributesCacheCommandTest extends TestCase
     {
         parent::setUp();
 
-        Cache::setConfig('attribute_test', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
-
         $this->loadTestAttributes();
 
         $this->registry = $this->createRegistry('attribute_test', true);
@@ -49,8 +46,6 @@ class AttributesCacheCommandTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        Cache::clear('attribute_test');
-        Cache::drop('attribute_test');
     }
 
     /**
@@ -73,6 +68,22 @@ class AttributesCacheCommandTest extends TestCase
             $args,
             $options,
             $parser->argumentNames(),
+        );
+    }
+
+    private function createTestAttribute(string $filePath, string $hash = ''): AttributeInfo
+    {
+        return new AttributeInfo(
+            className: 'Test\\Class',
+            attributeName: 'TestAttribute',
+            arguments: [],
+            filePath: $filePath,
+            lineNumber: 1,
+            target: new AttributeTarget(
+                type: AttributeTargetType::CLASS_TYPE,
+                targetName: 'Class',
+            ),
+            fileHash: $hash,
         );
     }
 

@@ -8,7 +8,6 @@ use AttributeRegistry\Service\AttributeCacheValidator;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
 use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
-use Cake\Cache\Cache;
 use Cake\TestSuite\TestCase;
 use Cake\Utility\Filesystem;
 use ReflectionClass;
@@ -28,19 +27,12 @@ class AttributeCacheValidatorTest extends TestCase
         $this->tempPath = sys_get_temp_dir() . '/validator_test_' . uniqid() . '/';
         mkdir($this->tempPath, 0755, true);
 
-        Cache::setConfig('validator_test', [
-            'engine' => 'Array',
-            'duration' => '+1 hour',
-        ]);
-
         $this->registry = $this->createRegistry($this->tempPath, true);
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
-        Cache::clear('validator_test');
-        Cache::drop('validator_test');
         if (is_dir($this->tempPath)) {
             (new Filesystem())->deleteDir($this->tempPath);
         }

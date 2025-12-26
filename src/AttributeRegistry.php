@@ -93,13 +93,9 @@ class AttributeRegistry implements EventDispatcherInterface
         $cacheConfig = (array)($config['cache'] ?? []);
 
         $pluginLocator = new PluginLocator();
-
-        // Create PathResolver with lazy plugin path resolution
         $pathResolver = new PathResolver(ROOT, $pluginLocator);
 
-        // Determine cache path from config
         $cachePath = (string)($cacheConfig['path'] ?? CACHE . 'attribute_registry' . DS);
-
         $cache = new CompiledCache(
             $cachePath,
             (bool)($cacheConfig['enabled'] ?? true),

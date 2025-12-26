@@ -6,7 +6,6 @@ namespace AttributeRegistry\Test\TestCase\Panel;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Panel\AttributeRegistryPanel;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
 
@@ -22,14 +21,6 @@ class AttributeRegistryPanelTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Set up test cache
-        if (Cache::getConfig('panel_test') === null) {
-            Cache::setConfig('panel_test', [
-                'engine' => 'Array',
-                'duration' => '+1 hour',
-            ]);
-        }
 
         $this->loadTestAttributes();
 
@@ -51,7 +42,6 @@ class AttributeRegistryPanelTest extends TestCase
         parent::tearDown();
         AttributeRegistry::setInstance(null);
         Configure::delete('AttributeRegistry');
-        Cache::clear('panel_test');
     }
 
     public function testDataReturnsAttributes(): void

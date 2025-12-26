@@ -510,12 +510,10 @@ PHP;
      */
     private function getCacheFilePath(string $key): string
     {
-        // Sanitize key for filesystem (for readability)
+        // Sanitize key for filesystem
         $safeKey = preg_replace('/[^a-z0-9_-]/i', '_', $key);
-        // Append a hash of the original key to avoid collisions between different keys
-        $hash = HashUtility::hash($key);
 
-        return $this->cachePath . $safeKey . '_' . $hash . '.php';
+        return $this->cachePath . $safeKey . '.php';
     }
 
     /**
