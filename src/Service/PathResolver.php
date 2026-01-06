@@ -65,27 +65,13 @@ class PathResolver
         $this->ensureAllPathsResolved();
 
         foreach ($this->basePaths as $basePath) {
-            foreach ($this->resolvePatternsForPath($basePath, $globPatterns) as $path) {
-                yield $path;
-            }
-        }
-    }
+            foreach ($globPatterns as $pattern) {
+                // Ensure pattern uses forward slashes for consistency
+                $pattern = PathNormalizer::toUnixStyle($pattern);
 
-    /**
-     * Resolve patterns for a specific base path.
-     *
-     * @param string $basePath Base path to resolve against
-     * @param array<string> $globPatterns Array of glob patterns
-     * @return \Generator<string> Generator yielding file paths
-     */
-    private function resolvePatternsForPath(string $basePath, array $globPatterns): Generator
-    {
-        foreach ($globPatterns as $pattern) {
-            // Ensure pattern uses forward slashes for consistency
-            $pattern = PathNormalizer::toUnixStyle($pattern);
-
-            foreach ($this->expandPattern($basePath, $pattern) as $path) {
-                yield $path;
+                foreach ($this->expandPattern($basePath, $pattern) as $path) {
+                    yield $path;
+                }
             }
         }
     }
