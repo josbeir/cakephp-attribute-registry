@@ -93,7 +93,11 @@ class AttributeRegistry implements EventDispatcherInterface
         $cacheConfig = (array)($config['cache'] ?? []);
 
         $pluginLocator = new PluginLocator();
-        $pathResolver = new PathResolver(ROOT, $pluginLocator);
+        $pathResolver = new PathResolver(
+            ROOT,
+            $pluginLocator,
+            (array)($scannerConfig['exclude_paths'] ?? ['vendor/**', 'tmp/**']),
+        );
 
         $cachePath = (string)($cacheConfig['path'] ?? CACHE . 'attribute_registry' . DS);
         $cache = new CompiledCache(
@@ -111,7 +115,6 @@ class AttributeRegistry implements EventDispatcherInterface
             $pathResolver,
             [
                 'paths' => (array)($scannerConfig['paths'] ?? ['src/**/*.php']),
-                'exclude_paths' => (array)($scannerConfig['exclude_paths'] ?? ['vendor/**', 'tmp/**']),
             ],
         );
 

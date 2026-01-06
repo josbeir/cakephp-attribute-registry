@@ -33,7 +33,6 @@ class AttributeScanner
     ) {
         $this->config = array_merge([
             'paths' => ['src/**/*.php'],
-            'exclude_paths' => ['vendor/**', 'tmp/**'],
         ], $config);
     }
 
@@ -45,36 +44,10 @@ class AttributeScanner
     public function scanAll(): Generator
     {
         foreach ($this->pathResolver->resolveAllPaths($this->config['paths']) as $filePath) {
-            if ($this->shouldScanFile($filePath)) {
-                foreach ($this->scanFile($filePath) as $attributeInfo) {
-                    yield $attributeInfo;
-                }
+            foreach ($this->scanFile($filePath) as $attributeInfo) {
+                yield $attributeInfo;
             }
         }
-    }
-
-    /**
-     * Check if a file should be scanned based on configuration.
-     *
-     * @param string $filePath File path to check
-     * @return bool True if file should be scanned
-     */
-    private function shouldScanFile(string $filePath): bool
-    {
-        // Check file extension
-        if (pathinfo($filePath, PATHINFO_EXTENSION) !== 'php') {
-            return false;
-        }
-
-        // Check exclude patterns
-        $filename = basename($filePath);
-        foreach ($this->config['exclude_paths'] as $excludePattern) {
-            if (fnmatch($excludePattern, $filename) || fnmatch($excludePattern, $filePath)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
