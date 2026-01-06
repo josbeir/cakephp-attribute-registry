@@ -6,7 +6,6 @@ namespace AttributeRegistry\Test\TestCase\Service;
 use AttributeRegistry\AttributeRegistry;
 use AttributeRegistry\Service\AttributeCacheValidator;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
 use Cake\TestSuite\TestCase;
 use Cake\Utility\Filesystem;
@@ -57,7 +56,7 @@ class AttributeCacheValidatorTest extends TestCase
         $validator = new AttributeCacheValidator($this->registry);
 
         // Create a fake attribute with non-existent file
-        $attr = $this->createTestAttribute('/not/a/real/file.php', 'deadbeef');
+        $attr = $this->createTestAttribute('/not/a/real/file.php', 123456789);
 
         // Manually populate registry cache with invalid data
         $this->registry->clearCache();
@@ -75,15 +74,15 @@ class AttributeCacheValidatorTest extends TestCase
     }
 
     /**
-     * RED TEST: Validator detects hash mismatch
+     * RED TEST: Validator detects modification time mismatch
      */
     public function testValidateDetectsHashMismatch(): void
     {
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
 
-        $wrongHash = 'deadbeef';
-        $attr = $this->createTestAttribute($tmpFile, $wrongHash);
+        $wrongTime = 999999999; // Wrong timestamp
+        $attr = $this->createTestAttribute($tmpFile, $wrongTime);
 
         $this->registry->clearCache();
         $reflection = new ReflectionClass($this->registry);
@@ -95,7 +94,7 @@ class AttributeCacheValidatorTest extends TestCase
 
         $this->assertFalse($result->valid);
         $this->assertNotEmpty($result->errors);
-        $this->assertStringContainsString('hash', strtolower($result->errors[0]));
+        $this->assertStringContainsString('modification time', strtolower($result->errors[0]));
     }
 
     /**
@@ -105,10 +104,10 @@ class AttributeCacheValidatorTest extends TestCase
     {
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
-        $hash = HashUtility::hashFile($tmpFile);
-        assert(is_string($hash));
+        $time = filemtime($tmpFile);
+        assert(is_int($time));
 
-        $attr = $this->createTestAttribute($tmpFile, $hash);
+        $attr = $this->createTestAttribute($tmpFile, $time);
 
         $this->registry->clearCache();
         $reflection = new ReflectionClass($this->registry);
@@ -151,12 +150,12 @@ class AttributeCacheValidatorTest extends TestCase
     {
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
-        $hash = HashUtility::hashFile($tmpFile);
-        assert(is_string($hash));
+        $time = filemtime($tmpFile);
+        assert(is_int($time));
 
         // Two attributes from same file
-        $attr1 = $this->createTestAttribute($tmpFile, $hash);
-        $attr2 = $this->createTestAttribute($tmpFile, $hash);
+        $attr1 = $this->createTestAttribute($tmpFile, $time);
+        $attr2 = $this->createTestAttribute($tmpFile, $time);
 
         $this->registry->clearCache();
         $reflection = new ReflectionClass($this->registry);
@@ -179,8 +178,8 @@ class AttributeCacheValidatorTest extends TestCase
         $tmpFile = $this->tempPath . 'test.php';
         file_put_contents($tmpFile, '<?php // test');
 
-        // Attribute without hash (empty string)
-        $attr = $this->createTestAttribute($tmpFile, '');
+        // Attribute without time (0 value means no validation)
+        $attr = $this->createTestAttribute($tmpFile, 0);
 
         $this->registry->clearCache();
         $reflection = new ReflectionClass($this->registry);

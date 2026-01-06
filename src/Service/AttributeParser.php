@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\Utility\PathNormalizer;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
@@ -53,11 +52,11 @@ class AttributeParser
 
         $attributes = [];
 
-        // Generate file content hash for cache validation
-        $fileHash = HashUtility::hashFile($realFilePath);
-        if ($fileHash === false) {
+        // Get file modification time for cache validation
+        $fileTime = filemtime($realFilePath);
+        if ($fileTime === false) {
             throw new RuntimeException(sprintf(
-                'Failed to compute hash for file "%s"',
+                'Failed to get modification time for file "%s"',
                 $realFilePath,
             ));
         }
@@ -79,11 +78,11 @@ class AttributeParser
 
                     $attributes = [
                         ...$attributes,
-                        ...$this->extractClassAttributes($reflection, $realFilePath, $fileHash),
-                        ...$this->extractMethodAttributes($reflection, $realFilePath, $fileHash),
-                        ...$this->extractPropertyAttributes($reflection, $realFilePath, $fileHash),
-                        ...$this->extractParameterAttributes($reflection, $realFilePath, $fileHash),
-                        ...$this->extractConstantAttributes($reflection, $realFilePath, $fileHash),
+                        ...$this->extractClassAttributes($reflection, $realFilePath, $fileTime),
+                        ...$this->extractMethodAttributes($reflection, $realFilePath, $fileTime),
+                        ...$this->extractPropertyAttributes($reflection, $realFilePath, $fileTime),
+                        ...$this->extractParameterAttributes($reflection, $realFilePath, $fileTime),
+                        ...$this->extractConstantAttributes($reflection, $realFilePath, $fileTime),
                     ];
                 } catch (Throwable $e) {
                     // Skip classes that can't be reflected
@@ -133,13 +132,13 @@ class AttributeParser
     /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractClassAttributes(
         ReflectionClass $class,
         string $filePath,
-        string $fileHash,
+        int $fileTime,
     ): array {
         $attributes = [];
 
@@ -154,7 +153,7 @@ class AttributeParser
                 $class->getName(),
                 $filePath,
                 $startLine === false ? 0 : $startLine,
-                $fileHash,
+                $fileTime,
                 new AttributeTarget(
                     AttributeTargetType::CLASS_TYPE,
                     $class->getShortName(),
@@ -168,13 +167,13 @@ class AttributeParser
     /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractMethodAttributes(
         ReflectionClass $class,
         string $filePath,
-        string $fileHash,
+        int $fileTime,
     ): array {
         $attributes = [];
 
@@ -190,7 +189,7 @@ class AttributeParser
                     $class->getName(),
                     $filePath,
                     $startLine === false ? 0 : $startLine,
-                    $fileHash,
+                    $fileTime,
                     new AttributeTarget(
                         AttributeTargetType::METHOD,
                         $method->getName(),
@@ -206,13 +205,13 @@ class AttributeParser
     /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractPropertyAttributes(
         ReflectionClass $class,
         string $filePath,
-        string $fileHash,
+        int $fileTime,
     ): array {
         $attributes = [];
 
@@ -227,7 +226,7 @@ class AttributeParser
                     $class->getName(),
                     $filePath,
                     0, // Properties don't have reliable line numbers
-                    $fileHash,
+                    $fileTime,
                     new AttributeTarget(
                         AttributeTargetType::PROPERTY,
                         $property->getName(),
@@ -243,13 +242,13 @@ class AttributeParser
     /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractParameterAttributes(
         ReflectionClass $class,
         string $filePath,
-        string $fileHash,
+        int $fileTime,
     ): array {
         $attributes = [];
 
@@ -266,7 +265,7 @@ class AttributeParser
                         $class->getName(),
                         $filePath,
                         $startLine === false ? 0 : $startLine,
-                        $fileHash,
+                        $fileTime,
                         new AttributeTarget(
                             AttributeTargetType::PARAMETER,
                             $parameter->getName(),
@@ -283,13 +282,13 @@ class AttributeParser
     /**
      * @param \ReflectionClass<object> $class Reflection class
      * @param string $filePath File path
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>
      */
     private function extractConstantAttributes(
         ReflectionClass $class,
         string $filePath,
-        string $fileHash,
+        int $fileTime,
     ): array {
         $attributes = [];
 
@@ -304,7 +303,7 @@ class AttributeParser
                     $class->getName(),
                     $filePath,
                     0, // Constants don't have reliable line numbers
-                    $fileHash,
+                    $fileTime,
                     new AttributeTarget(
                         AttributeTargetType::CONSTANT,
                         $constant->getName(),
@@ -324,7 +323,7 @@ class AttributeParser
      * @param string $className Class name
      * @param string $filePath File path
      * @param int $lineNumber Line number
-     * @param string $fileHash File content hash
+     * @param int $fileTime File modification time
      * @param \AttributeRegistry\ValueObject\AttributeTarget $target Target information
      * @return \AttributeRegistry\ValueObject\AttributeInfo Created AttributeInfo instance
      */
@@ -333,7 +332,7 @@ class AttributeParser
         string $className,
         string $filePath,
         int $lineNumber,
-        string $fileHash,
+        int $fileTime,
         AttributeTarget $target,
     ): AttributeInfo {
         $pluginName = $this->pluginLocator?->getPluginNameFromPath($filePath);
@@ -345,7 +344,7 @@ class AttributeParser
             filePath: $filePath,
             lineNumber: $lineNumber,
             target: $target,
-            fileHash: $fileHash,
+            fileTime: $fileTime,
             pluginName: $pluginName,
         );
     }

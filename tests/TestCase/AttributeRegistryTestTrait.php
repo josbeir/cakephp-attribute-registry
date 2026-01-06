@@ -180,7 +180,7 @@ trait AttributeRegistryTestTrait
      * Useful for tests that need to inject mock attribute data.
      *
      * @param string $filePath File path where attribute was found
-     * @param string $hash File hash (xxh3) for validation
+     * @param int $time File modification time for validation
      * @param string $className Class name containing the attribute
      * @param string $attributeName Attribute class name
      * @param array<string, mixed> $arguments Attribute arguments
@@ -191,7 +191,7 @@ trait AttributeRegistryTestTrait
      */
     protected function createTestAttribute(
         string $filePath,
-        string $hash = '',
+        int $time = 0,
         string $className = 'Test\\Class',
         string $attributeName = 'TestAttribute',
         array $arguments = [],
@@ -211,7 +211,7 @@ trait AttributeRegistryTestTrait
             filePath: $filePath,
             lineNumber: $lineNumber,
             target: $target,
-            fileHash: $hash,
+            fileTime: $time,
             pluginName: $pluginName,
         );
     }

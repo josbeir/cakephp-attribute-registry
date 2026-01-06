@@ -125,7 +125,7 @@ class AttributesInspectCommand extends Command
         }
 
         $io->out(sprintf('   File: %s:%d', $attr->filePath, $attr->lineNumber));
-        $io->out(sprintf('   File Hash: %s', $attr->fileHash));
+        $io->out(sprintf('   File Time: %s', date('Y-m-d H:i:s', $attr->fileTime)));
 
         if ($attr->arguments !== []) {
             $io->out('   Arguments:');

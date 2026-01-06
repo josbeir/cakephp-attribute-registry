@@ -6,7 +6,6 @@ namespace AttributeRegistry\Test\TestCase\Service;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\Service\CompiledCache;
 use AttributeRegistry\Test\TestCase\AttributeRegistryTestTrait;
-use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\TestSuite\TestCase;
@@ -65,7 +64,7 @@ class CompiledCacheTest extends TestCase
     public function testGetReturnsNullWhenDisabled(): void
     {
         $cache = new CompiledCache($this->tempPath, false);
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $cache->set('test_key', [$attr]);
         $result = $cache->get('test_key');
@@ -76,7 +75,7 @@ class CompiledCacheTest extends TestCase
     public function testSetReturnsFalseWhenDisabled(): void
     {
         $cache = new CompiledCache($this->tempPath, false);
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $result = $cache->set('test_key', [$attr]);
 
@@ -85,7 +84,7 @@ class CompiledCacheTest extends TestCase
 
     public function testSetAndGetSimpleAttribute(): void
     {
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
 
         $setResult = $this->cache->set('test_key', [$attr]);
         $this->assertTrue($setResult);
@@ -108,7 +107,7 @@ class CompiledCacheTest extends TestCase
 
     public function testSetAndGetMultipleAttributes(): void
     {
-        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $attr2 = new AttributeInfo(
             className: 'App\\Controller\\PostsController',
             attributeName: 'App\\Cache',
@@ -120,7 +119,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'PostsController',
             ),
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->cache->set('test_key', [$attr1, $attr2]);
@@ -156,7 +155,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'index',
                 parentClass: 'UsersController',
             ),
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->cache->set('complex', [$attr]);
@@ -181,7 +180,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: "Test'Class",
             ),
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->cache->set('special', [$attr]);
@@ -205,7 +204,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Controller',
             ),
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->cache->set('namespaces', [$attr]);
@@ -218,7 +217,7 @@ class CompiledCacheTest extends TestCase
 
     public function testDeleteRemovesCacheFile(): void
     {
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test_key', [$attr]);
 
         $result = $this->cache->delete('test_key');
@@ -236,7 +235,7 @@ class CompiledCacheTest extends TestCase
 
     public function testClearRemovesAllCacheFiles(): void
     {
-        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('key1', [$attr1]);
         $this->cache->set('key2', [$attr1]);
         $this->cache->set('key3', [$attr1]);
@@ -251,7 +250,7 @@ class CompiledCacheTest extends TestCase
 
     public function testGeneratesValidPHPSyntax(): void
     {
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
         $filePath = $this->tempPath . 'test.php';
@@ -268,7 +267,7 @@ class CompiledCacheTest extends TestCase
 
     public function testCacheFileContainsMetadata(): void
     {
-        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $this->cache->set('test', [$attr]);
 
         $filePath = $this->tempPath . 'test.php';
@@ -292,7 +291,7 @@ class CompiledCacheTest extends TestCase
 
     public function testOverwritesExistingCache(): void
     {
-        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', '', 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
+        $attr1 = $this->createTestAttribute('/app/src/Controller/UsersController.php', 0, 'App\\Controller\\UsersController', 'App\\Route', ['path' => '/users'], 15);
         $attr2 = new AttributeInfo(
             className: 'Different\\Class',
             attributeName: 'Different\\Attr',
@@ -303,7 +302,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Different',
             ),
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->cache->set('test', [$attr1]);
@@ -328,7 +327,7 @@ class CompiledCacheTest extends TestCase
             filePath: '/test/file.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $result = $this->cache->set('test', [$attr]);
@@ -350,7 +349,7 @@ class CompiledCacheTest extends TestCase
                 filePath: '/test/file.php',
                 lineNumber: 10,
                 target: $target,
-                fileHash: '',
+                fileTime: 0,
             );
 
             $result = $this->cache->set('test', [$attr]);
@@ -382,13 +381,13 @@ class CompiledCacheTest extends TestCase
     }
 
     /**
-     * RED TEST: Test that fileHash is stored when provided
+     * RED TEST: Test that fileTime is stored when provided
      */
-    public function testFileHashIsStoredInCache(): void
+    public function testFileTimeIsStoredInCache(): void
     {
         $testFile = __FILE__;
-        $fileHash = HashUtility::hashFile($testFile);
-        $this->assertNotFalse($fileHash);
+        $fileTime = filemtime($testFile);
+        $this->assertNotFalse($fileTime);
 
         $attr = new AttributeInfo(
             className: 'App\\Controller\\TestController',
@@ -400,15 +399,15 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileHash: $fileHash,
+            fileTime: $fileTime,
         );
 
         $this->cache->set('test', [$attr]);
         $loaded = $this->cache->get('test');
 
         $this->assertIsArray($loaded);
-        $this->assertNotEmpty($loaded[0]->fileHash);
-        $this->assertEquals($attr->fileHash, $loaded[0]->fileHash);
+        $this->assertGreaterThan(0, $loaded[0]->fileTime);
+        $this->assertEquals($attr->fileTime, $loaded[0]->fileTime);
     }
 
     /**
@@ -432,8 +431,8 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $originalHash = HashUtility::hashFile($testFile);
-        $this->assertNotFalse($originalHash);
+        $originalTime = filemtime($testFile);
+        $this->assertNotFalse($originalTime);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -445,7 +444,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileHash: $originalHash,
+            fileTime: $originalTime,
         );
 
         // Cache with validation enabled
@@ -459,8 +458,11 @@ class CompiledCacheTest extends TestCase
 
         // Modify the file content
         file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
+        // Ensure modification time changes (sleep to avoid same-second issue)
+        sleep(1);
+        touch($testFile);
 
-        // Get cache again - should return null because hash changed
+        // Get cache again - should return null because modification time changed
         $reloaded = $cache->get('test');
         $this->assertNull($reloaded);
     }
@@ -473,8 +475,8 @@ class CompiledCacheTest extends TestCase
         $testFile = $this->tempPath . 'test_source2.php';
         file_put_contents($testFile, '<?php class TestClass {}');
 
-        $originalHash = HashUtility::hashFile($testFile);
-        $this->assertNotFalse($originalHash);
+        $originalTime = filemtime($testFile);
+        $this->assertNotFalse($originalTime);
 
         $attr = new AttributeInfo(
             className: 'TestClass',
@@ -486,7 +488,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileHash: $originalHash,
+            fileTime: $originalTime,
         );
 
         // Cache with validation DISABLED
@@ -503,9 +505,9 @@ class CompiledCacheTest extends TestCase
     }
 
     /**
-     * RED TEST: Test backward compatibility with entries without fileHash
+     * RED TEST: Test backward compatibility with entries without fileTime
      */
-    public function testBackwardCompatibilityWithoutFileHash(): void
+    public function testBackwardCompatibilityWithoutFileTime(): void
     {
         $attr = new AttributeInfo(
             className: 'App\\Controller\\TestController',
@@ -517,7 +519,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestController',
             ),
-            fileHash: '', // Empty hash for backward compatibility
+            fileTime: 0, // Zero time for backward compatibility
         );
 
         $cache = new CompiledCache($this->tempPath, true, true);
@@ -537,8 +539,8 @@ class CompiledCacheTest extends TestCase
         $fileContent = '<?php class TestClass {}';
         file_put_contents($testFile, $fileContent);
 
-        $fileHash = HashUtility::hashFile($testFile);
-        $this->assertNotFalse($fileHash);
+        $fileTime = filemtime($testFile);
+        $this->assertNotFalse($fileTime);
 
         // Create attribute with valid hash
         $attr = new AttributeInfo(
@@ -551,7 +553,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileHash: $fileHash,
+            fileTime: $fileTime,
         );
 
         $cache = new CompiledCache($this->tempPath, true, true);
@@ -573,8 +575,8 @@ class CompiledCacheTest extends TestCase
         $fileContent = '<?php class TestClass {}';
         file_put_contents($testFile, $fileContent);
 
-        $fileHash = HashUtility::hashFile($testFile);
-        $this->assertNotFalse($fileHash);
+        $fileTime = filemtime($testFile);
+        $this->assertNotFalse($fileTime);
 
         // Create multiple attributes from the same file
         $attr1 = new AttributeInfo(
@@ -587,7 +589,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'TestClass',
             ),
-            fileHash: $fileHash,
+            fileTime: $fileTime,
         );
 
         $attr2 = new AttributeInfo(
@@ -601,7 +603,7 @@ class CompiledCacheTest extends TestCase
                 targetName: 'testMethod',
                 parentClass: 'TestClass',
             ),
-            fileHash: $fileHash,
+            fileTime: $fileTime,
         );
 
         $cache = new CompiledCache($this->tempPath, true, true);
@@ -626,7 +628,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'UsersController',
             ),
-            fileHash: 'abc123',
+            fileTime: 1234567890,
             pluginName: 'TestPlugin',
         );
 
@@ -660,7 +662,7 @@ class CompiledCacheTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'UsersController',
             ),
-            fileHash: 'abc123',
+            fileTime: 1234567890,
         );
 
         $this->cache->set('app_test', [$attr]);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
 use Cake\Log\Log;
@@ -33,7 +32,7 @@ class CompiledCache
      *
      * @param string $cachePath Path to store compiled cache files (will be normalized with trailing separator)
      * @param bool $enabled Whether caching is enabled
-     * @param bool $validateFiles Whether to validate file hashes on cache retrieval (development mode)
+     * @param bool $validateFiles Whether to validate file modification times on cache retrieval (development mode)
      */
     public function __construct(
         string $cachePath,
@@ -258,7 +257,7 @@ class CompiledCache
             "%s    filePath: %s,\n" .
             "%s    lineNumber: %d,\n" .
             "%s    target: %s,\n" .
-            "%s    fileHash: %s,\n" .
+            "%s    fileTime: %d,\n" .
             "%s    pluginName: %s,\n" .
             '%s)',
             $indent,
@@ -275,7 +274,7 @@ class CompiledCache
             $indent,
             $this->generateAttributeTarget($attr->target, 2),
             $indent,
-            $this->exportString($attr->fileHash),
+            $attr->fileTime,
             $indent,
             $attr->pluginName === null ? 'null' : $this->exportString($attr->pluginName),
             $indent,
@@ -555,22 +554,22 @@ PHP;
     }
 
     /**
-     * Validate cached data by checking file hashes.
+     * Validate cached data by checking file modification times.
      *
      * Returns null if any files have changed (cache is stale).
-     * Returns the filtered array if all files are valid or have empty hashes (backward compatibility).
+     * Returns the filtered array if all files are valid or have fileTime = 0 (backward compatibility).
      *
      * @param array<\AttributeRegistry\ValueObject\AttributeInfo> $data Cached attribute data
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>|null Validated data or null if stale
      */
     private function validateCachedData(array $data): ?array
     {
-        // Cache file hashes to avoid redundant reads when multiple attributes come from the same file
-        $fileHashCache = [];
+        // Cache file modification times to avoid redundant reads when multiple attributes come from the same file
+        $fileTimeCache = [];
 
         foreach ($data as $attr) {
-            // Skip validation for entries without hash (backward compatibility)
-            if ($attr->fileHash === '') {
+            // Skip validation for entries without fileTime (backward compatibility)
+            if ($attr->fileTime === 0) {
                 continue;
             }
 
@@ -579,22 +578,22 @@ PHP;
                 return null;
             }
 
-            // Get hash from cache or compute it
-            if (!isset($fileHashCache[$attr->filePath])) {
-                $currentHash = HashUtility::hashFile($attr->filePath);
-                if ($currentHash === false) {
+            // Get modification time from cache or compute it
+            if (!isset($fileTimeCache[$attr->filePath])) {
+                $currentTime = filemtime($attr->filePath);
+                if ($currentTime === false) {
                     Log::warning(sprintf(
-                        'Failed to compute hash for file "%s" while validating cached data.',
+                        'Failed to get modification time for file "%s" while validating cached data.',
                         $attr->filePath,
                     ));
 
                     return null;
                 }
 
-                $fileHashCache[$attr->filePath] = $currentHash;
+                $fileTimeCache[$attr->filePath] = $currentTime;
             }
 
-            if ($fileHashCache[$attr->filePath] !== $attr->fileHash) {
+            if ($fileTimeCache[$attr->filePath] !== $attr->fileTime) {
                 // File has changed, cache is stale
                 return null;
             }

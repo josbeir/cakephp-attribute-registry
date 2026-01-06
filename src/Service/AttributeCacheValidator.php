@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace AttributeRegistry\Service;
 
 use AttributeRegistry\AttributeRegistry;
-use AttributeRegistry\Utility\HashUtility;
 use AttributeRegistry\ValueObject\AttributeCacheValidationResult;
 
 /**
@@ -25,7 +24,7 @@ class AttributeCacheValidator
      * Validate the attribute cache.
      *
      * Checks that all cached attributes reference existing files
-     * and that file hashes match (if present).
+     * and that file modification times match (if present).
      *
      * @return \AttributeRegistry\ValueObject\AttributeCacheValidationResult
      */
@@ -49,7 +48,7 @@ class AttributeCacheValidator
 
         foreach ($attributes as $attribute) {
             $filePath = $attribute->filePath;
-            $fileHash = $attribute->fileHash;
+            $fileTime = $attribute->fileTime;
 
             // Track unique files
             $filesChecked[$filePath] = true;
@@ -60,11 +59,13 @@ class AttributeCacheValidator
                 continue;
             }
 
-            // Check hash if present (backward compatibility - skip if empty)
-            if (!empty($fileHash)) {
-                $actualHash = HashUtility::hashFile($filePath);
-                if ($actualHash !== $fileHash) {
-                    $errors[] = 'Hash mismatch for file: ' . $filePath;
+            // Check modification time if present (backward compatibility - skip if 0)
+            if ($fileTime > 0) {
+                $actualTime = filemtime($filePath);
+                if ($actualTime === false) {
+                    $errors[] = 'Cannot read modification time for file: ' . $filePath;
+                } elseif ($actualTime !== $fileTime) {
+                    $errors[] = 'Modification time mismatch for file: ' . $filePath;
                 }
             }
         }
