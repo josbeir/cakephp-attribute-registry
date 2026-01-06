@@ -504,34 +504,6 @@ class CompiledCacheTest extends TestCase
         $this->assertCount(1, $reloaded);
     }
 
-    /**
-     * RED TEST: Test backward compatibility with entries without fileTime
-     */
-    public function testBackwardCompatibilityWithoutFileTime(): void
-    {
-        $attr = new AttributeInfo(
-            className: 'App\\Controller\\TestController',
-            attributeName: 'App\\Route',
-            arguments: [],
-            filePath: __FILE__,
-            lineNumber: 10,
-            target: new AttributeTarget(
-                type: AttributeTargetType::CLASS_TYPE,
-                targetName: 'TestController',
-            ),
-            fileTime: 0, // Zero time for backward compatibility
-        );
-
-        $cache = new CompiledCache($this->tempPath, true, true);
-        $cache->set('test', [$attr]);
-
-        $loaded = $cache->get('test');
-
-        // Should not filter entries without hash
-        $this->assertIsArray($loaded);
-        $this->assertCount(1, $loaded);
-    }
-
     public function testValidationHandlesHashFailureGracefully(): void
     {
         // Create a test file

@@ -171,30 +171,6 @@ class AttributeCacheValidatorTest extends TestCase
     }
 
     /**
-     * RED TEST: Validator skips attributes without hash (backward compat)
-     */
-    public function testValidateSkipsAttributesWithoutHash(): void
-    {
-        $tmpFile = $this->tempPath . 'test.php';
-        file_put_contents($tmpFile, '<?php // test');
-
-        // Attribute without time (0 value means no validation)
-        $attr = $this->createTestAttribute($tmpFile, 0);
-
-        $this->registry->clearCache();
-        $reflection = new ReflectionClass($this->registry);
-        $property = $reflection->getProperty('discoveredAttributes');
-        $property->setValue($this->registry, [$attr]);
-
-        $validator = new AttributeCacheValidator($this->registry);
-        $result = $validator->validate();
-
-        // Should pass validation (hash not checked)
-        $this->assertTrue($result->valid);
-        $this->assertEmpty($result->errors);
-    }
-
-    /**
      * Test helper methods on validation result
      */
     public function testValidationResultHelperMethods(): void

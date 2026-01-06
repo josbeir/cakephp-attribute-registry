@@ -59,14 +59,12 @@ class AttributeCacheValidator
                 continue;
             }
 
-            // Check modification time if present (backward compatibility - skip if 0)
-            if ($fileTime > 0) {
-                $actualTime = filemtime($filePath);
-                if ($actualTime === false) {
-                    $errors[] = 'Cannot read modification time for file: ' . $filePath;
-                } elseif ($actualTime !== $fileTime) {
-                    $errors[] = 'Modification time mismatch for file: ' . $filePath;
-                }
+            // Validate modification time
+            $actualTime = filemtime($filePath);
+            if ($actualTime === false) {
+                $errors[] = 'Cannot read modification time for file: ' . $filePath;
+            } elseif ($actualTime !== $fileTime) {
+                $errors[] = 'Modification time mismatch for file: ' . $filePath;
             }
         }
 

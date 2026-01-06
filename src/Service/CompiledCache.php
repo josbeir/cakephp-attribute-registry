@@ -557,7 +557,6 @@ PHP;
      * Validate cached data by checking file modification times.
      *
      * Returns null if any files have changed (cache is stale).
-     * Returns the filtered array if all files are valid or have fileTime = 0 (backward compatibility).
      *
      * @param array<\AttributeRegistry\ValueObject\AttributeInfo> $data Cached attribute data
      * @return array<\AttributeRegistry\ValueObject\AttributeInfo>|null Validated data or null if stale
@@ -568,11 +567,6 @@ PHP;
         $fileTimeCache = [];
 
         foreach ($data as $attr) {
-            // Skip validation for entries without fileTime (backward compatibility)
-            if ($attr->fileTime === 0) {
-                continue;
-            }
-
             // Check if file still exists
             if (!file_exists($attr->filePath)) {
                 return null;
