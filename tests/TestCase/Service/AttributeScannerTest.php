@@ -79,25 +79,6 @@ class AttributeScannerTest extends TestCase
         $this->assertCount(count($attributes1), $attributes2);
     }
 
-    public function testScanAllRespectsExcludePaths(): void
-    {
-        $scannerWithExclude = $this->createScanner(
-            config: [
-                'paths' => ['*.php'],
-                'exclude_paths' => ['TestController.php'],
-            ],
-        );
-
-        $attributes = iterator_to_array($scannerWithExclude->scanAll());
-
-        // Should not find TestController attributes
-        $testControllerAttrs = array_filter(
-            $attributes,
-            fn(AttributeInfo $attr): bool => str_contains($attr->className, 'TestController'),
-        );
-        $this->assertEmpty($testControllerAttrs);
-    }
-
     public function testScanAllSkipsNonPhpFiles(): void
     {
         // Create a temporary non-PHP file

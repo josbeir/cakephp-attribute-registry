@@ -177,6 +177,139 @@ class PathResolverTest extends TestCase
         $this->assertNotEmpty($paths);
     }
 
+    /**
+     * RED TEST: Exclude specific directories using glob patterns
+     */
+    public function testExcludeDirectoriesWithGlobPattern(): void
+    {
+        // Create vendor and tmp directories
+        mkdir($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor', 0755, true);
+        mkdir($this->testAppPath . DIRECTORY_SEPARATOR . 'tmp', 0755, true);
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'Test.php', '<?php');
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . 'Cache.php', '<?php');
+
+        $resolver = new PathResolver($this->testAppPath, null, ['vendor/**', 'tmp/**']);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['**/*.php']));
+
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'Test.php', $paths);
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . 'Cache.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+    }
+
+    /**
+     * RED TEST: Exclude by filename pattern
+     */
+    public function testExcludeFilesByPattern(): void
+    {
+        $resolver = new PathResolver($this->testAppPath, null, ['*Controller.php']);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['src/**/*.php']));
+
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller' . DIRECTORY_SEPARATOR . 'TestController.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'TestModel.php', $paths);
+    }
+
+    /**
+     * RED TEST: Multiple exclusion patterns
+     */
+    public function testMultipleExclusionPatterns(): void
+    {
+        $resolver = new PathResolver($this->testAppPath, null, ['*Controller.php', '**/Model/**']);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['src/**/*.php']));
+
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller' . DIRECTORY_SEPARATOR . 'TestController.php', $paths);
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'TestModel.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+    }
+
+    /**
+     * RED TEST: No exclusions when empty array provided
+     */
+    public function testNoExclusionsWithEmptyArray(): void
+    {
+        $resolver = new PathResolver($this->testAppPath, null, []);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['src/**/*.php']));
+
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller' . DIRECTORY_SEPARATOR . 'TestController.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Model' . DIRECTORY_SEPARATOR . 'TestModel.php', $paths);
+    }
+
+    /**
+     * Test pattern with just filename (no directory prefix)
+     */
+    public function testResolvePatternWithJustFilename(): void
+    {
+        // Create files in base directory
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'BaseFile.php', '<?php');
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'OtherFile.txt', 'text');
+
+        $resolver = new PathResolver($this->testAppPath);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['*.php']));
+
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'BaseFile.php', $paths);
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'OtherFile.txt', $paths);
+    }
+
+    /**
+     * Test recursive pattern with no suffix
+     */
+    public function testResolveRecursivePatternWithNoSuffix(): void
+    {
+        $resolver = new PathResolver($this->testAppPath);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['src/**']));
+
+        // Should find all files (not just .php)
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Controller' . DIRECTORY_SEPARATOR . 'TestController.php', $paths);
+    }
+
+    /**
+     * Test pattern starting with ** (scan from root)
+     */
+    public function testResolvePatternStartingWithDoubleStarFromRoot(): void
+    {
+        $resolver = new PathResolver($this->testAppPath);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['**/*.php']));
+
+        // Should find files from all directories
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php', $paths);
+    }
+
+    /**
+     * Test suffix filter actually filters non-matching files
+     */
+    public function testSuffixFilterExcludesNonMatchingFiles(): void
+    {
+        // Create files with different extensions
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Test.txt', 'text');
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Test.php', '<?php');
+
+        $resolver = new PathResolver($this->testAppPath);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['src/*.php']));
+
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Test.php', $paths);
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Test.txt', $paths);
+    }
+
+    /**
+     * Test exclusion pattern matches directory exactly
+     */
+    public function testExcludeDirectoryExactMatch(): void
+    {
+        mkdir($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor', 0755, true);
+        file_put_contents($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'Test.php', '<?php');
+
+        // Test that 'vendor/**' excludes the vendor directory itself
+        $resolver = new PathResolver($this->testAppPath, null, ['vendor/**']);
+        $paths = iterator_to_array($resolver->resolveAllPaths(['**/*.php']));
+
+        $this->assertNotContains($this->testAppPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'Test.php', $paths);
+        $this->assertContains($this->testAppPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'TestClass.php', $paths);
+    }
+
     private function createTestStructure(): void
     {
         $structure = [

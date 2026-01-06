@@ -33,10 +33,11 @@ trait AttributeRegistryTestTrait
      * Create a new PathResolver instance.
      *
      * @param string|null $basePath Base path for resolution (defaults to test data path)
+     * @param array<string> $excludePatterns Patterns to exclude from path resolution
      */
-    protected function createPathResolver(?string $basePath = null): PathResolver
+    protected function createPathResolver(?string $basePath = null, array $excludePatterns = []): PathResolver
     {
-        return new PathResolver($basePath ?? $this->getTestDataPath());
+        return new PathResolver($basePath ?? $this->getTestDataPath(), null, $excludePatterns);
     }
 
     /**
@@ -72,10 +73,20 @@ trait AttributeRegistryTestTrait
         ?PathResolver $pathResolver = null,
         array $config = [],
     ): AttributeScanner {
+        $mergedConfig = $config + $this->getDefaultScannerConfig();
+
+        // If pathResolver is not provided and exclude_paths is in config, create with exclusions
+        if (!$pathResolver instanceof PathResolver && isset($mergedConfig['exclude_paths'])) {
+            $pathResolver = $this->createPathResolver(null, $mergedConfig['exclude_paths']);
+        }
+
+        // Remove exclude_paths from scanner config as it's now handled by PathResolver
+        unset($mergedConfig['exclude_paths']);
+
         return new AttributeScanner(
             $parser ?? $this->createParser(),
             $pathResolver ?? $this->createPathResolver(),
-            $config + $this->getDefaultScannerConfig(),
+            $mergedConfig,
         );
     }
 
@@ -154,7 +165,6 @@ trait AttributeRegistryTestTrait
     {
         return [
             'paths' => ['*.php'],
-            'exclude_paths' => [],
         ];
     }
 
