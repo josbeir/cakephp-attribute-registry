@@ -3,7 +3,14 @@ declare(strict_types=1);
 
 namespace AttributeRegistry\Test\TestCase;
 
+use AttributeRegistry\Collection\AttributeCollection;
+use AttributeRegistry\Event\AfterCacheClearEvent;
+use AttributeRegistry\Event\AfterDiscoverEvent;
+use AttributeRegistry\Event\AfterScanEvent;
 use AttributeRegistry\Event\AttributeRegistryEvents;
+use AttributeRegistry\Event\BeforeCacheClearEvent;
+use AttributeRegistry\Event\BeforeDiscoverEvent;
+use AttributeRegistry\Event\BeforeScanEvent;
 use Cake\Event\EventInterface;
 use Cake\Event\EventList;
 use Cake\Event\EventManager;
@@ -200,9 +207,99 @@ class AttributeRegistryEventTest extends TestCase
 
         $this->assertEventFiredWith(
             AttributeRegistryEvents::AFTER_CACHE_CLEAR,
-            'success',
+            'cleared',
             true,
             $eventManager,
         );
+    }
+
+    public function testBeforeDiscoverEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, false);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.beforeDiscover', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(BeforeDiscoverEvent::class, $event);
+            $this->assertSame(BeforeDiscoverEvent::NAME, $event->getName());
+            $fired = true;
+        });
+
+        $registry->discover();
+        $this->assertTrue($fired, 'Event listener was not called');
+    }
+
+    public function testAfterDiscoverEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, false);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.afterDiscover', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(AfterDiscoverEvent::class, $event);
+            $this->assertInstanceOf(AttributeCollection::class, $event->getAttributes());
+            $fired = true;
+        });
+
+        $registry->discover();
+        $this->assertTrue($fired, 'Event listener was not called');
+    }
+
+    public function testBeforeScanEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, false);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.beforeScan', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(BeforeScanEvent::class, $event);
+            $this->assertSame(BeforeScanEvent::NAME, $event->getName());
+            $fired = true;
+        });
+
+        $registry->discover();
+        $this->assertTrue($fired, 'Event listener was not called');
+    }
+
+    public function testAfterScanEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, false);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.afterScan', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(AfterScanEvent::class, $event);
+            $this->assertInstanceOf(AttributeCollection::class, $event->getAttributes());
+            $fired = true;
+        });
+
+        $registry->discover();
+        $this->assertTrue($fired, 'Event listener was not called');
+    }
+
+    public function testBeforeCacheClearEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, true);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.beforeCacheClear', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(BeforeCacheClearEvent::class, $event);
+            $this->assertSame(BeforeCacheClearEvent::NAME, $event->getName());
+            $fired = true;
+        });
+
+        $registry->clearCache();
+        $this->assertTrue($fired, 'Event listener was not called');
+    }
+
+    public function testAfterCacheClearEventIsTypedClass(): void
+    {
+        $registry = $this->createRegistry($this->cachePath, true);
+        $fired = false;
+
+        $registry->getEventManager()->on('AttributeRegistry.afterCacheClear', function (EventInterface $event) use (&$fired): void {
+            $this->assertInstanceOf(AfterCacheClearEvent::class, $event);
+            $this->assertTrue($event->wasCleared());
+            $fired = true;
+        });
+
+        $registry->clearCache();
+        $this->assertTrue($fired, 'Event listener was not called');
     }
 }

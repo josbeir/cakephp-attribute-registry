@@ -5,7 +5,12 @@ namespace AttributeRegistry;
 
 use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Enum\AttributeTargetType;
-use AttributeRegistry\Event\AttributeRegistryEvents;
+use AttributeRegistry\Event\AfterCacheClearEvent;
+use AttributeRegistry\Event\AfterDiscoverEvent;
+use AttributeRegistry\Event\AfterScanEvent;
+use AttributeRegistry\Event\BeforeCacheClearEvent;
+use AttributeRegistry\Event\BeforeDiscoverEvent;
+use AttributeRegistry\Event\BeforeScanEvent;
 use AttributeRegistry\Service\AttributeParser;
 use AttributeRegistry\Service\AttributeScanner;
 use AttributeRegistry\Service\CompiledCache;
@@ -148,7 +153,8 @@ class AttributeRegistry implements EventDispatcherInterface
     public function discover(): AttributeCollection
     {
         // Dispatch before discover event
-        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_DISCOVER);
+        $event = new BeforeDiscoverEvent($this);
+        $this->getEventManager()->dispatch($event);
 
         if ($this->discoveredAttributes !== null) {
             $collection = new AttributeCollection($this->discoveredAttributes);
@@ -168,7 +174,8 @@ class AttributeRegistry implements EventDispatcherInterface
         }
 
         // Dispatch before scan event
-        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_SCAN);
+        $event = new BeforeScanEvent($this);
+        $this->getEventManager()->dispatch($event);
 
         $attributes = [];
         foreach ($this->scanner->scanAll() as $attribute) {
@@ -181,9 +188,8 @@ class AttributeRegistry implements EventDispatcherInterface
         $collection = new AttributeCollection($attributes);
 
         // Dispatch after scan event
-        $this->dispatchEvent(AttributeRegistryEvents::AFTER_SCAN, [
-            'attributes' => $collection,
-        ]);
+        $event = new AfterScanEvent($this, $collection);
+        $this->getEventManager()->dispatch($event);
 
         $this->dispatchAfterDiscover($collection);
 
@@ -236,14 +242,14 @@ class AttributeRegistry implements EventDispatcherInterface
      */
     public function clearCache(): bool
     {
-        $this->dispatchEvent(AttributeRegistryEvents::BEFORE_CACHE_CLEAR);
+        $event = new BeforeCacheClearEvent($this);
+        $this->getEventManager()->dispatch($event);
 
         $this->discoveredAttributes = null;
         $success = $this->cache->delete(self::CACHE_KEY);
 
-        $this->dispatchEvent(AttributeRegistryEvents::AFTER_CACHE_CLEAR, [
-            'success' => $success,
-        ]);
+        $event = new AfterCacheClearEvent($this, $success);
+        $this->getEventManager()->dispatch($event);
 
         return $success;
     }
@@ -278,8 +284,7 @@ class AttributeRegistry implements EventDispatcherInterface
      */
     private function dispatchAfterDiscover(AttributeCollection $collection): void
     {
-        $this->dispatchEvent(AttributeRegistryEvents::AFTER_DISCOVER, [
-            'attributes' => $collection,
-        ]);
+        $event = new AfterDiscoverEvent($this, $collection);
+        $this->getEventManager()->dispatch($event);
     }
 }
