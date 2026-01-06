@@ -456,11 +456,10 @@ class CompiledCacheTest extends TestCase
         $this->assertIsArray($loaded);
         $this->assertCount(1, $loaded);
 
-        // Modify the file content
-        file_put_contents($testFile, '<?php class TestClass { /* modified */ }');
-        // Ensure modification time changes (sleep to avoid same-second issue)
+        // Ensure modification time changes - use touch() with explicit future timestamp
         sleep(1);
-        touch($testFile);
+        touch($testFile, $originalTime + 2);
+        clearstatcache(); // Clear PHP's stat cache since we're testing in the same process
 
         // Get cache again - should return null because modification time changed
         $reloaded = $cache->get('test');

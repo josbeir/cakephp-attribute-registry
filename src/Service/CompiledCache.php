@@ -79,7 +79,7 @@ class CompiledCache
             return null;
         }
 
-        // Check in-memory cache first (but skip if validation is enabled)
+        // Check in-memory cache first (skip if validation is enabled to ensure fresh validation)
         if (!$this->validateFiles && isset($this->memoryCache[$key])) {
             return $this->memoryCache[$key];
         }
@@ -104,7 +104,10 @@ class CompiledCache
                     $data = $validated;
                 }
 
-                $this->memoryCache[$key] = $data;
+                // Only cache in memory if validation is disabled (to ensure fresh validation on each get)
+                if (!$this->validateFiles) {
+                    $this->memoryCache[$key] = $data;
+                }
 
                 return $data;
             }
