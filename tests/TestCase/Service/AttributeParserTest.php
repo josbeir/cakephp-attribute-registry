@@ -258,23 +258,30 @@ class AttributeParserTest extends TestCase
         $this->assertEquals('TestController', $constAttr->target->parentClass);
     }
 
-    public function testParseFileGeneratesFileHash(): void
+    public function testParseFileGeneratesFileTime(): void
     {
         $attributes = $this->parser->parseFile($this->testFilePath);
 
         $this->assertNotEmpty($attributes);
 
-        // All attributes should have a non-empty file hash
+        // Get expected file modification time
+        $expectedTime = filemtime($this->testFilePath);
+        $this->assertNotFalse($expectedTime, 'Should be able to get file modification time');
+
+        // All attributes should have a valid file time
         foreach ($attributes as $attr) {
-            $this->assertNotEmpty($attr->fileHash, 'fileHash should not be empty');
-            $this->assertMatchesRegularExpression('/^[a-f0-9]+$/', $attr->fileHash, 'fileHash should be a hex string');
+            $this->assertGreaterThan(0, $attr->fileTime, 'fileTime should be greater than 0');
+            $this->assertIsInt($attr->fileTime, 'fileTime should be an integer');
         }
 
-        // All attributes from the same file should have the same hash
-        $firstHash = $attributes[0]->fileHash;
+        // All attributes from the same file should have the same time
+        $firstTime = $attributes[0]->fileTime;
         foreach ($attributes as $attr) {
-            $this->assertEquals($firstHash, $attr->fileHash, 'All attributes from same file should have same hash');
+            $this->assertEquals($firstTime, $attr->fileTime, 'All attributes from same file should have same fileTime');
         }
+
+        // Should match actual file modification time
+        $this->assertEquals($expectedTime, $attributes[0]->fileTime, 'fileTime should match actual file modification time');
     }
 
     public function testParseFileDetectsPluginNameForAppFiles(): void

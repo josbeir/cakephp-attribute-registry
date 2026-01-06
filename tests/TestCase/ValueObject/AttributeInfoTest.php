@@ -37,7 +37,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 15,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->assertEquals('App\Controller\MyController', $attributeInfo->className);
@@ -63,7 +63,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 25,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->assertEmpty($attributeInfo->arguments);
@@ -85,7 +85,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Model/Entity/User.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         // This should not be allowed in PHP 8.2+ readonly objects
@@ -108,7 +108,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $instance = $attributeInfo->getInstance();
@@ -132,7 +132,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 15,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $instance = $attributeInfo->getInstance(TestColumn::class);
@@ -156,7 +156,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/SomeClass.php',
             lineNumber: 5,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->expectException(RuntimeException::class);
@@ -199,7 +199,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->assertTrue($attributeInfo->isInstanceOf(TestRoute::class));
@@ -221,7 +221,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/MyController.php',
             lineNumber: 20,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $array = $attributeInfo->toArray();
@@ -279,7 +279,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Entity/User.php',
             lineNumber: 25,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $array = $original->toArray();
@@ -310,7 +310,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/TestController.php',
             lineNumber: 15,
             target: $target,
-            fileHash: 'abc123',
+            fileTime: 1234567890,
         );
 
         // Test __set_state method directly with array data
@@ -324,7 +324,7 @@ class AttributeInfoTest extends TestCase
         $this->assertEquals($original->filePath, $restored->filePath);
         $this->assertEquals($original->lineNumber, $restored->lineNumber);
         $this->assertEquals($original->target->type, $restored->target->type);
-        $this->assertEquals($original->fileHash, $restored->fileHash);
+        $this->assertEquals($original->fileTime, $restored->fileTime);
     }
 
     public function testPluginNameCanBeSet(): void
@@ -341,7 +341,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/plugins/DebugKit/src/Controller/PanelsController.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
             pluginName: 'DebugKit',
         );
 
@@ -362,7 +362,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/app/src/Controller/UsersController.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
         );
 
         $this->assertNull($attributeInfo->pluginName);
@@ -382,7 +382,7 @@ class AttributeInfoTest extends TestCase
             filePath: '/plugins/MyPlugin/src/Controller/TestController.php',
             lineNumber: 10,
             target: $target,
-            fileHash: '',
+            fileTime: 0,
             pluginName: 'MyPlugin',
         );
 
@@ -404,7 +404,7 @@ class AttributeInfoTest extends TestCase
                 'type' => 'class',
                 'targetName' => 'GenerateController',
             ],
-            'fileHash' => 'abc123',
+            'fileTime' => 1234567890,
             'pluginName' => 'Bake',
         ];
 
@@ -425,7 +425,7 @@ class AttributeInfoTest extends TestCase
                 'type' => 'class',
                 'targetName' => 'UserController',
             ],
-            'fileHash' => '',
+            'fileTime' => 0,
             // Notice: pluginName key is missing (backward compatibility test)
         ];
 

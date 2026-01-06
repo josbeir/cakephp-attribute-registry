@@ -229,8 +229,6 @@ class AttributeRegistry implements EventDispatcherInterface
     /**
      * Clear all cached attribute data.
      *
-     * Clears atomic cache and legacy context-specific caches for backward compatibility.
-     *
      * @return bool True on success
      */
     public function clearCache(): bool

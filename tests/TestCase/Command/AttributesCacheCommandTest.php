@@ -71,7 +71,7 @@ class AttributesCacheCommandTest extends TestCase
         );
     }
 
-    private function createTestAttribute(string $filePath, string $hash = ''): AttributeInfo
+    private function createTestAttribute(string $filePath, int $time = 0): AttributeInfo
     {
         return new AttributeInfo(
             className: 'Test\\Class',
@@ -83,7 +83,7 @@ class AttributesCacheCommandTest extends TestCase
                 type: AttributeTargetType::CLASS_TYPE,
                 targetName: 'Class',
             ),
-            fileHash: $hash,
+            fileTime: $time,
         );
     }
 
@@ -267,7 +267,7 @@ class AttributesCacheCommandTest extends TestCase
         $this->registry->discover();
 
         // Inject invalid data - attribute with non-existent file
-        $attr = $this->createTestAttribute('/tmp/non_existent_file_' . uniqid() . '.php', 'deadbeef');
+        $attr = $this->createTestAttribute('/tmp/non_existent_file_' . uniqid() . '.php', 123456789);
         $reflection = new ReflectionClass($this->registry);
         $property = $reflection->getProperty('discoveredAttributes');
         $property->setValue($this->registry, [$attr]);

@@ -17,7 +17,7 @@ readonly class AttributeInfo
      * @param string $filePath File path where attribute was found
      * @param int $lineNumber Line number where attribute was found
      * @param \AttributeRegistry\ValueObject\AttributeTarget $target Target information
-     * @param string $fileHash File content hash (xxh3) for validation
+     * @param int $fileTime File modification time (Unix timestamp) for cache validation
      * @param string|null $pluginName Plugin name or null for App namespace
      */
     public function __construct(
@@ -27,7 +27,7 @@ readonly class AttributeInfo
         public string $filePath,
         public int $lineNumber,
         public AttributeTarget $target,
-        public string $fileHash = '',
+        public int $fileTime = 0,
         public ?string $pluginName = null,
     ) {
     }
@@ -46,7 +46,7 @@ readonly class AttributeInfo
             'filePath' => $this->filePath,
             'lineNumber' => $this->lineNumber,
             'target' => $this->target->toArray(),
-            'fileHash' => $this->fileHash,
+            'fileTime' => $this->fileTime,
             'pluginName' => $this->pluginName,
         ];
     }
@@ -65,7 +65,7 @@ readonly class AttributeInfo
             filePath: (string)$data['filePath'],
             lineNumber: (int)$data['lineNumber'],
             target: AttributeTarget::fromArray((array)$data['target']),
-            fileHash: (string)($data['fileHash'] ?? ''),
+            fileTime: (int)($data['fileTime'] ?? 0),
             pluginName: $data['pluginName'] ?? null,
         );
     }
