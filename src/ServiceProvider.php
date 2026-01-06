@@ -33,25 +33,13 @@ class ServiceProvider extends CakeServiceProvider
             return AttributeRegistry::getInstance();
         });
 
-        $container->add(AttributesCacheCommand::class, function () use ($container): AttributesCacheCommand {
-            /** @var \AttributeRegistry\AttributeRegistry $registry */
-            $registry = $container->get(AttributeRegistry::class);
+        $container->add(AttributesCacheCommand::class)
+            ->addArgument(AttributeRegistry::class);
 
-            return new AttributesCacheCommand($registry);
-        });
+        $container->add(AttributesListCommand::class)
+            ->addArgument(AttributeRegistry::class);
 
-        $container->add(AttributesListCommand::class, function () use ($container): AttributesListCommand {
-            /** @var \AttributeRegistry\AttributeRegistry $registry */
-            $registry = $container->get(AttributeRegistry::class);
-
-            return new AttributesListCommand($registry);
-        });
-
-        $container->add(AttributesInspectCommand::class, function () use ($container): AttributesInspectCommand {
-            /** @var \AttributeRegistry\AttributeRegistry $registry */
-            $registry = $container->get(AttributeRegistry::class);
-
-            return new AttributesInspectCommand($registry);
-        });
+        $container->add(AttributesInspectCommand::class)
+            ->addArgument(AttributeRegistry::class);
     }
 }
