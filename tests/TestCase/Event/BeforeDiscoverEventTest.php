@@ -16,7 +16,7 @@ class BeforeDiscoverEventTest extends TestCase
 
     public function testEventCreation(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new BeforeDiscoverEvent($registry);
 
         $this->assertSame(BeforeDiscoverEvent::NAME, $event->getName());
@@ -25,7 +25,7 @@ class BeforeDiscoverEventTest extends TestCase
 
     public function testGetSubjectReturnsTypedRegistry(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new BeforeDiscoverEvent($registry);
 
         $subject = $event->getSubject();

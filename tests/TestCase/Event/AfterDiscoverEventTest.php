@@ -17,7 +17,7 @@ class AfterDiscoverEventTest extends TestCase
 
     public function testEventCreationWithCollection(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $collection = new AttributeCollection([]);
 
         $event = new AfterDiscoverEvent($registry, $collection);
@@ -29,7 +29,7 @@ class AfterDiscoverEventTest extends TestCase
 
     public function testGetAttributesReturnsCollection(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $collection = new AttributeCollection([]);
 
         $event = new AfterDiscoverEvent($registry, $collection);

@@ -7,7 +7,6 @@ use AttributeRegistry\Collection\AttributeCollection;
 use AttributeRegistry\Event\AfterCacheClearEvent;
 use AttributeRegistry\Event\AfterDiscoverEvent;
 use AttributeRegistry\Event\AfterScanEvent;
-use AttributeRegistry\Event\AttributeRegistryEvents;
 use AttributeRegistry\Event\BeforeCacheClearEvent;
 use AttributeRegistry\Event\BeforeDiscoverEvent;
 use AttributeRegistry\Event\BeforeScanEvent;
@@ -48,7 +47,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->discover();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::BEFORE_DISCOVER,
+            BeforeDiscoverEvent::NAME,
             $eventManager,
         );
     }
@@ -63,7 +62,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->discover();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::AFTER_DISCOVER,
+            AfterDiscoverEvent::NAME,
             $eventManager,
         );
     }
@@ -79,7 +78,7 @@ class AttributeRegistryEventTest extends TestCase
 
         // Verify event was fired with collection
         $this->assertEventFiredWith(
-            AttributeRegistryEvents::AFTER_DISCOVER,
+            AfterDiscoverEvent::NAME,
             'attributes',
             $result,
             $eventManager,
@@ -115,7 +114,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->discover();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::BEFORE_SCAN,
+            BeforeScanEvent::NAME,
             $eventManager,
         );
     }
@@ -130,7 +129,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->discover();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::AFTER_SCAN,
+            AfterScanEvent::NAME,
             $eventManager,
         );
     }
@@ -162,8 +161,8 @@ class AttributeRegistryEventTest extends TestCase
             $firedEvents[] = $event->getName();
         }
 
-        $this->assertNotContains(AttributeRegistryEvents::BEFORE_SCAN, $firedEvents);
-        $this->assertNotContains(AttributeRegistryEvents::AFTER_SCAN, $firedEvents);
+        $this->assertNotContains(BeforeScanEvent::NAME, $firedEvents);
+        $this->assertNotContains(AfterScanEvent::NAME, $firedEvents);
     }
 
     public function testBeforeCacheClearEventFired(): void
@@ -176,7 +175,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->clearCache();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::BEFORE_CACHE_CLEAR,
+            BeforeCacheClearEvent::NAME,
             $eventManager,
         );
     }
@@ -191,7 +190,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->clearCache();
 
         $this->assertEventFired(
-            AttributeRegistryEvents::AFTER_CACHE_CLEAR,
+            AfterCacheClearEvent::NAME,
             $eventManager,
         );
     }
@@ -206,7 +205,7 @@ class AttributeRegistryEventTest extends TestCase
         $registry->clearCache();
 
         $this->assertEventFiredWith(
-            AttributeRegistryEvents::AFTER_CACHE_CLEAR,
+            AfterCacheClearEvent::NAME,
             'cleared',
             true,
             $eventManager,

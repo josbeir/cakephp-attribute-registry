@@ -16,7 +16,7 @@ class AfterCacheClearEventTest extends TestCase
 
     public function testEventCreationWithResult(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new AfterCacheClearEvent($registry, true);
 
         $this->assertSame(AfterCacheClearEvent::NAME, $event->getName());
@@ -26,7 +26,7 @@ class AfterCacheClearEventTest extends TestCase
 
     public function testWasClearedReturnsFalse(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new AfterCacheClearEvent($registry, false);
 
         $this->assertFalse($event->wasCleared());

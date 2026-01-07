@@ -16,7 +16,7 @@ class BeforeCacheClearEventTest extends TestCase
 
     public function testEventCreation(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new BeforeCacheClearEvent($registry);
 
         $this->assertSame(BeforeCacheClearEvent::NAME, $event->getName());

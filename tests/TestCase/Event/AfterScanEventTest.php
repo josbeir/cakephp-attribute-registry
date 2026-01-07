@@ -17,7 +17,7 @@ class AfterScanEventTest extends TestCase
 
     public function testEventCreationWithCollection(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $collection = new AttributeCollection([]);
 
         $event = new AfterScanEvent($registry, $collection);

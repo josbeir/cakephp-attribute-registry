@@ -16,7 +16,7 @@ class BeforeScanEventTest extends TestCase
 
     public function testEventCreation(): void
     {
-        $registry = $this->createMock(AttributeRegistry::class);
+        $registry = $this->createStub(AttributeRegistry::class);
         $event = new BeforeScanEvent($registry);
 
         $this->assertSame(BeforeScanEvent::NAME, $event->getName());
