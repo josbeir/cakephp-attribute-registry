@@ -109,8 +109,8 @@ return [
             'enabled' => true,
             // Cache directory (defaults to CACHE . 'attribute_registry' . DS)
             'path' => CACHE . 'attribute_registry' . DS,
-            // Validate file hashes on cache retrieval (default: false)
-            // When enabled, cached entries are validated against file content changes
+            // Validate file modification times on cache retrieval (default: false)
+            // When enabled, cached entries are validated against file timestamp changes
             // Useful in development to auto-rebuild cache when files change
             // Example: Configure::read('debug') enables validation only in debug mode
             'validateFiles' => false,
@@ -155,7 +155,7 @@ You can disable caching for development purposes by setting `cache.enabled` to `
 
 ### Smart Cache Validation
 
-Instead of disabling the cache entirely, you can enable **file hash validation** to automatically invalidate stale cache entries when files change:
+Instead of disabling the cache entirely, you can enable **file modification time validation** to automatically invalidate stale cache entries when files change:
 
 ```php
 use Cake\Core\Configure;
@@ -171,7 +171,7 @@ use Cake\Core\Configure;
 
 When `validateFiles` is enabled:
 - ✅ **Cache remains active** - Fast performance
-- ✅ **Auto-detects changes** - Validates file content hashes (xxh3) on cache load
+- ✅ **Auto-detects changes** - Validates file modification times (filemtime) on cache load
 - ✅ **Granular invalidation** - Only rebuilds when cached files are modified
 
 > [!IMPORTANT]
