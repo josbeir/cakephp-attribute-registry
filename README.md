@@ -474,52 +474,62 @@ The cache records file modification timestamps (`filemtime`) for discovered attr
 
 ### Events
 
-The AttributeRegistry dispatches events at key points in the discovery and caching lifecycle. You can listen to these events to implement custom functionality like performance monitoring, logging, or integration with other systems.
+The AttributeRegistry dispatches custom event classes at key points in the discovery and caching lifecycle. These typed event classes provide better IDE support and type safety compared to generic events.
 
 **Available Events:**
 
-| Event Name | When Fired | Event Data | Description |
-|------------|------------|------------|-------------|
-| `AttributeRegistry.beforeDiscover` | Start of `discover()` | None | Fired before attribute discovery begins (every call) |
-| `AttributeRegistry.afterDiscover` | End of `discover()` | `attributes` (AttributeCollection) | Fired after discovery completes with the result collection |
-| `AttributeRegistry.beforeScan` | Before file scanning | None | Fired only when scanning files (not when using cached data) |
-| `AttributeRegistry.afterScan` | After file scanning | `attributes` (AttributeCollection) | Fired after scanning completes with discovered attributes |
-| `AttributeRegistry.beforeCacheClear` | Start of `clearCache()` | None | Fired before clearing the cache |
-| `AttributeRegistry.afterCacheClear` | End of `clearCache()` | `success` (bool) | Fired after cache clearing with success status |
+| Event Class | Event Name | When Fired | Methods | Description |
+|------------|------------|------------|---------|-------------|
+| `BeforeDiscoverEvent` | `AttributeRegistry.beforeDiscover` | Start of `discover()` | `getSubject()` | Fired before attribute discovery begins (every call) |
+| `AfterDiscoverEvent` | `AttributeRegistry.afterDiscover` | End of `discover()` | `getSubject()`, `getAttributes()` | Fired after discovery completes with the result collection |
+| `BeforeScanEvent` | `AttributeRegistry.beforeScan` | Before file scanning | `getSubject()` | Fired only when scanning files (not when using cached data) |
+| `AfterScanEvent` | `AttributeRegistry.afterScan` | After file scanning | `getSubject()`, `getAttributes()` | Fired after scanning completes with discovered attributes |
+| `BeforeCacheClearEvent` | `AttributeRegistry.beforeCacheClear` | Start of `clearCache()` | `getSubject()` | Fired before clearing the cache |
+| `AfterCacheClearEvent` | `AttributeRegistry.afterCacheClear` | End of `clearCache()` | `getSubject()`, `wasCleared()` | Fired after cache clearing with success status |
 
-**Event Listener Example:**
+Each event class extends `Cake\Event\Event` and provides:
+- A `NAME` constant for type-safe event name references
+- A typed `getSubject()` method returning the `AttributeRegistry` instance
+- Additional typed accessor methods for event-specific data
+
+**Event Listener Examples:**
 
 ```php
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
-use AttributeRegistry\Event\AttributeRegistryEvents;
+use AttributeRegistry\Event\AfterDiscoverEvent;
+use AttributeRegistry\Event\AfterScanEvent;
+use AttributeRegistry\Event\AfterCacheClearEvent;
+use AttributeRegistry\Event\BeforeScanEvent;
 
-// Listen to the afterDiscover event
+// Listen using typed event classes for better IDE support
 EventManager::instance()->on(
-    AttributeRegistryEvents::AFTER_DISCOVER,
-    function (EventInterface $event) {
-        $attributes = $event->getData('attributes');
+    AfterDiscoverEvent::NAME,
+    function (AfterDiscoverEvent $event) {
+        // Typed access to attributes collection
+        $attributes = $event->getAttributes();
         $count = $attributes->count();
 
         Log::info("Discovered {$count} attributes");
     }
 );
 
-// Track scanning performance
+// Track scanning performance with typed events
 $scanTimer = null;
 
 EventManager::instance()->on(
-    AttributeRegistryEvents::BEFORE_SCAN,
-    function (EventInterface $event) use (&$scanTimer) {
+    BeforeScanEvent::NAME,
+    function (BeforeScanEvent $event) use (&$scanTimer) {
         $scanTimer = microtime(true);
     }
 );
 
 EventManager::instance()->on(
-    AttributeRegistryEvents::AFTER_SCAN,
-    function (EventInterface $event) use (&$scanTimer) {
+    AfterScanEvent::NAME,
+    function (AfterScanEvent $event) use (&$scanTimer) {
         $duration = microtime(true) - $scanTimer;
-        $attributes = $event->getData('attributes');
+        // Type-safe method access
+        $attributes = $event->getAttributes();
 
         Log::info(sprintf(
             'Scanned %d attributes in %.2fms',
@@ -531,13 +541,24 @@ EventManager::instance()->on(
 
 // Clear related caches when AttributeRegistry cache is cleared
 EventManager::instance()->on(
-    AttributeRegistryEvents::AFTER_CACHE_CLEAR,
-    function (EventInterface $event) {
-        if ($event->getData('success')) {
+    AfterCacheClearEvent::NAME,
+    function (AfterCacheClearEvent $event) {
+        // Type-safe boolean check
+        if ($event->wasCleared()) {
             // Clear your custom route cache, API documentation cache, etc.
             Cache::delete('my_route_cache');
             Cache::delete('api_docs');
         }
+    }
+);
+
+// You can also use generic EventInterface if you prefer
+EventManager::instance()->on(
+    'AttributeRegistry.afterDiscover',
+    function (EventInterface $event) {
+        // Generic access still works, but without IDE autocomplete
+        $attributes = $event->getData('attributes');
+        // ...
     }
 );
 ```
