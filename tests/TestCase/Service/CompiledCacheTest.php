@@ -362,22 +362,33 @@ class CompiledCacheTest extends TestCase
     }
 
     /**
-     * Test that objects without __set_state are rejected
+     * Test that objects can be exported without __set_state using brick/varexporter
      */
-    public function testSetRejectsObjectsWithoutSetState(): void
+    public function testSetHandlesObjectsWithoutSetState(): void
     {
         $target = new AttributeTarget(AttributeTargetType::CLASS_TYPE, 'Test\\MyClass');
+        $obj = new stdClass();
+        $obj->property = 'value';
+        $obj->number = 42;
+
         $attr = new AttributeInfo(
             className: 'Test\\MyClass',
             attributeName: 'Test\\MyAttribute',
-            arguments: ['obj' => new stdClass()],
+            arguments: ['obj' => $obj],
             filePath: '/test/file.php',
             lineNumber: 10,
             target: $target,
         );
 
         $result = $this->cache->set('test', [$attr]);
-        $this->assertFalse($result, 'set() should return false when attributes contain objects without __set_state');
+        $this->assertTrue($result, 'set() should succeed with objects without __set_state (using brick/varexporter)');
+
+        $loaded = $this->cache->get('test');
+        $this->assertIsArray($loaded);
+        $this->assertCount(1, $loaded);
+        $this->assertInstanceOf(stdClass::class, $loaded[0]->arguments['obj']);
+        $this->assertEquals('value', $loaded[0]->arguments['obj']->property);
+        $this->assertEquals(42, $loaded[0]->arguments['obj']->number);
     }
 
     /**
