@@ -216,42 +216,58 @@ The plugin uses **compiled cache files** for zero-cost attribute caching. Discov
 
 ### Attribute Argument Requirements
 
-The compiled cache uses `var_export()` to serialize attribute arguments. Most PHP types work seamlessly:
+The compiled cache uses [brick/varexporter](https://github.com/brick/varexporter) to serialize attribute arguments. All common PHP types are fully supported:
 
-**Supported Types** (no special handling needed):
+**Supported Types:**
 - Scalars: `string`, `int`, `float`, `bool`, `null`
-- Arrays of supported types
-- Enums (PHP 8.1+, natively supported)
+- Arrays of any supported types
+- Enums (PHP 8.1+)
+- Objects (automatically handled via reflection)
 
-**Object Arguments** require `__set_state()` implementation:
+**Object Arguments** work seamlessly without requiring any special methods:
 
 ```php
-class MyArgument
+class Translation
 {
     public function __construct(
-        public string $value,
+        public string $key,
+        public string $domain = 'default',
+        public ?string $locale = null,
     ) {}
+}
 
-    // Required for cache serialization
-    public static function __set_state(array $data): self
-    {
-        return new self(
-            value: $data['value'],
-        );
-    }
+class ValidationRule
+{
+    public function __construct(
+        public string $rule,
+        public array $options = [],
+    ) {}
 }
 
 #[Attribute]
-class MyAttribute
+class Translatable
 {
     public function __construct(
-        public MyArgument $arg, // Object argument - needs __set_state()
+        public Translation $translation,
+        public ValidationRule $validation,
     ) {}
+}
+
+// Usage on entity property
+class Article
+{
+    #[Translatable(
+        translation: new Translation('article.title', 'cms', 'en_US'),
+        validation: new ValidationRule('maxLength', ['max' => 255])
+    )]
+    public string $title;
 }
 ```
 
+Objects are serialized using reflection-based strategies automatically.
+
 > [!TIP]
-> If caching fails because an object lacks `__set_state()`, an error will be logged at `logs/error.log` and the attribute will be skipped from the cache.
+> If caching fails due to unsupported types (resources, closures), an error will be logged at `logs/error.log` and the attribute will be skipped from the cache.
 
 ## Usage
 

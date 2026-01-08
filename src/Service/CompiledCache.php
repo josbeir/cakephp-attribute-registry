@@ -6,11 +6,11 @@ namespace AttributeRegistry\Service;
 use AttributeRegistry\Enum\AttributeTargetType;
 use AttributeRegistry\ValueObject\AttributeInfo;
 use AttributeRegistry\ValueObject\AttributeTarget;
+use Brick\VarExporter\VarExporter;
 use Cake\Log\Log;
 use Closure;
 use RuntimeException;
 use Throwable;
-use UnitEnum;
 
 /**
  * Compiled cache service for zero-cost attribute caching.
@@ -265,13 +265,13 @@ class CompiledCache
             '%s)',
             $indent,
             $indent,
-            $this->exportString($attr->className),
+            VarExporter::export($attr->className),
             $indent,
-            $this->exportString($attr->attributeName),
+            VarExporter::export($attr->attributeName),
             $indent,
-            $this->exportArray($attr->arguments, 2),
+            VarExporter::export($attr->arguments, indentLevel: 2),
             $indent,
-            $this->exportString($attr->filePath),
+            VarExporter::export($attr->filePath),
             $indent,
             $attr->lineNumber,
             $indent,
@@ -279,7 +279,7 @@ class CompiledCache
             $indent,
             $attr->fileTime,
             $indent,
-            $attr->pluginName === null ? 'null' : $this->exportString($attr->pluginName),
+            $attr->pluginName === null ? 'null' : VarExporter::export($attr->pluginName),
             $indent,
         );
     }
@@ -305,122 +305,11 @@ class CompiledCache
             $innerIndent,
             $target->type->name,
             $innerIndent,
-            $this->exportString($target->targetName),
+            VarExporter::export($target->targetName),
             $innerIndent,
-            $this->exportValue($target->parentClass, $level),
+            VarExporter::export($target->parentClass, indentLevel: $level),
             $indent,
         );
-    }
-
-    /**
-     * Export a string value as PHP code.
-     *
-     * @param string $value String to export
-     * @return string Exported code
-     */
-    private function exportString(string $value): string
-    {
-        // Use var_export for safety with special characters
-        return var_export($value, true);
-    }
-
-    /**
-     * Export any value as PHP code.
-     *
-     * @param mixed $value Value to export
-     * @param int $level Indentation level for nested structures
-     * @return string Exported code
-     */
-    private function exportValue(mixed $value, int $level = 0): string
-    {
-        if ($value === null) {
-            return 'null';
-        }
-
-        if (is_string($value)) {
-            return $this->exportString($value);
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if (is_int($value)) {
-            return (string)$value;
-        }
-
-        if (is_float($value)) {
-            // Handle special float values
-            if (is_infinite($value)) {
-                return $value > 0 ? 'INF' : '-INF';
-            }
-
-            if (is_nan($value)) {
-                return 'NAN';
-            }
-
-            return var_export($value, true);
-        }
-
-        if (is_array($value)) {
-            return $this->exportArray($value, $level);
-        }
-
-        if (is_object($value)) {
-            // Enums are natively supported by var_export (PHP 8.1+)
-            if ($value instanceof UnitEnum) {
-                return var_export($value, true);
-            }
-
-            // For other objects, only allow those that can be reconstructed via __set_state
-            if (!method_exists($value, '__set_state')) {
-                throw new RuntimeException(
-                    sprintf(
-                        'Unsupported object type for export: %s must implement __set_state().',
-                        get_debug_type($value),
-                    ),
-                );
-            }
-
-            return var_export($value, true);
-        }
-
-        throw new RuntimeException('Unsupported value type: ' . get_debug_type($value));
-    }
-
-    /**
-     * Export an array as PHP code.
-     *
-     * @param array<mixed> $array Array to export
-     * @param int $level Indentation level
-     * @return string Exported code
-     */
-    private function exportArray(array $array, int $level): string
-    {
-        if ($array === []) {
-            return '[]';
-        }
-
-        $indent = str_repeat('    ', $level + 1);
-        $closeIndent = str_repeat('    ', $level);
-
-        $isAssoc = array_keys($array) !== range(0, count($array) - 1);
-
-        $items = [];
-        foreach ($array as $key => $value) {
-            if ($isAssoc) {
-                $items[] = sprintf(
-                    '%s%s => %s',
-                    $indent,
-                    $this->exportValue($key, $level + 1),
-                    $this->exportValue($value, $level + 1),
-                );
-            } else {
-                $items[] = $indent . $this->exportValue($value, $level + 1);
-            }
-        }
-
-        return "[\n" . implode(",\n", $items) . ",\n{$closeIndent}]";
     }
 
     /**
@@ -553,7 +442,7 @@ PHP;
             }
         }
 
-        // Allow objects - var_export will handle them
+        // VarExporter handles all other types including objects
     }
 
     /**
