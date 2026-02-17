@@ -8,6 +8,9 @@
 
 # CakePHP Attribute Registry Plugin
 
+> [!WARNING]
+> This plugin will become a CakePHP Core component in 6.x
+
 A powerful CakePHP plugin for discovering, caching, and querying PHP 8 attributes across your application and plugins.
 
 ## Table of Contents
